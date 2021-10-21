@@ -269,7 +269,7 @@ The following models are implemented in TIMEX and can be used in the forecasting
 - ARIMA: Simple ARIMA model, with automatic tuning. Keyword: `arima`.  
 
 ## Available transformations
-The following transformations are available on TIMEX, which will use them in order to pre-process the time-series and
+The following transformations are available on TIMEX_CLUSTERING, which will use them in order to pre-process the time-series and
 check if this increases the forecasting performance on the validation set.
 
 - Identity: don't modify the values. Keyword: `none`.
