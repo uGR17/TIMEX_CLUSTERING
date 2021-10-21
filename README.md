@@ -6,10 +6,10 @@ Library for time-series-clustering-as-a-service.
 ![PyPI](https://img.shields.io/pypi/v/timexseries)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/timexseries)
 
-TIMEX (referred in code as `timexseries`) is a framework for time-series-forecasting-as-a-service.
+TIMEX_CLUSTERING (referred in code as `timexseries_c`) is a framework for time-series-clustering-as-a-service.
 
 Its main goal is to provide a simple and generic tool to build websites and, more in general,
-platforms, able to provide the forecasting of time-series in the "as-a-service" manner.
+platforms, able to provide the clustering of time-series in the "as-a-service" manner.
 
 This means that users should interact with the service as less as possible.
 
@@ -30,7 +30,7 @@ However, installation is as simple as running:
 
 ## Get started
 Please, refer to the Examples folder. You will find some Jupyter Notebook which illustrate
-the main characteristics of TIMEX. A Notebook explaining the covid-timex.it website is present,
+the main characteristics of TIMEX CLUSERING. A Notebook explaining the covid-timex.it website is present,
 along with the source code of the site, [here](https://github.com/AlexMV12/covid-timex.it).
 
 ## Documentation
@@ -40,6 +40,7 @@ The full documentation is available at [here](https://alexmv12.github.io/TIMEX/t
 If you have questions, suggestions or problems, feel free to open an Issue.
 You can contact us at:
 
+- uriel.guadarrama@polimi.it
 - alessandro.falcetta@polimi.it
 - manuel.roveri@polimi.it
 
