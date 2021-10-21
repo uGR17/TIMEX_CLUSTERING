@@ -6,7 +6,7 @@ Library for time-series-clustering-as-a-service.
 ![PyPI](https://img.shields.io/pypi/v/timexseries)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/timexseries)
 
-TIMEX (referred in code as `timexseries`) is a framework for time-series-clustering-as-a-service.
+TIMEX_CLUSTERING (referred in code as `timexseries_c`) is a framework for time-series-clustering-as-a-service.
 
 Its main goal is to provide a simple and generic tool to build websites and, more in general,
 platforms, able to provide the clustering of time-series in the "as-a-service" manner.
