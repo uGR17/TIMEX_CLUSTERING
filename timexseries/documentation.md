@@ -1,13 +1,13 @@
-`TIMEX` (referred as `timexseries` in code) is a Python package which implements a pipeline for time-series forecasting.
+`TIMEX CLUSTERING` (referred as `timexseries_c` in code) is a Python package which implements a pipeline for time-series clustering.
 
 The pipeline consists in:
 
 - time-series data ingestion;
 - time-series pre-processing; 
-- time-series analysis and prediction;
+- time-series analysis and clustering;
 - results visualization.
 
-While `TIMEX` is intended to be use in a fully automatic way (which means that each
+While `TIMEX CLUSTERING` is intended to be use in a fully automatic way (which means that each
 step is automatically computed, without user intervention), users can also take
 advantage of single parts of the framework.
 
