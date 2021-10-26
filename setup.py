@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as readme_file:
     readme = readme_file.read()
 
-requirements = ["dataparser>=0.0.2", "pandas>=1.3.4"]
+requirements = ["dataparser>=0.0.2", "pandas>=1.3.4", "numpy>=1.19.3"]
 
 setup(
     name="timexseries_c",
