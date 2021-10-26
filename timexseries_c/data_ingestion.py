@@ -39,9 +39,6 @@ def ingest_timeseries(param_config: dict):
       values. If not specified the frequency will be infered.
     - `columns_to_load_from_url`: comma-separated string of columns' names which will be read from the CSV file. If not
       specified, all columns will be read;
-    - `add_diff_column`: comma-separated string of columns' names for which a corresponding column containing the diff
-      values should be created. They will be created with the name `col_name'_diff. Note that the first row of the
-      dataset will be discarded;
     - `timeseries_names`: dictionary of key-values (old_name: new_name) used to rename some columns in the CSV;
     - `dateparser_options`: dictionary of key-values which will be given to `dateparser.parse()`.
 
@@ -52,12 +49,10 @@ def ingest_timeseries(param_config: dict):
     ...    "source_data_url": "tests/test_datasets/covid_example_data_ingestion.csv",
     ...    "columns_to_load_from_url": "data,nuovi_positivi,terapia_intensiva",
     ...    "index_column_name": "data",
-    ...    "add_diff_column": "terapia_intensiva",
     ...    "timeseries_names": {
     ...        "data": "Date",
     ...        "nuovi_positivi": "Daily cases",
-    ...        "terapia_intensiva": "Total intensive care",
-    ...        "terapia_intensiva_diff": "Daily intensive care",
+    ...        "terapia_intensiva": "Total intensive care"
     ...    }
     ...  }
     ...}
@@ -107,13 +102,6 @@ def ingest_timeseries(param_config: dict):
 
     log.debug(f"Removing duplicates rows from dataframe; keep the last...")
     df_ingestion = df_ingestion[~df_ingestion.index.duplicated(keep='last')]
-
-    try:
-        targets = list(input_parameters["add_diff_column"].split(','))
-        log.debug(f"Adding the diff columns...")
-        df_ingestion = add_diff_columns(df_ingestion, targets)
-    except KeyError:
-        pass
 
     try:
         mappings = input_parameters["timeseries_names"]
