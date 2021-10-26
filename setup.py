@@ -3,11 +3,11 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as readme_file:
     readme = readme_file.read()
 
-requirements = ["numpy>=1.19.3","dataparser=*"]
+requirements = ["numpy>=1.19.3","dataparser==1.1.0"]
 
 setup(
     name="timexseries_c",
-    version="0.0.6",
+    version="0.0.8",
     author="Uriel Guadarrama Ramirez",
     author_email="u.guadarrama@hotmail.com",
     description="TIMEX-CLUSTERING is a framework for time-series-clustering-as-a-service",
