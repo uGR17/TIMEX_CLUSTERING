@@ -73,31 +73,6 @@ class TestDataIngestion:
 
         assert df.index.freq == 'M'
 
-    def test_diff_columns(self):
-        # Local load, with diff columns.
-        param_config = {
-            "input_parameters": {
-                "source_data_url": os.path.join("test_datasets", "test_1_2.csv"),
-                "columns_to_load_from_url": "third_column,second_column,first_column",
-                "datetime_column_name": "first_column",
-                "index_column_name": "first_column",
-                "dateparser_options": {
-                    "date_formats": ["%Y-%m-%dT%H:%M:%S"]
-                },
-                "add_diff_column": "third_column,second_column"
-            }
-        }
-
-        df = ingest_timeseries(param_config)
-
-        assert df.index.name == "first_column"
-        assert df.columns[0] == "third_column"
-        assert df.columns[1] == "second_column"
-        assert df.columns[2] == "third_column_diff"
-        assert df.columns[3] == "second_column_diff"
-        assert len(df.columns) == 4
-        assert len(df) == 3
-
     @pytest.mark.parametrize(
         "rename_index",
         [True, False]
@@ -537,48 +512,3 @@ class TestDataSelection:
 
         assert df.iloc[0]["third_column"] == 3
         assert len(df) == 1
-
-
-class TestAddDiff:
-    def test_add_single_diff_column(self):
-        # Add a single diff column.
-        df = get_fake_df(3)
-
-        new_df = add_diff_columns(df, ["value"])
-        assert df.iloc[1]["value"] == new_df.iloc[0]["value"]
-        assert df.iloc[2]["value"] == new_df.iloc[1]["value"]
-
-        assert new_df.iloc[0]["value_diff"] == df.iloc[1]["value"]-df.iloc[0]["value"]
-        assert new_df.iloc[1]["value_diff"] == df.iloc[2]["value"]-df.iloc[1]["value"]
-
-        assert len(new_df) == 2
-
-    def test_add_multiple_diff_columns(self):
-        # Add a multiple diff column.
-
-        df = DataFrame({"a": [0, 1, 2], "b": [10, 30, 60], "c": [5, 10, 20]}, dtype=float)
-        df.set_index("a", inplace=True, drop=True)
-
-        new_df = add_diff_columns(df, ["b", "c"])
-
-        test_df = DataFrame({"a": [1, 2], "b": [30, 60], "c": [10, 20], "b_diff": [20, 30], "c_diff": [5, 10]},
-                            dtype=float)
-        test_df.set_index("a", inplace=True, drop=True)
-
-        assert new_df.equals(test_df)
-
-    def test_add_multiple_diff_columns_groupby(self):
-        # Add a multiple diff column. Group by.
-
-        df = DataFrame({"a": [0, 0, 0, 1, 1, 1, 2, 2, 2], "b": [10, 20, 30, 10, 20, 30, 10, 20, 30],
-                        "c": [1, 1, 2, 3, 5, 8, 13, 21, 34], "d": [1, 2, 3, 5, 8, 13, 21, 34, 55]}, dtype=float)
-        df.set_index(["a", "b"], inplace=True, drop=True)
-
-        new_df = add_diff_columns(df, ["c", "d"], group_by="b")
-
-        test_df = DataFrame({"a": [1, 1, 1, 2, 2, 2], "b": [10, 20, 30, 10, 20, 30],
-                             "c": [3, 5, 8, 13, 21, 34], "d": [5, 8, 13, 21, 34, 55],
-                             "c_diff": [2, 4, 6, 10, 16, 26], "d_diff": [4, 6, 10, 16, 26, 42]}, dtype=float)
-        test_df.set_index(["a", "b"], inplace=True, drop=True)
-
-        assert new_df.equals(test_df)
