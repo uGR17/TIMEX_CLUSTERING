@@ -11,7 +11,7 @@ import numpy as np
 
 from .context import timexseries
 
-from timexseries.data_ingestion import ingest_timeseries, add_freq, select_timeseries_portion, add_diff_columns, \
+from timexseries_c.data_ingestion import ingest_timeseries, add_freq, select_timeseries_portion, \
     ingest_additional_regressors
 from .utilities import get_fake_df
 
