@@ -7,17 +7,52 @@ from typing import Tuple
 import dateparser
 from pandas import DataFrame
 
-from timexseries_c.data_ingestion import ingest_additional_regressors
-from timexseries_c.data_prediction import PredictionModel
-from timexseries_c.data_prediction.models.arima_predictor import ARIMAModel
-from timexseries_c.data_prediction.models.lstm_predictor import LSTMModel
-from timexseries_c.data_prediction.models.mockup_predictor import MockUpModel
+from timexseries.data_ingestion import ingest_additional_regressors
+from timexseries.data_prediction import PredictionModel
+from timexseries.data_prediction.models.arima_predictor import ARIMAModel
+from timexseries.data_prediction.models.lstm_predictor import LSTMModel
+from timexseries.data_prediction.models.mockup_predictor import MockUpModel
 # from timexseries.data_prediction.models.neuralprophet_predictor import NeuralProphetModel
-from timexseries_c.data_prediction.models.prophet_predictor import FBProphetModel
-from timexseries_c.data_prediction.xcorr import calc_all_xcorr
-from timexseries_c.timeseries_container import TimeSeriesContainer
+from timexseries.data_prediction.models.prophet_predictor import FBProphetModel
+from timexseries.data_prediction.xcorr import calc_all_xcorr
+from timexseries.timeseries_container import TimeSeriesContainer
 
 log = logging.getLogger(__name__)
+
+
+def prepare_extra_regressor(container: TimeSeriesContainer, model: str) -> DataFrame:
+    """
+    This function receives a `timexseries.timeseries_container.TimeSeriesContainer` object, which includes the time-series
+    historical data and the various predictions for the future.
+
+    The best prediction for the model 'model' is taken and appended to the original time-series, in order to obtain a
+    DataFrame with the original time series and the best possible prediction.
+
+    The resulting DataFrame is returned.
+
+    Parameters
+    ----------
+    container : TimeSeriesContainer
+        `timexseries.timeseries_container.TimeSeriesContainer` from which an extra-regressor should be extracted.
+
+    model
+        The model from which get the best available prediction.
+
+    Returns
+    -------
+    df : DataFrame
+        DataFrame with the length of the original time-series + prediction lags.
+    """
+    name = container.timeseries_data.columns[0]
+    best_prediction = container.models[model].best_prediction
+
+    original_ts = container.timeseries_data
+    f = best_prediction.loc[:, ['yhat']]
+    f.rename(columns={'yhat': name}, inplace=True)
+
+    best_entire_forecast = original_ts.combine_first(f)
+
+    return best_entire_forecast
 
 
 def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict, total_xcorr: dict = None) -> \
@@ -92,8 +127,6 @@ def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict
 
     This is the `timexseries.data_prediction.models.predictor.ModelResult` object for FBProphet that we have just computed.
     """
-
-    """
     transformations_to_test = [*param_config["model_parameters"]["possible_transformations"].split(",")]
     main_accuracy_estimator = param_config["model_parameters"]["main_accuracy_estimator"]
     models = [*param_config["model_parameters"]["models"].split(",")]
@@ -145,8 +178,6 @@ def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict
         )
 
     return best_transformations, timeseries_containers
-    """
-    log.info(f"Best_univariate in progress!")    
 
 
 def get_best_multivariate_predictions(timeseries_containers: [TimeSeriesContainer], ingested_data: DataFrame,
@@ -248,7 +279,6 @@ def get_best_multivariate_predictions(timeseries_containers: [TimeSeriesContaine
 
     This means that using `b` as additional regressor for `a` made us obtain a better error.
     """
-    """
     iterations = 0
     best_forecasts_found = 0
 
@@ -345,9 +375,7 @@ def get_best_multivariate_predictions(timeseries_containers: [TimeSeriesContaine
 
     log.info(f"Found the optimal prediction for all the {best_forecasts_found} time-series in {iterations} iterations!")
     return timeseries_containers
-    """
-    log.info(f"Best_multivariate in progress!")
-    
+
 
 def get_best_predictions(ingested_data: DataFrame, param_config: dict):
     """
@@ -385,8 +413,6 @@ def get_best_predictions(ingested_data: DataFrame, param_config: dict):
     Simply compute the predictions and get the returned `timexseries.timeseries_container.TimeSeriesContainer` objects:
     >>> timeseries_outputs = get_best_predictions(timeseries_dataframe, param_config)
     """
-
-    """
     if "xcorr_parameters" in param_config and len(ingested_data.columns) > 1:
         log.info(f"Computing the cross-correlation...")
         total_xcorr = calc_all_xcorr(ingested_data=ingested_data, param_config=param_config)
@@ -403,8 +429,6 @@ def get_best_predictions(ingested_data: DataFrame, param_config: dict):
                                                       param_config=param_config)
 
     return timeseries_containers
-    """
-    log.info(f"Best_preditions in progress!")    
 
 
 def compute_historical_predictions(ingested_data, param_config):
@@ -496,8 +520,6 @@ def compute_historical_predictions(ingested_data, param_config):
     }
 
     If multiple models were specified, `historical_prediction` dictionary would have other entries.
-    """
-
     """
     input_parameters = param_config["input_parameters"]
     models = [*param_config["model_parameters"]["models"].split(",")]
@@ -603,8 +625,6 @@ def compute_historical_predictions(ingested_data, param_config):
         s.set_historical_prediction(timeseries_historical_predictions)
 
     return timeseries_containers
-    """
-    log.info(f"compute_historical_predictions in progress!")    
 
 
 def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):

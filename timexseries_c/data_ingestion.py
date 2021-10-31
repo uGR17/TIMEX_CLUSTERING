@@ -133,65 +133,6 @@ def ingest_timeseries(param_config: dict):
     return df_ingestion
 
 
-def ingest_additional_regressors(source_data_url, param_config):
-    """Create a DataFrame from the data specified at source_data_url, to be used as additional regressors.
-
-    Parameters
-    ----------
-    source_data_url : string
-        URL of the CSV file to retrieve. Local or remote.
-    param_config : dict
-        A dictionary corresponding to a TIMEX JSON configuration file.
-
-    Returns
-    -------
-    df_ingestion : DataFrame
-        Pandas DataFrame corresponding to the CSV files specified in source_data_url.
-
-    See Also
-    --------
-    ingest_timeseries :
-        The logic is very similar, but this is used only to load a time-series which will be used as additional
-        regressor for a multivariate prediction model.
-    """
-
-    input_parameters = param_config["input_parameters"]
-
-    df_ingestion = pd.read_csv(source_data_url)
-
-    try:
-        index_column_name = input_parameters["index_column_name"]
-    except KeyError:
-        index_column_name = df_ingestion.columns[0]
-
-    log.debug(f"Parsing {index_column_name} as datetime column...")
-
-    if "dateparser_options" in input_parameters:
-        dateparser_options = input_parameters["dateparser_options"]
-        df_ingestion[index_column_name] = df_ingestion[index_column_name].apply(
-            lambda x: dateparser.parse(x, **dateparser_options)
-        )
-    else:
-        df_ingestion[index_column_name] = df_ingestion[index_column_name].apply(
-            lambda x: dateparser.parse(x)
-        )
-
-    df_ingestion.set_index(index_column_name, inplace=True, drop=True)
-
-    log.debug(f"Removing duplicates rows from dataframe; keep the last...")
-    df_ingestion = df_ingestion[~df_ingestion.index.duplicated(keep='last')]
-
-    try:
-        freq = input_parameters["frequency"]
-    except KeyError:
-        freq = None
-
-    df_ingestion = add_freq(df_ingestion, freq)
-    df_ingestion = df_ingestion.interpolate()
-
-    return df_ingestion
-
-
 def add_freq(df, freq=None) -> DataFrame:
     """Add a frequency to the index of df. Pandas DatetimeIndex have a `frequency` attribute; this function tries to
     assign a value to that attribute.
