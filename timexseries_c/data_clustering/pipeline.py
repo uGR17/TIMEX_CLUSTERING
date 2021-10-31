@@ -7,14 +7,14 @@ from typing import Tuple
 import dateparser
 from pandas import DataFrame
 
-from timexseries_c.data_ingestion import ingest_additional_regressors
-from timexseries_c.data_prediction import PredictionModel
-from timexseries_c.data_prediction.models.arima_predictor import ARIMAModel
-from timexseries_c.data_prediction.models.lstm_predictor import LSTMModel
-from timexseries_c.data_prediction.models.mockup_predictor import MockUpModel
+#from timexseries_c.data_ingestion import ingest_additional_regressors
+from timexseries_c.data_clustering import PredictionModel
+from timexseries_c.data_clustering.models.arima_predictor import ARIMAModel
+from timexseries_c.data_clustering.models.lstm_predictor import LSTMModel
+from timexseries_c.data_clustering.models.mockup_predictor import MockUpModel
 # from timexseries.data_prediction.models.neuralprophet_predictor import NeuralProphetModel
-from timexseries_c.data_prediction.models.prophet_predictor import FBProphetModel
-from timexseries_c.data_prediction.xcorr import calc_all_xcorr
+from timexseries_c.data_clustering.models.prophet_predictor import FBProphetModel
+from timexseries_c.data_clustering.xcorr import calc_all_xcorr
 from timexseries_c.timeseries_container import TimeSeriesContainer
 
 log = logging.getLogger(__name__)
