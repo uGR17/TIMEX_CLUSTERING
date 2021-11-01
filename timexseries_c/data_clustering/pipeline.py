@@ -2,7 +2,7 @@ import logging
 import os
 import pickle
 from functools import reduce
-from typing import Tuple
+from typing import Tuple, List
 
 import dateparser
 from pandas import DataFrame
@@ -12,8 +12,8 @@ from timexseries_c.data_clustering import PredictionModel
 from timexseries_c.data_clustering.models.arima_predictor import ARIMAModel
 from timexseries_c.data_clustering.models.lstm_predictor import LSTMModel
 from timexseries_c.data_clustering.models.mockup_predictor import MockUpModel
-# from timexseries.data_prediction.models.neuralprophet_predictor import NeuralProphetModel
-from timexseries_c.data_clustering.models.prophet_predictor import FBProphetModel
+#from timexseries.data_prediction.models.neuralprophet_predictor import NeuralProphetModel
+#from timexseries_c.data_clustering.models.prophet_predictor import FBProphetModel
 from timexseries_c.data_clustering.xcorr import calc_all_xcorr
 from timexseries_c.timeseries_container import TimeSeriesContainer
 
@@ -149,7 +149,7 @@ def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict
     log.info(f"Best_univariate in progress!")    
 
 
-def get_best_multivariate_predictions(timeseries_containers: [TimeSeriesContainer], ingested_data: DataFrame,
+def get_best_multivariate_predictions(timeseries_containers: List[TimeSeriesContainer], ingested_data: DataFrame,
                                       best_transformations: dict, total_xcorr: dict, param_config: dict):
     """
     Starting from the a list of `timexseries.timeseries_container.TimeSeriesContainer`, use the available univariated
@@ -349,7 +349,7 @@ def get_best_multivariate_predictions(timeseries_containers: [TimeSeriesContaine
     log.info(f"Best_multivariate in progress!")
     
 
-def get_best_predictions(ingested_data: DataFrame, param_config: dict):
+def get_best_clusters(ingested_data: DataFrame, param_config: dict):
     """
     Starting from `ingested_data`, using the models/cross correlation settings set in `param_config`, return the best
     possible predictions in a `timexseries.timeseries_container.TimeSeriesContainer` for each time-series in `ingested_data`.
@@ -609,11 +609,10 @@ def compute_historical_predictions(ingested_data, param_config):
 
 def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
     """
-    Entry points of the pipeline; it will compute univariate/multivariate predictions, historical predictions, or only
+    Entry points of the pipeline; it will compute univariate (multivariate in future realeases 2.0.0) clustering, or only
     create the containers with the time-series data, according to the content of `param_config`, with this logic:
 
-    - if `historical_prediction_parameters` is in `param_config`, then `compute_historical_predictions` will be called;
-    - else, if `model_parameters` is in `param_config`, then `get_best_predictions` will be called;
+    - if `model_parameters` is in `param_config`, then `get_best_clusters` will be called;
     - else, create a list of `timexseries.timeseries_container.TimeSeriesContainer` with only the time-series data and, if
       `xcorr_parameters` is in `param_config`, with also the cross-correlation.
 
@@ -628,17 +627,14 @@ def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
     Returns
     -------
     list
-        A list of `timexseries.timeseries_container.TimeSeriesContainer` objects, one for each time-series.
+        A list of `timexseries_c.timeseries_container.TimeSeriesContainer` objects, one for each time-series.
 
     Examples
     --------
-    The first example of `compute_historical_predictions` applies also here; calling `create_timeseries_containers` will
+    The first example of `get_best_clusters` applies also here; calling `create_timeseries_containers` will
     produce the same identical result.
 
-    If we remove `historical_prediction_parameters` from the `param_config`, then calling this function is the same as
-    calling `get_best_predictions`.
-
-    However, if no predictions should be made but we just want the time-series containers:
+    However, if no clustering should be made but we just want the time-series containers:
     >>> dates = pd.date_range('2000-01-01', periods=30)  # Last index is 2000-01-30
     >>> ds = pd.DatetimeIndex(dates, freq="D")
     >>> a = np.arange(30, 60)
@@ -668,27 +664,23 @@ def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
     2000-01-29  58
     2000-01-30  59
     """
-    if "historical_prediction_parameters" in param_config:
-        log.debug(f"Requested the computation of historical predictions.")
-        timeseries_containers = compute_historical_predictions(ingested_data, param_config)
+    if "model_parameters" in param_config:
+        log.debug(f"Computing best clustering.")
+        timeseries_containers = get_best_clusters(ingested_data, param_config)
     else:
-        if "model_parameters" in param_config:
-            log.debug(f"Computing best predictions, without history.")
-            timeseries_containers = get_best_predictions(ingested_data, param_config)
+        log.debug(f"Creating containers only for data visualization.")
+        timeseries_containers = []
+        if "xcorr_parameters" in param_config and len(ingested_data.columns) > 1:
+            total_xcorr = calc_all_xcorr(ingested_data=ingested_data, param_config=param_config)
         else:
-            log.debug(f"Creating containers only for data visualization.")
-            timeseries_containers = []
-            if "xcorr_parameters" in param_config and len(ingested_data.columns) > 1:
-                total_xcorr = calc_all_xcorr(ingested_data=ingested_data, param_config=param_config)
-            else:
-                total_xcorr = None
+            total_xcorr = None
 
-            for col in ingested_data.columns:
-                timeseries_data = ingested_data[[col]]
-                timeseries_xcorr = total_xcorr[col] if total_xcorr is not None else None
-                timeseries_containers.append(
-                    TimeSeriesContainer(timeseries_data, None, timeseries_xcorr)
-                )
+        for col in ingested_data.columns:
+            timeseries_data = ingested_data[[col]]
+            timeseries_xcorr = total_xcorr[col] if total_xcorr is not None else None
+            timeseries_containers.append(
+                TimeSeriesContainer(timeseries_data, None, timeseries_xcorr)
+            )
 
     return timeseries_containers
 
@@ -727,6 +719,8 @@ def model_factory(model_class: str, param_config: dict, transformation: str = No
     >>> print(type(model))
     <class 'timexseries.data_prediction.models.prophet_predictor.FBProphetModel'>
     """
+
+    """
     if model_class == "fbprophet":
         return FBProphetModel(params=param_config, transformation=transformation)
     if model_class == "LSTM":
@@ -737,3 +731,4 @@ def model_factory(model_class: str, param_config: dict, transformation: str = No
         return MockUpModel(param_config, transformation)
     else:
         return ARIMAModel(params=param_config, transformation=transformation)
+    """
