@@ -2,9 +2,10 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 from statsmodels.tsa.stattools import grangercausalitytests
+from typing import List
 
 
-def calc_xcorr(target: str, ingested_data: DataFrame, max_lags: int, modes: [str] = ["pearson"]) -> dict:
+def calc_xcorr(target: str, ingested_data: DataFrame, max_lags: int, modes: List[str] = ["pearson"]) -> dict:
     """
     Calculate the cross-correlation for the `ingested data`.
     Use `target` time-series column as target; the correlation is computed against all lags of all the other columns

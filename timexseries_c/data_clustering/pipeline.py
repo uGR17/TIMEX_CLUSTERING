@@ -93,7 +93,7 @@ def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict
     This is the `timexseries.data_prediction.models.predictor.ModelResult` object for FBProphet that we have just computed.
     """
 
-    """
+    
     transformations_to_test = [*param_config["model_parameters"]["possible_transformations"].split(",")]
     main_accuracy_estimator = param_config["model_parameters"]["main_accuracy_estimator"]
     models = [*param_config["model_parameters"]["models"].split(",")]
@@ -144,9 +144,7 @@ def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict
             TimeSeriesContainer(timeseries_data, model_results, xcorr)
         )
 
-    return best_transformations, timeseries_containers
-    """
-    log.info(f"Best_univariate in progress!")    
+    return best_transformations, timeseries_containers 
 
 
 def get_best_multivariate_predictions(timeseries_containers: List[TimeSeriesContainer], ingested_data: DataFrame,
@@ -352,7 +350,7 @@ def get_best_multivariate_predictions(timeseries_containers: List[TimeSeriesCont
 def get_best_clusters(ingested_data: DataFrame, param_config: dict):
     """
     Starting from `ingested_data`, using the models/cross correlation settings set in `param_config`, return the best
-    possible predictions in a `timexseries.timeseries_container.TimeSeriesContainer` for each time-series in `ingested_data`.
+    possible clustering in a `timexseries_c.timeseries_container.TimeSeriesContainer` for all the time-series in `ingested_data`.
 
     Parameters
     ----------
@@ -360,13 +358,13 @@ def get_best_clusters(ingested_data: DataFrame, param_config: dict):
         Initial data of the time-series.
 
     param_config : dict
-        TIMEX configuration dictionary. `get_best_univariate_predictions` and `get_best_multivariate_predictions` will
+        TIMEX CLUSTERING configuration dictionary. `get_best_univariate_clusters` and `get_best_multivariate_clusters` (multivariate_clustering will be realased in timexseries_c 2.0.0) will
         use the various settings in `param_config`.
 
     Returns
     -------
     list
-        A list of `timexseries.timeseries_container.TimeSeriesContainer` objects, one for each time-series.
+        A list of `timexseries_c.timeseries_container.TimeSeriesContainer` objects, one for each time-series.
 
     Examples
     --------
@@ -382,11 +380,10 @@ def get_best_clusters(ingested_data: DataFrame, param_config: dict):
     >>>
     >>> timeseries_dataframe = DataFrame(data={"a": a, "b": b}, index=ds)
 
-    Simply compute the predictions and get the returned `timexseries.timeseries_container.TimeSeriesContainer` objects:
+    Simply compute the predictions and get the returned `timexseries_c.timeseries_container.TimeSeriesContainer` objects:
     >>> timeseries_outputs = get_best_predictions(timeseries_dataframe, param_config)
     """
 
-    """
     if "xcorr_parameters" in param_config and len(ingested_data.columns) > 1:
         log.info(f"Computing the cross-correlation...")
         total_xcorr = calc_all_xcorr(ingested_data=ingested_data, param_config=param_config)
@@ -395,16 +392,15 @@ def get_best_clusters(ingested_data: DataFrame, param_config: dict):
 
     best_transformations, timeseries_containers = get_best_univariate_predictions(ingested_data, param_config,
                                                                                   total_xcorr)
-
+    """
     if total_xcorr is not None or "additional_regressors" in param_config:
         timeseries_containers = get_best_multivariate_predictions(timeseries_containers=timeseries_containers, ingested_data=ingested_data,
                                                       best_transformations=best_transformations,
                                                       total_xcorr=total_xcorr,
                                                       param_config=param_config)
+    """
 
     return timeseries_containers
-    """
-    log.info(f"Best_preditions in progress!")    
 
 
 def compute_historical_predictions(ingested_data, param_config):
