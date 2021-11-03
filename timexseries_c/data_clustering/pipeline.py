@@ -20,7 +20,7 @@ from timexseries_c.timeseries_container import TimeSeriesContainer
 log = logging.getLogger(__name__)
 
 
-def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict, total_xcorr: dict = None) -> \
+def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, total_xcorr: dict = None) -> \
         Tuple[dict, list]:
     """
     Compute, for all the columns in `ingested_data` (every time-series) the best univariate clustering possible.
@@ -76,7 +76,7 @@ def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict
     ... }
 
     Now, get the univariate predictions:
-    >>> best_transformations, timeseries_outputs = get_best_univariate_predictions(timeseries_dataframe, param_config)
+    >>> best_transformations, timeseries_outputs = get_best_univariate_clusters(timeseries_dataframe, param_config)
 
     Let's inspect the results. `best_transformations` contains the suggested feature transformations to use:
     >>> best_transformations
@@ -173,7 +173,7 @@ def get_best_multivariate_predictions(timeseries_containers: List[TimeSeriesCont
         Initial data of the time-series.
     best_transformations : dict
         Dictionary which assigns the best transformation for every used prediction model, for every time-series. It
-        should be returned by `get_best_univariate_predictions`.
+        should be returned by `get_best_univariate_clusters`.
     total_xcorr : dict
         Cross-correlation dictionary computed by `timexseries.data_prediction.xcorr.calc_all_xcorr`. The cross-correlation is
         used in this function, to find, among all the time-series in `ingested_data`, additional regressors for each
@@ -238,7 +238,7 @@ def get_best_multivariate_predictions(timeseries_containers: List[TimeSeriesCont
     ...     }
     ... }
     >>> xcorr = calc_all_xcorr(timeseries_dataframe, param_config)
-    >>> best_transformations, timeseries_outputs = get_best_univariate_predictions(timeseries_dataframe, param_config)
+    >>> best_transformations, timeseries_outputs = get_best_univariate_clusters(timeseries_dataframe, param_config)
     >>> timeseries_outputs = get_best_multivariate_predictions(timeseries_outputs, timeseries_dataframe,
     >>>                                                        best_transformations, xcorr, param_config)
 
@@ -373,9 +373,8 @@ def get_best_clusters(ingested_data: DataFrame, param_config: dict):
 
     Examples
     --------
-    This is basically the function on top of `get_best_univariate_predictions` and `get_best_multivariate_predictions`:
-    it will call first the univariate and then the multivariate if the cross-correlation section is present
-    in `param_config`.
+    This is basically the function on top of `get_best_univariate_clusters` and `get_best_multivariate_predictions`:
+    it will call first the univariate and then the multivariate if the cross-correlation section is present in `param_config`.
 
     Create some data:
     >>> dates = pd.date_range('2000-01-01', periods=30)  # Last index is 2000-01-30
@@ -385,8 +384,8 @@ def get_best_clusters(ingested_data: DataFrame, param_config: dict):
     >>>
     >>> timeseries_dataframe = DataFrame(data={"a": a, "b": b}, index=ds)
 
-    Simply compute the predictions and get the returned `timexseries_c.timeseries_container.TimeSeriesContainer` objects:
-    >>> timeseries_outputs = get_best_predictions(timeseries_dataframe, param_config)
+    Simply compute the clustering and get the returned `timexseries_c.timeseries_container.TimeSeriesContainer` objects:
+    >>> timeseries_outputs = get_best_clusters(timeseries_dataframe, param_config)
     """
 
     if "xcorr_parameters" in param_config and len(ingested_data.columns) > 1:
@@ -395,9 +394,9 @@ def get_best_clusters(ingested_data: DataFrame, param_config: dict):
     else:
         total_xcorr = None
 
-    best_transformations, timeseries_containers = get_best_univariate_predictions(ingested_data, param_config,
+    best_transformations, timeseries_containers = get_best_univariate_clusters(ingested_data, param_config,
                                                                                   total_xcorr)
-    """
+    """ **
     if total_xcorr is not None or "additional_regressors" in param_config:
         timeseries_containers = get_best_multivariate_predictions(timeseries_containers=timeseries_containers, ingested_data=ingested_data,
                                                       best_transformations=best_transformations,
@@ -485,7 +484,7 @@ def compute_historical_predictions(ingested_data, param_config):
     Launch the computation.
     >>> timeseries_outputs = compute_historical_predictions(timeseries_dataframe, param_config)
 
-    Similarly to `get_best_predictions`, we have a list of `timexseries.timeseries_container.TimeSeriesContainer` objects.
+    Similarly to `get_best_clusters`, we have a list of `timexseries.timeseries_container.TimeSeriesContainer` objects.
     However, these objects also have an historical prediction:
     >>> timeseries_outputs[0].historical_prediction
     {'fbprophet':                  a
@@ -552,7 +551,7 @@ def compute_historical_predictions(ingested_data, param_config):
         available_data = ingested_data[:current_index]  # Remember: this includes current_index
         log.info(f"Using data from {available_data.index[0]} to {current_index} for training...")
 
-        timeseries_containers = get_best_predictions(available_data, param_config)
+        timeseries_containers = get_best_clusters(available_data, param_config)
 
         log.info(f"Assigning the historical predictions from {current_index + delta_time} to "
                  f"{current_index + hist_pred_delta * delta_time}")
@@ -576,7 +575,7 @@ def compute_historical_predictions(ingested_data, param_config):
         available_data = ingested_data[:current_index]  # Remember: this includes current_index
         log.info(f"Using data from {available_data.index[0]} to {current_index} for training...")
 
-        timeseries_containers = get_best_predictions(available_data, param_config)
+        timeseries_containers = get_best_clusters(available_data, param_config)
 
         log.info(f"Assigning the historical predictions from {current_index + delta_time} to "
                  f"{final_index}")
@@ -594,7 +593,7 @@ def compute_historical_predictions(ingested_data, param_config):
             pickle.dump(historical_prediction, file, protocol=pickle.HIGHEST_PROTOCOL)
 
     available_data = ingested_data
-    timeseries_containers = get_best_predictions(available_data, param_config)
+    timeseries_containers = get_best_clusters(available_data, param_config)
 
     for s in timeseries_containers:
         timeseries_name = s.timeseries_data.columns[0]
