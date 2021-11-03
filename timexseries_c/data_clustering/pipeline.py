@@ -8,12 +8,12 @@ import dateparser
 from pandas import DataFrame
 
 #from timexseries_c.data_ingestion import ingest_additional_regressors
-from timexseries_c.data_clustering import PredictionModel
+from timexseries_c.data_clustering import ClustersModel
 from timexseries_c.data_clustering.models.arima_predictor import ARIMAModel
 from timexseries_c.data_clustering.models.lstm_predictor import LSTMModel
 from timexseries_c.data_clustering.models.mockup_predictor import MockUpModel
 #from timexseries.data_prediction.models.neuralprophet_predictor import NeuralProphetModel
-#from timexseries_c.data_clustering.models.prophet_predictor import FBProphetModel
+from timexseries_c.data_clustering.models.kmeans_cluster import KMeansModel
 from timexseries_c.data_clustering.xcorr import calc_all_xcorr
 from timexseries_c.timeseries_container import TimeSeriesContainer
 
@@ -98,7 +98,7 @@ def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict
 
     clustering_approach = [*param_config["model_parameters"]["clustering_approach"]]
     transformations_to_test = [*param_config["model_parameters"]["possible_transformations"].split(",")]
-    distance_measure = [*param_config["model_parameters"]["distance_measure"].split(",")]
+    dist_measure = [*param_config["model_parameters"]["distance_measure"].split(",")]
     models = [*param_config["model_parameters"]["models"].split(",")]
     main_accuracy_estimator = param_config["model_parameters"]["main_accuracy_estimator"]
 
@@ -128,7 +128,7 @@ def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict
 
             for transf in transformations_to_test:
                 log.info(f"Computing univariate prediction for {col} using transformation: {transf}...")
-                predictor = model_factory(model, param_config=param_config, transformation=transf)
+                predictor = model_factory(clustering_approach, model, param_config=param_config, transformation=transf)
                 _result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
 
                 performances = _result.results
@@ -686,22 +686,26 @@ def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
     return timeseries_containers
 
 
-def model_factory(model_class: str, param_config: dict, transformation: str = None) -> PredictionModel:
+def model_factory(clustering_approach: str, model_class: str, param_config: dict, transformation: str = None) -> ClustersModel:
     """
-    Given the name of the model, return the corresponding PredictionModel.
+    Given the clustering_approach and name of the model, return the corresponding ClustersModel.
 
     Parameters
     ----------
+    clustering_approach : str
+        Clustering approach, e.g. "observation_based"
     model_class : str
-        Model type, e.g. "fbprophet"
+        Model type, e.g. "k_means"
     param_config : dict
         TIMEX configuration dictionary, to pass to the just created model.
+    distance_measure : str, e.g. "k_means" **
+        Distance/similarity measure type, e.g. "DTW" **
     transformation : str, optional, default None
         Optional `transformation` parameter to pass to the just created model.
 
     Returns
     -------
-    PredictionModel
+    ClustersModel
         Prediction model of the class specified in `model_class`.
 
     Examples
@@ -721,15 +725,23 @@ def model_factory(model_class: str, param_config: dict, transformation: str = No
     <class 'timexseries.data_prediction.models.prophet_predictor.FBProphetModel'>
     """
 
-    """
-    if model_class == "fbprophet":
-        return FBProphetModel(params=param_config, transformation=transformation)
-    if model_class == "LSTM":
-        return LSTMModel(param_config, transformation)
-    # if model_class == "neuralprophet":
-    #     return NeuralProphetModel(param_config, transformation)
-    if model_class == "mockup":
-        return MockUpModel(param_config, transformation)
-    else:
-        return ARIMAModel(params=param_config, transformation=transformation)
-    """
+    if clustering_approach == "observation_based":
+        if model_class == "k_means": #fbprophet
+            return KMeansModel(params=param_config, transformation=transformation)
+        if model_class == "LSTM": #LSTM
+            return LSTMModel(param_config, transformation)
+        # if model_class == "neuralprophet": #neuralprophet
+        #     return NeuralProphetModel(param_config, transformation)
+        if model_class == "mockup":
+            return MockUpModel(param_config, transformation)
+        else:
+            return ARIMAModel(params=param_config, transformation=transformation)
+    
+    if clustering_approach == "feature_based":
+        if model_class == "k_means": #fbprophet
+            print("feature_based in progress")
+    
+    if clustering_approach == "model_based":
+        if model_class == "k_means": #fbprophet
+            print("model_based in progress")
+

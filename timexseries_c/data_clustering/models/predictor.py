@@ -4,6 +4,7 @@ import math
 import multiprocessing
 import pkgutil
 from functools import reduce
+from typing import List
 
 import pandas as pd
 from pandas import DataFrame, Series
@@ -51,13 +52,13 @@ class ModelResult:
         the prediction that users are most likely to want.
     """
 
-    def __init__(self, results: [SingleResult], characteristics: dict, best_prediction: DataFrame):
+    def __init__(self, results: List[SingleResult], characteristics: dict, best_prediction: DataFrame):
         self.results = results
         self.characteristics = characteristics
         self.best_prediction = best_prediction
 
 
-class PredictionModel:
+class ClustersModel:
     """
     Base class for every prediction model which can be used on a time series.
 
@@ -286,7 +287,7 @@ class PredictionModel:
         train_sets_number = math.ceil(len(train_ts) / self.delta_training_values)
         log.info(f"Model will use {train_sets_number} different training sets...")
 
-        def c(targets: [int], _return_dict: dict, thread_number: int):
+        def c(targets: List[int], _return_dict: dict, thread_number: int):
             _results = []
 
             for _i in range(targets[0], targets[1]):
@@ -367,7 +368,7 @@ class PredictionModel:
 
         return results
 
-    def _compute_best_prediction(self, ingested_data: DataFrame, training_results: [SingleResult],
+    def _compute_best_prediction(self, ingested_data: DataFrame, training_results: List[SingleResult],
                                  extra_regressors: DataFrame = None):
         """
         Given the ingested data and the training results, identify the best training window and compute a prediction

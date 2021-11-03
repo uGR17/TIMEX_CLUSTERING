@@ -4,20 +4,21 @@ import pkgutil
 import logging
 import os
 
-from fbprophet import Prophet
+#from fbprophet import Prophet
 import pandas as pd
-from fbprophet.diagnostics import cross_validation, performance_metrics
+#from fbprophet.diagnostics import cross_validation, performance_metrics
 from pandas import DataFrame
 import numpy as np
 
-# from timexseries.data_prediction.data_prediction import PredictionModel, TestingPerformance
-from timexseries_c.data_clustering import PredictionModel
+# from timexseries_c.data_prediction.data_prediction import ClustersModel, TestingPerformance
+from timexseries_c.data_clustering import ClustersModel
 
 logging.getLogger('fbprophet').setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
 
 
-class FBProphetModel(PredictionModel):
+class KMeansModel(ClustersModel):
+    '''
     """Facebook's Prophet prediction model."""
 
     def __init__(self, params: dict, transformation: str = None):
@@ -32,7 +33,7 @@ class FBProphetModel(PredictionModel):
             self.fbprophet_parameters = None
 
     def train(self, input_data: DataFrame, extra_regressors: DataFrame = None):
-        """Overrides PredictionModel.train()"""
+        """Overrides ClustersModel.train()"""
 
         if self.fbprophet_parameters is not None:
             try:
@@ -122,7 +123,7 @@ class FBProphetModel(PredictionModel):
         #     self.fbmodel.fit(input_data)
 
     def predict(self, future_dataframe: DataFrame, extra_regressors: DataFrame = None) -> DataFrame:
-        """Overrides PredictionModel.predict()"""
+        """Overrides ClustersModel.predict()"""
         future = future_dataframe.reset_index()
         future.rename(columns={'index': 'ds'}, inplace=True)
 
@@ -137,6 +138,7 @@ class FBProphetModel(PredictionModel):
         forecast.set_index('ds', inplace=True)
 
         return forecast
+        '''
 
 
 class suppress_stdout_stderr(object):
