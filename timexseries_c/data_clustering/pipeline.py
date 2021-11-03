@@ -23,10 +23,10 @@ log = logging.getLogger(__name__)
 def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict, total_xcorr: dict = None) -> \
         Tuple[dict, list]:
     """
-    Compute, for every column in `ingested_data` (every time-series) the best univariate prediction possible.
-    This is done using the models specified in `param_config` and testing the effect of the different transformations
-    specified in `param_config`. Moreover, the best feature transformation found, across the possible ones, will be
-    returned.
+    Compute, for all the columns in `ingested_data` (every time-series) the best univariate clustering possible.
+    This is done using the clustering approach specified in `param_config` and testing the effect of the different 
+    clustering algorithms, similarity measurements and transformations specified in `param_config`. 
+    Moreover, the best feature transformation found, across the possible ones, will be returned.
 
     Parameters
     ----------
@@ -36,19 +36,20 @@ def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict
         TIMEX configuration dictionary. In particular, the `model_parameters` sub-dictionary will be used. In
         `model_parameters` the following options has to be specified:
 
-        - `possible_transformations`: comma-separated list of transformations keywords (e.g. "none,log_modified").
-        - `main_accuracy_estimator`: error metric which will be minimized as target by the procedure. E.g. "mae".
-        - `models`: comma-separated list of the models to use (e.g. "fbprophet,arima").
-
+        - `clustering_approach`: clustering approach which will be use (options: "observation_based", "feature_based" or "model_based").
+        - `possible_transformations`: comma-separated list of transformations keywords (e.g. "none,DWT,DFT,SVD").
+        - `distance_measure`: distance/similarity measure which will be use (e.g. "ED,DTW,arma").
+        - `models`: comma-separated list of the models to use (e.g. "agglomerative, k_means").
+        - `main_accuracy_estimator`: error metric which will be minimized as target by the procedure. E.g. "rand_index", "silhouette_index","sse".
     total_xcorr : dict, optional, default None
         Cross-correlation dictionary computed by `calc_all_xcorr`. The cross-correlation is actually not used in this
         function, however it is used to build the returned `timexseries.timeseries_container.TimeSeriesContainer`, if given.
 
     Returns
-    -------
-    dict
+    ----------
+    dict **
         Dictionary which assigns the best transformation for every used prediction model, for every time-series.
-    list
+    list **
         A list of `timexseries.timeseries_container.TimeSeriesContainer` objects, one for each time-series.
 
     Examples
@@ -63,8 +64,10 @@ def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict
     And create the model configuration part of the TIMEX configuration dictionary:
     >>> param_config = {
     ...   "model_parameters": {
-    ...     "models": "fbprophet",  # Model(s) which will be tested.
-    ...     "possible_transformations": "none,log_modified",  # Possible feature transformation to test.
+    ...     "clustering_approach": "observation_based",  # Clustering approach which will be tested.
+    ...     "possible_transformations": "none,log_modified,DWT",  # Possible feature transformation to test.**
+    ...     "distance_measure": "DTW,ED",  # Distance/similarity measure which will be tested.
+    ...     "models": "k_means",  # Model(s) which will be tested.
     ...     "main_accuracy_estimator": "mae",
     ...     "delta_training_percentage": 20,  # Training windows will be incremented by the 20% each step...
     ...     "test_values": 5,  # Use the last 5 values as validation set.
@@ -79,24 +82,25 @@ def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict
     >>> best_transformations
     {'fbprophet': {'a': 'none', 'b': 'none'}}
 
-    It is reasonable with this simple data that no transformation is the best transformation.
+    It is reasonable with this simple data that no transformation is the best transformation.**
     We have the `timexseries.timeseries_container.TimeSeriesContainer` list as well:
     >>> timeseries_outputs
     [<timexseries.timeseries_container.TimeSeriesContainer at 0x7f62f45d1fa0>,
      <timexseries.timeseries_container.TimeSeriesContainer at 0x7f62d4e97cd0>]
 
     These are the `timexseries.timeseries_container.TimeSeriesContainer` objects, one for time-series `a` and one for `b`.
-    Each one has various fields, in this case the most interesting one is `models`:
+    Each one has various fields, in this case the most interesting one is `models`:**
     >>> timeseries_outputs[0].models
     {'fbprophet': <timexseries.data_prediction.models.predictor.ModelResult at 0x7f62f45d1d90>}
 
     This is the `timexseries.data_prediction.models.predictor.ModelResult` object for FBProphet that we have just computed.
     """
 
-    
+    clustering_approach = [*param_config["model_parameters"]["clustering_approach"]]
     transformations_to_test = [*param_config["model_parameters"]["possible_transformations"].split(",")]
-    main_accuracy_estimator = param_config["model_parameters"]["main_accuracy_estimator"]
+    distance_measure = [*param_config["model_parameters"]["distance_measure"].split(",")]
     models = [*param_config["model_parameters"]["models"].split(",")]
+    main_accuracy_estimator = param_config["model_parameters"]["main_accuracy_estimator"]
 
     best_transformations = dict.fromkeys(models, {})
     timeseries_containers = []
