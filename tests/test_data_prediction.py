@@ -5,30 +5,30 @@ import os
 import dateparser
 import pandas
 import pytest
-from prophet import Prophet
+#from prophet import Prophet
 
 from pandas import Series, DataFrame
 import pandas as pd
 import numpy as np
 from scipy.stats import yeojohnson
 
-from timexseries.data_prediction.models.arima_predictor import ARIMAModel
-from timexseries.data_prediction.models.exponentialsmoothing_predictor import ExponentialSmoothingModel
-from timexseries.data_prediction.models.lstm_predictor import LSTMModel
-from timexseries.data_prediction.models.mockup_predictor import MockUpModel
-# from timexseries.data_prediction.models.neuralprophet_predictor import NeuralProphetModel
-from timexseries.data_prediction.models.predictor import ModelResult
-from timexseries.data_prediction.xcorr import calc_xcorr, calc_all_xcorr
+from timexseries_c.data_clustering.models.arima_predictor import ARIMAModel
+from timexseries_c.data_clustering.models.exponentialsmoothing_predictor import ExponentialSmoothingModel
+from timexseries_c.data_clustering.models.lstm_predictor import LSTMModel
+from timexseries_c.data_clustering.models.mockup_predictor import MockUpModel
+# from timexseries_c.data_clustering.models.neuralprophet_predictor import NeuralProphetModel
+from timexseries_c.data_clustering.models.predictor import ModelResult
+from timexseries_c.data_clustering.xcorr import calc_xcorr, calc_all_xcorr
 
 from tests.utilities import get_fake_df
-from timexseries.data_ingestion import add_freq
+from timexseries_c.data_ingestion import add_freq
 
-from timexseries.data_prediction.pipeline import prepare_extra_regressor, get_best_univariate_predictions, \
-    get_best_multivariate_predictions, compute_historical_predictions, get_best_predictions, \
+from timexseries_c.data_clustering.pipeline import get_best_univariate_clusters, \
+    get_best_multivariate_predictions, compute_historical_predictions, get_best_clusters, \
     create_timeseries_containers
-from timexseries.data_prediction.models.prophet_predictor import FBProphetModel, suppress_stdout_stderr
-from timexseries.data_prediction.transformation import transformation_factory, Identity
-from timexseries.timeseries_container import TimeSeriesContainer
+#from timexseries_c.data_clustering.models.prophet_predictor import FBProphetModel, suppress_stdout_stderr
+from timexseries_c.data_clustering.transformation import transformation_factory, Identity
+from timexseries_c.timeseries_container import TimeSeriesContainer
 
 xcorr_modes = ['pearson', 'kendall', 'spearman', 'matlab_normalized']
 
@@ -447,7 +447,7 @@ class Test_Models_General:
         param_config["model_parameters"]["max_values"] = {set_max: 67}
         param_config["model_parameters"]["round_to_integer"] = round_to_integer
 
-        timeseries_containers = get_best_predictions(df, param_config)
+        timeseries_containers = get_best_clusters(df, param_config)
 
         indexes_to_check_min = [0] if set_min == "a" else [0, 1]
         indexes_to_check_max = [0] if set_max == "a" else [0, 1]
@@ -484,6 +484,7 @@ class Test_Models_General:
                         pd.testing.assert_series_equal(p, e.loc[p.index[0]:].
                                                        apply(
                             lambda x: 67.0 if x >= 67 else (63.0 if x <= 63 else round_or_not_x(x))))
+
 
 
 class Test_Models_Specific:
@@ -577,7 +578,7 @@ class TestGetPredictions:
 
         total_xcorr = calc_all_xcorr(ingested_data=ing_data, param_config=param_config)
 
-        best_transformations, timeseries_containers = get_best_univariate_predictions(ing_data, param_config,
+        best_transformations, timeseries_containers = get_best_univariate_clusters(ing_data, param_config,
                                                                                       total_xcorr)
 
         assert len(best_transformations) == 2
@@ -916,7 +917,7 @@ class TestGetPredictions:
         ingested_data = df[["ds", "b"]].copy()
         ingested_data.set_index("ds", inplace=True)
 
-        timeseries_containers = get_best_predictions(ingested_data, param_config)
+        timeseries_containers = get_best_clusters(ingested_data, param_config)
         test_prediction = timeseries_containers[0].models['fbprophet'].results[0].prediction
         best_prediction = timeseries_containers[0].models['fbprophet'].best_prediction
 

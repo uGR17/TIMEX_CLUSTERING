@@ -394,8 +394,7 @@ def get_best_clusters(ingested_data: DataFrame, param_config: dict):
     else:
         total_xcorr = None
 
-    best_transformations, timeseries_containers = get_best_univariate_clusters(ingested_data, param_config,
-                                                                                  total_xcorr)
+    best_transformations, timeseries_containers = get_best_univariate_clusters(ingested_data, param_config, total_xcorr)
     """ **
     if total_xcorr is not None or "additional_regressors" in param_config:
         timeseries_containers = get_best_multivariate_predictions(timeseries_containers=timeseries_containers, ingested_data=ingested_data,
@@ -403,7 +402,6 @@ def get_best_clusters(ingested_data: DataFrame, param_config: dict):
                                                       total_xcorr=total_xcorr,
                                                       param_config=param_config)
     """
-
     return timeseries_containers
 
 
