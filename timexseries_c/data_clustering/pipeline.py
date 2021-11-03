@@ -105,6 +105,7 @@ def get_best_univariate_predictions(ingested_data: DataFrame, param_config: dict
     best_transformations = dict.fromkeys(models, {})
     timeseries_containers = []
 
+    # Get the set of CPUs on which the calling process is eligible to run.
     try:
         max_threads = param_config['max_threads']
     except KeyError:
