@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from sklearn.preprocessing import MinMaxScaler
 
-from timexseries_c.data_clustering import PredictionModel
+from timexseries_c.data_clustering import ClustersModel
 log = logging.getLogger(__name__)
 
 
