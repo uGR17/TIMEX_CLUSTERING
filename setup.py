@@ -18,11 +18,7 @@ requirements = ["dateparser<2.0.0,>=1.0.0",\
 
 setup(
     name="timexseries_c",
-<<<<<<< HEAD
-    version="0.0.13",
-=======
-    version="0.0.11",
->>>>>>> parent of 3591ff9 (v13)
+    version="0.0.14",
     author="Uriel Guadarrama Ramirez",
     author_email="u.guadarrama@hotmail.com",
     description="TIMEX-CLUSTERING is a framework for time-series-clustering-as-a-service",
