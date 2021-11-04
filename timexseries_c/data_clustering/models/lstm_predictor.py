@@ -51,14 +51,14 @@ class LSTM(nn.Module):
         return predictions[-1]
 
 
-class LSTMModel(PredictionModel):
+class LSTMModel(ClustersModel):
     """LSTM prediction model."""
     def __init__(self, params: dict, transformation: str = None):
         super().__init__(params, name="LSTM", transformation=transformation)
         self.scalers = {}
 
     def train(self, input_data: DataFrame, extra_regressors: DataFrame = None):
-        """Overrides PredictionModel.train()"""
+        """Overrides ClustersModel.train()"""
 
         if torch.cuda.is_available():
             dev = "cuda:0"
@@ -121,7 +121,7 @@ class LSTMModel(PredictionModel):
         self.len_train_set = len(input_data)
 
     def predict(self, future_dataframe: DataFrame, extra_regressors: DataFrame = None) -> DataFrame:
-        """Overrides PredictionModel.predict()"""
+        """Overrides ClustersModel.predict()"""
         if torch.cuda.is_available():
             dev = "cuda:0"
         else:

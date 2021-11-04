@@ -4,12 +4,12 @@
 # import pandas as pd
 # from pandas import DataFrame
 #
-# from timexseries.data_prediction import PredictionModel
+# from timexseries.data_prediction import ClustersModel
 # logging.getLogger('fbprophet').setLevel(logging.WARNING)
 # log = logging.getLogger(__name__)
 #
 #
-# class NeuralProphetModel(PredictionModel):
+# class NeuralProphetModel(ClustersModel):
 #     """Facebook's NeuralProphet prediction model."""
 #
 #     def __init__(self, params: dict, transformation: str = None):
@@ -24,7 +24,7 @@
 #             self.neuralprophet_parameters = None
 #
 #     def train(self, input_data: DataFrame, extra_regressors: DataFrame = None):
-#         """Overrides PredictionModel.train()"""
+#         """Overrides ClustersModel.train()"""
 #
 #         if self.neuralprophet_parameters is not None:
 #             try:
@@ -68,7 +68,7 @@
 #         self.input_data = input_data
 #
 #     def predict(self, future_dataframe: DataFrame, extra_regressors: DataFrame = None) -> DataFrame:
-#         """Overrides PredictionModel.predict()"""
+#         """Overrides ClustersModel.predict()"""
 #         requested_prediction = len(future_dataframe) - len(self.input_data)
 #         future = self.neuralprophetmodel.make_future_dataframe(self.input_data, periods=requested_prediction)
 #         # future = future_dataframe.reset_index()

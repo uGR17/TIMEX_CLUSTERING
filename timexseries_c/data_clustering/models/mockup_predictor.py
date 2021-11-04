@@ -2,11 +2,11 @@ import logging
 
 from pandas import DataFrame
 
-from timexseries_c.data_clustering import PredictionModel
+from timexseries_c.data_clustering import ClustersModel
 log = logging.getLogger(__name__)
 
 
-class MockUpModel(PredictionModel):
+class MockUpModel(ClustersModel):
     """
     Mock up prediction model. Useful for testing purposes.
     This model "simulates" a real model by returning a - at least in dimensions - correct dataframe.
@@ -24,12 +24,12 @@ class MockUpModel(PredictionModel):
         self.requested_predictions = 0
 
     def train(self, input_data: DataFrame, extra_regressors: DataFrame = None):
-        """Overrides PredictionModel.train()"""
+        """Overrides ClustersModel.train()"""
         self.extra_regressors_in_training = extra_regressors
         self.len_train_set = len(input_data)
 
     def predict(self, future_dataframe: DataFrame, extra_regressors: DataFrame = None) -> DataFrame:
-        """Overrides PredictionModel.predict()"""
+        """Overrides ClustersModel.predict()"""
         self.extra_regressors_in_training = extra_regressors
         self.requested_predictions = len(future_dataframe) - self.len_train_set
         self.extra_regressors_in_predict = extra_regressors

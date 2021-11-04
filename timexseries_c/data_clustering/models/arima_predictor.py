@@ -4,10 +4,10 @@ import itertools
 import statsmodels.api as sm
 import pandas as pd
 
-from timexseries_c.data_clustering import PredictionModel
+from timexseries_c.data_clustering import ClustersModel
 
 
-class ARIMAModel(PredictionModel):
+class ARIMAModel(ClustersModel):
     """ARIMA prediction model."""
 
     # NOT WORKING
@@ -46,7 +46,7 @@ class ARIMAModel(PredictionModel):
             self.model = mod.fit(disp=0)
 
     def predict(self, future_dataframe: DataFrame, extra_regressor: DataFrame = None) -> DataFrame:
-        """Overrides PredictionModel.predict()"""
+        """Overrides ClustersModel.predict()"""
         pred = self.model.forecast(future_dataframe.index.values[-1])
 
         r = pd.DataFrame(pred)
