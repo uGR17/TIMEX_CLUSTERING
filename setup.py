@@ -5,6 +5,7 @@ with open("README.md", "r") as readme_file:
 
 requirements = ["dateparser<2.0.0,>=1.0.0",\
     "torch>=1.7.0",\
+    "tslearn>=0.5.0",\
     #"prophet<2.0.0,>=1.0.1",\
     "colorhash<2.0.0,>=1.0.3",\
     "networkx>=2.5.0",\
