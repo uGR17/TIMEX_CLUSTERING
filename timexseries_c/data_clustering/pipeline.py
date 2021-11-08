@@ -98,8 +98,8 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
     This is the `timexseries.data_prediction.models.predictor.ModelResult` object for FBProphet that we have just computed.
     """
 
-    case_name = [*param_config["activity_title"]]
-    clustering_approach = [*param_config["model_parameters"]["clustering_approach"]]
+    case_name = [param_config["activity_title"]]
+    clustering_approach = [param_config["model_parameters"]["clustering_approach"]]
     transformations = [*param_config["model_parameters"]["possible_transformations"].split(",")]
     dist_measures_to_test = [*param_config["model_parameters"]["distance_metric"].split(",")]
     models = [*param_config["model_parameters"]["models"].split(",")]
@@ -132,6 +132,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         for metric in dist_measures_to_test:
             log.info(f"Computing univariate clustering for {case_name} using approach: {clustering_approach} and distance metric: {metric}...")
             predictor = model_factory(clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transformations)
+            print(type(predictor))
             _result = predictor.fit_predict(ingested_data.copy())
             #_result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
 
