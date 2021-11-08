@@ -131,16 +131,15 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
         for metric in dist_measures_to_test:
             log.info(f"Computing univariate clustering for {case_name} using approach: {clustering_approach} and distance metric: {metric}...")
-            predictor = model_factory(clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transformations)
-            print(type(predictor))
-            _result = predictor.fit_predict(ingested_data.copy())
+            _result = model_factory(ingested_data, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transformations)
+            #_result = predictor.fit_predict(ingested_data.copy())
             #_result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
 
             #performances = _result.results
             #performances.sort(key=lambda x: getattr(x.testing_performances, main_accuracy_estimator.upper()))
             #performances = getattr(performances[0].testing_performances, main_accuracy_estimator.upper())
 
-           #this_model_performances.append((_result, performances, metric))
+           #this_model_performances.append((_result, performances, transf))
             this_model_performances.append((_result, metric))
 
         #this_model_performances.sort(key=lambda x: x[1])
@@ -152,7 +151,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         model_results[model] = this_model_performances[0][0]
 
     timeseries_containers.append(
-        TimeSeriesContainer(timeseries_data, model_results, xcorr)
+        TimeSeriesContainer(ingested_data, model_results, xcorr)
     )
     
     #return best_transformations, timeseries_containers 
@@ -285,7 +284,7 @@ def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
     return timeseries_containers
 
 
-def model_factory(clustering_approach: str, model_class: str, distance_metric: str, param_config: dict, transformation: str = None): #-> ClustersModel:
+def model_factory(ingested_data: DataFrame, clustering_approach: str, model_class: str, distance_metric: str, param_config: dict, transformation: str = None): #-> ClustersModel:
     """
     Given the clustering_approach and name of the model, return the corresponding ClustersModel.
 
@@ -330,17 +329,22 @@ def model_factory(clustering_approach: str, model_class: str, distance_metric: s
             seed=0
             if distance_metric == "ED": #fbprophet
                 km = TimeSeriesKMeans(n_clusters=3, metric="euclidean", verbose=True, random_state=seed)
+                X_train = ingested_data.transpose()
+                _result = km.fit_predict(X_train)
             if distance_metric == "DTW":
                 km = TimeSeriesKMeans(n_clusters=3, metric="dtw", verbose=True, max_iter_barycenter=10, random_state=seed)
+                X_train = ingested_data.copy()
+                _result = km.fit_predict(X_train)
             if distance_metric == "soft_DTW":
                 km = TimeSeriesKMeans(n_clusters=3, metric="softdtw", verbose=True, metric_params={"gamma": .01}, random_state=seed)
-            return km
+                _result = km.fit_predict(ingested_data)
+            return _result
         if model_class == "LSTM": #LSTM
             return LSTMModel(param_config, distance_metric)
         if model_class == "mockup":
             return MockUpModel(param_config, distance_metric)
         else:
-            return ARIMAModel(params=param_config, dis_metric=distance_metric)
+            return ARIMAModel(param_config, distance_metric)
     
     if clustering_approach == "feature_based":
         if model_class == "k_means":
