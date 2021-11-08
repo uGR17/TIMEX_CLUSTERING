@@ -284,7 +284,7 @@ def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
     return timeseries_containers
 
 
-def model_factory(clustering_approach: str, model_class: str, distance_metric: str, param_config: dict, transformation: str = None) -> ClustersModel:
+def model_factory(clustering_approach: str, model_class: str, distance_metric: str, param_config: dict, transformation: str = None): #-> ClustersModel:
     """
     Given the clustering_approach and name of the model, return the corresponding ClustersModel.
 
