@@ -5,6 +5,7 @@ from functools import reduce
 from typing import Tuple, List
 
 import dateparser
+import tslearn
 from pandas import DataFrame
 
 #from timexseries_c.data_ingestion import ingest_additional_regressors

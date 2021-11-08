@@ -194,34 +194,6 @@ class YeoJohnson(Distance_metric):
         return f"Yeo-Johnson (lambda: {round(self.lmbda, 3)})"
 
 
-class Diff(Distance_metric):
-    """Class corresponding to the differentiate transformation.
-    Basically, each value at time `t` is computed as the difference between the current value and the past one.
-    Applying this transformation makes the transformed Series have one less value, because the first one can not be
-    computed; the value is saved in order to be able to recompute `inverse`.
-
-    Notes
-    -----
-    Let `X` be the time-series and `X(t)` the value of the time-series at time `t`. This transformation changes X in Y,
-    where:
-
-    .. math::
-        Y(t) = X(t) - X(t-1)
-    """
-    def __init__(self):
-        self.first_value = 0
-
-    def apply(self, data: Series) -> Series:
-        self.first_value = data[0]
-        return data.diff()[1:]
-
-    def inverse(self, data: Series) -> Series:
-        return Series(np.r_[self.first_value, data].cumsum())
-
-    def __str__(self):
-        return "differentiate (1)"
-
-
 def distance_metric_factory(dst_class: str) -> Distance_metric:
     """
     Given the type of the transformation, encoded as string, return the Transformation object.
