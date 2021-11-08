@@ -7,6 +7,7 @@ requirements = ["dateparser<2.0.0,>=1.0.0",\
     "torch>=1.7.0",\
     "tslearn>=0.5.0",\
     "matplotlib>=2.0.0",\
+    "wheel>=0.33.0",\
     #"prophet<2.0.0,>=1.0.1",\
     "colorhash<2.0.0,>=1.0.3",\
     "networkx>=2.5.0",\
@@ -20,7 +21,7 @@ requirements = ["dateparser<2.0.0,>=1.0.0",\
 
 setup(
     name="timexseries_c",
-    version="0.0.18",
+    version="0.0.20",
     author="Uriel Guadarrama Ramirez",
     author_email="u.guadarrama@hotmail.com",
     description="TIMEX-CLUSTERING is a framework for time-series-clustering-as-a-service",

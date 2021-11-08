@@ -11,6 +11,7 @@ from pandas import DataFrame, Series
 import numpy as np
 
 from timexseries_c.data_clustering.transformation import transformation_factory
+from timexseries_c.data_clustering.distance_metric import distance_metric_factory
 from timexseries_c.data_clustering.validation_performances import ValidationPerformance
 
 log = logging.getLogger(__name__)
@@ -29,14 +30,14 @@ class SingleResult:
         set, obtained using this training set to train the model.
     """
 
-    def __init__(self, prediction: DataFrame, testing_performances: ValidationPerformance):
-        self.prediction = prediction
+    def __init__(self, clustering: DataFrame, testing_performances: ValidationPerformance):
+        self.clustering = clustering
         self.testing_performances = testing_performances
 
 
 class ModelResult:
     """
-    Class for to collect the global results of a model trained on a time-series.
+    Class for to collect the global results of a model clustering all the time-series.
 
     Parameters
     ----------
@@ -47,20 +48,20 @@ class ModelResult:
     characteristics : dict
         Model parameters. This dictionary collects human-readable characteristics of the model, e.g. the used number of
         validation points used, the length of the sliding training window, etc.
-    best_prediction : DataFrame
+    best_clustering : DataFrame
         Prediction obtained using the best training window and _all_ the available points in the time-series. This is
         the prediction that users are most likely to want.
     """
 
-    def __init__(self, results: List[SingleResult], characteristics: dict, best_prediction: DataFrame):
+    def __init__(self, results: List[SingleResult], characteristics: dict, best_clustering: DataFrame):
         self.results = results
         self.characteristics = characteristics
-        self.best_prediction = best_prediction
+        self.best_clustering = best_clustering
 
 
 class ClustersModel:
     """
-    Base class for every prediction model which can be used on a time series.
+    Base class for every cluster model which can be used on a time series.
 
     Parameters
     ----------
@@ -71,6 +72,8 @@ class ClustersModel:
         configuration parameter dictionary.
     name : str
         Class of the model.
+    distance_metric : str
+        The class of distance metric which the model will use to meausure similarity among time series.
     transformation : str, None, optional
         The class of transformation which the model should use. If not specified, the one in `params` will be used.
 
@@ -83,6 +86,8 @@ class ClustersModel:
         in the configuration parameter dictionary, `test_percentage` will be used.
     test_percentage : float
         Percentage of the time-series length to used for the validation set. Default 0
+    distance_metric : str
+        Distance metric to to meausure similarity among time series. Default ED
     transformation : str
         Transformation to apply to the time series before using it. Default None
     prediction_lags : int
@@ -106,7 +111,7 @@ class ClustersModel:
         Dictionary of values containing the main characteristics and parameters of the model. Default {}
     """
 
-    def __init__(self, params: dict, name: str, transformation: str = None) -> None:
+    def __init__(self, params: dict, name: str, distance_metric: str = None, transformation: str = None) -> None:
         self.name = name
 
         log.info(f"Creating a {self.name} model...")
@@ -119,12 +124,11 @@ class ClustersModel:
             log.debug(f"Loading user settings...")
             model_parameters = params["model_parameters"]
 
-        if "test_values" in model_parameters:
-            self.test_values = model_parameters["test_values"]
+        if distance_metric is not None:
+            self.distance_metric = distance_metric_factory(distance_metric)
         else:
-            self.test_percentage = model_parameters["test_percentage"]
-            self.test_values = -1
-
+            self.distance_metric = distance_metric_factory(model_parameters["distance_metric"])
+        
         if transformation is not None:
             self.transformation = transformation_factory(transformation)
         else:
@@ -146,7 +150,6 @@ class ClustersModel:
             self.round_to_integer = None
 
         self.prediction_lags = model_parameters["prediction_lags"]
-        self.delta_training_percentage = model_parameters["delta_training_percentage"]
         self.main_accuracy_estimator = model_parameters["main_accuracy_estimator"]
         self.delta_training_values = 0
         self.model_characteristics = {}
@@ -492,17 +495,19 @@ class ClustersModel:
         """
         model_characteristics = self.model_characteristics
 
-        self.delta_training_values = int(round(len(ingested_data) * self.delta_training_percentage / 100))
+        #self.delta_training_values = int(round(len(ingested_data) * self.delta_training_percentage / 100))
 
-        if self.test_values == -1:
-            self.test_values = int(round(len(ingested_data) * (self.test_percentage / 100)))
+        #if self.test_values == -1:
+        #    self.test_values = int(round(len(ingested_data) * (self.test_percentage / 100)))
 
         self.freq = pd.infer_freq(ingested_data.index)
 
         # We need to pass ingested data both to compute_training and compute_best_prediction, so better use copy()
         # because, otherwise, we may have side effects.
-        train_ts = ingested_data.copy().iloc[:-self.test_values]
-        test_ts = ingested_data.copy().iloc[-self.test_values:]
+        #train_ts = ingested_data.copy().iloc[:-self.test_values]
+        #test_ts = ingested_data.copy().iloc[-self.test_values:]
+        train_ts = ingested_data.copy()
+        test_ts = ingested_data.copy()
 
         train_ts.iloc[:, 0] = self.transformation.apply(train_ts.iloc[:, 0])
 
@@ -514,9 +519,9 @@ class ClustersModel:
             model_characteristics["extra_regressors"] = ', '.join([*extra_regressors.columns])
 
         model_characteristics["name"] = self.name
-        model_characteristics["delta_training_percentage"] = self.delta_training_percentage
-        model_characteristics["delta_training_values"] = self.delta_training_values
-        model_characteristics["test_values"] = self.test_values
+        #model_characteristics["delta_training_percentage"] = self.delta_training_percentage
+        #model_characteristics["delta_training_values"] = self.delta_training_values
+        #model_characteristics["test_values"] = self.test_values
         model_characteristics["transformation"] = self.transformation
 
         return ModelResult(results=model_training_results, characteristics=model_characteristics,

@@ -16,6 +16,7 @@ from timexseries_c.data_clustering.models.mockup_predictor import MockUpModel
 from timexseries_c.data_clustering.models.kmeans_cluster import KMeansModel
 from timexseries_c.data_clustering.xcorr import calc_all_xcorr
 from timexseries_c.timeseries_container import TimeSeriesContainer
+from tslearn.clustering import TimeSeriesKMeans
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
         - `clustering_approach`: clustering approach which will be use (options: "observation_based", "feature_based" or "model_based").
         - `possible_transformations`: comma-separated list of transformations keywords (e.g. "none,DWT,DFT,SVD").
-        - `distance_measure`: distance/similarity measure which will be use (e.g. "ED,DTW,arma").
+        - `distance_metric`: distance/similarity measure which will be use (e.g. "ED,DTW,arma").
         - `models`: comma-separated list of the models to use (e.g. "agglomerative, k_means").
         - `main_accuracy_estimator`: error metric which will be minimized as target by the procedure. E.g. "rand_index", "silhouette_index","sse".
     total_xcorr : dict, optional, default None
@@ -66,7 +67,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
     ...   "model_parameters": {
     ...     "clustering_approach": "observation_based",  # Clustering approach which will be tested.
     ...     "possible_transformations": "none,log_modified,DWT",  # Possible feature transformation to test.**
-    ...     "distance_measure": "DTW,ED",  # Distance/similarity measure which will be tested.
+    ...     "distance_metric": "DTW,ED",  # Distance/similarity measure which will be tested.
     ...     "models": "k_means",  # Model(s) which will be tested.
     ...     "main_accuracy_estimator": "mae",
     ...     "delta_training_percentage": 20,  # Training windows will be incremented by the 20% each step...
@@ -96,9 +97,10 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
     This is the `timexseries.data_prediction.models.predictor.ModelResult` object for FBProphet that we have just computed.
     """
 
+    case_name = [*param_config["activity_title"]]
     clustering_approach = [*param_config["model_parameters"]["clustering_approach"]]
     transformations = [*param_config["model_parameters"]["possible_transformations"].split(",")]
-    dist_measures_to_test = [*param_config["model_parameters"]["distance_measure"].split(",")]
+    dist_measures_to_test = [*param_config["model_parameters"]["distance_metric"].split(",")]
     models = [*param_config["model_parameters"]["models"].split(",")]
     main_accuracy_estimator = param_config["model_parameters"]["main_accuracy_estimator"]
 
@@ -121,261 +123,59 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         timeseries_data = ingested_data[[col]]
         xcorr = total_xcorr[col] if total_xcorr is not None else None
 
-        for model in models:
-            this_model_performances = []
-
-            log.info(f"Using model {model}...")
-
-            for metric in dist_measures_to_test:
-                log.info(f"Computing univariate distance measurement for {col} using distance metric: {metric}...")
-                predictor = model_factory(clustering_approach, model, metric, param_config=param_config, transformation=transformations)
-                _result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
-
-                performances = _result.results
-                performances.sort(key=lambda x: getattr(x.testing_performances, main_accuracy_estimator.upper()))
-                performances = getattr(performances[0].testing_performances, main_accuracy_estimator.upper())
-
-                this_model_performances.append((_result, performances, metric))
-
-            this_model_performances.sort(key=lambda x: x[1])
-            best_tr = this_model_performances[0][2]
-            [log.debug(f"Error with {t}: {e}") for t, e in zip(map(lambda x: x[2], this_model_performances),
-                                                               map(lambda x: x[1], this_model_performances))]
-            log.info(f"Best transformation for {col} using {model}: {best_tr}")
-            best_transformations[model][col] = best_tr
-            model_results[model] = this_model_performances[0][0]
-
-        timeseries_containers.append(
-            TimeSeriesContainer(timeseries_data, model_results, xcorr)
-        )
-
-    return best_transformations, timeseries_containers 
-
-
-def get_best_multivariate_predictions(timeseries_containers: List[TimeSeriesContainer], ingested_data: DataFrame,
-                                      best_transformations: dict, total_xcorr: dict, param_config: dict):
-    """
-    Starting from the a list of `timexseries.timeseries_container.TimeSeriesContainer`, use the available univariated
-    predictions and the time-series in `ingested_data`, plus eventual user-given additional regressors to compute new
-    multivariate predictions.
-
-    These new predictions will be used only if better than the univariate ones.
-
-    Returns the updated list of `timexseries.timeseries_container.TimeSeriesContainer`.
-
-    Parameters
-    ----------
-    timeseries_containers : [TimeSeriesContainer]
-        Initial `timexseries.timeseries_container.TimeSeriesContainer` list from which the computation of multivariate
-        predictions start. Some univariate predictions should be already present in each object: more formally, each
-        `timexseries.timeseries_container.TimeSeriesContainer` should have the `model_results` attribute.
-    ingested_data : DataFrame
-        Initial data of the time-series.
-    best_transformations : dict
-        Dictionary which assigns the best transformation for every used prediction model, for every time-series. It
-        should be returned by `get_best_univariate_clusters`.
-    total_xcorr : dict
-        Cross-correlation dictionary computed by `timexseries.data_prediction.xcorr.calc_all_xcorr`. The cross-correlation is
-        used in this function, to find, among all the time-series in `ingested_data`, additional regressors for each
-        time-series, if there are some.
-    param_config : dict
-        TIMEX configuration dictionary. In particular, the `xcorr_parameters` sub-dictionary will be used. In
-        `xcorr_parameters` the following options has to be specified if `total_xcorr` parameter is not None:
-
-        - `xcorr_mode_target`: which cross-correlation algorithm should be used as target in evaluating useful
-          additional regressors. E.g. "pearson".
-        - `xcorr_extra_regressor_threshold`: the minimum absolute value of cross-correlation which indicates a useful
-          extra-regressor. E.g. 0.8.
-
-        Additionally, the `additional_regressors` part of the TIMEX configuration parameter dictionary can be used by
-        the user to specify additional CSV paths to time-series data to use as extra-regressor.
-        It should be a dictionary in the form "target time-series": "path of the additional extra-regressors".
-
-    Returns
-    -------
-    list
-        A list of `timexseries.timeseries_container.TimeSeriesContainer` objects, one for each time-series.
-
-    Examples
-    --------
-    We will create ad-hoc time-series in which using a multivariate model will perform better than using a univariate
-    one.
-
-    >>> dates = pd.date_range('2000-01-01', periods=30)  # Last index is 2000-01-30
-    >>> ds = pd.DatetimeIndex(dates, freq="D")
-    >>>
-    >>> x = np.linspace(0, 2 * np.pi, 60)
-    >>> y = np.sin(x)
-    >>>
-    >>> np.random.seed(0)
-    >>> noise = np.random.normal(0, 2.0, 60)
-    >>> y = y + noise
-    >>>
-    >>> a = y[:30]
-    >>> b = y[5:35]
-    >>>
-    >>> timeseries_dataframe = DataFrame(data={"a": a, "b": b}, index=ds)
-
-    In this dataset the time-series `b` can be used to better predict `a`... simply because it is the same series, but
-    traslated!
-
-    Try to perform the computations.
-
-    >>> param_config = {
-    ...     "model_parameters": {
-    ...         "models": "LSTM",
-    ...         "possible_transformations": "none,log_modified",
-    ...         "main_accuracy_estimator": "mae",
-    ...         "delta_training_percentage": 20,
-    ...         "test_values": 5,
-    ...         "prediction_lags": 7,
-    ...     },
-    ...     "xcorr_parameters": {
-    ...         "xcorr_mode_target": "pearson",
-    ...         "xcorr_extra_regressor_threshold": 0.7,
-    ...         "xcorr_max_lags": 6,
-    ...         "xcorr_mode": "pearson"
-    ...     }
-    ... }
-    >>> xcorr = calc_all_xcorr(timeseries_dataframe, param_config)
-    >>> best_transformations, timeseries_outputs = get_best_univariate_clusters(timeseries_dataframe, param_config)
-    >>> timeseries_outputs = get_best_multivariate_predictions(timeseries_outputs, timeseries_dataframe,
-    >>>                                                        best_transformations, xcorr, param_config)
-
-    From the log, we can see:
-    >>> "INFO:timexseries.data_prediction.pipeline:Found useful extra-regressors: Index(['b'], dtype='object'). Re-compute the prediction for a"
-    >>> "INFO:timexseries.data_prediction.models.predictor:Creating a LSTM model..."
-    >>> "INFO:timexseries.data_prediction.models.predictor:Model will use 5 different training sets..."
-    >>> "INFO:timexseries.data_prediction.models.predictor:LSTM/NeuralProphet model. Cant use multiprocessing."
-    >>> "INFO:timexseries.data_prediction.pipeline:Obtained a better error: 1.6009327718008979 vs old 1.9918351002921089"
-
-    This means that using `b` as additional regressor for `a` made us obtain a better error.
-    """
-    """
-    iterations = 0
-    best_forecasts_found = 0
-
-    if total_xcorr is not None:
-        xcorr_mode_target = param_config["xcorr_parameters"]["xcorr_mode_target"]
-        xcorr_threshold = param_config["xcorr_parameters"]["xcorr_extra_regressor_threshold"]
-
-    try:
-        additional_regressors = param_config["additional_regressors"]
-    except KeyError:
-        additional_regressors = None
-
-    models = [*param_config["model_parameters"]["models"].split(",")]
-
-    try:
-        max_threads = param_config['max_threads']
-    except KeyError:
-        try:
-            max_threads = len(os.sched_getaffinity(0))
-        except:
-            max_threads = 1
-
     for model in models:
-        log.info(f"Checking optimal predictions with model {model}")
-        best_forecasts_found = 0
-        iterations = 0
+        this_model_performances = []
 
-        while best_forecasts_found != len(ingested_data.columns):
-            log.info(f"-> Found the optimal prediction for only {best_forecasts_found}")
-            best_forecasts_found = 0
+        log.info(f"Using model {model}...")
 
-            for col in ingested_data.columns:
-                useful_extra_regressors = []
+        for metric in dist_measures_to_test:
+            log.info(f"Computing univariate clustering for {case_name} using approach: {clustering_approach} and distance metric: {metric}...")
+            predictor = model_factory(clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transformations)
+            _result = predictor.fit_predict(ingested_data.copy())
+            #_result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
 
-                log.debug(f"Look for extra regressors in other dataset's columns...")
-                try:
-                    local_xcorr = total_xcorr[col][xcorr_mode_target]
+            #performances = _result.results
+            #performances.sort(key=lambda x: getattr(x.testing_performances, main_accuracy_estimator.upper()))
+            #performances = getattr(performances[0].testing_performances, main_accuracy_estimator.upper())
 
-                    # Add extra regressors from the original dataset
-                    for extra_regressor in local_xcorr.columns:
-                        # Look only in correlation with future lags.
-                        index_of_max = local_xcorr[extra_regressor].abs().idxmax()
-                        corr = local_xcorr.loc[index_of_max, extra_regressor]
-                        if abs(corr) > xcorr_threshold and index_of_max >= 0:
-                            log.debug(
-                                f"Found a possible extra-regressor for {col}: {extra_regressor} at lag {index_of_max}")
+           #this_model_performances.append((_result, performances, metric))
+            this_model_performances.append((_result, metric))
 
-                            useful_extra_regressors.append(
-                                prepare_extra_regressor(next(filter(
-                                    lambda x: x.timeseries_data.columns[0] == extra_regressor, timeseries_containers)), model=model))
-                    local_xcorr = total_xcorr[col]  # To give the full xcorr to Scenario
-                except:
-                    local_xcorr = None
+        #this_model_performances.sort(key=lambda x: x[1])
+        #best_tr = this_model_performances[0][2]
+        #[log.debug(f"Error with {t}: {e}") for t, e in zip(map(lambda x: x[2], this_model_performances),
+        #                                                    map(lambda x: x[1], this_model_performances))]
+        #log.info(f"Best transformation for {col} using {model}: {best_tr}")
+        #best_transformations[model][col] = best_tr
+        model_results[model] = this_model_performances[0][0]
 
-                log.debug(f"Look for user-given additional regressors...")
-                try:
-                    additional_regressor_path = additional_regressors[col]
-                    useful_extra_regressors.append(ingest_additional_regressors(additional_regressor_path, param_config))
-                except:
-                    pass
-
-                if len(useful_extra_regressors) == 0:
-                    log.debug(f"No useful extra-regressor found for {col}: skipping...")
-                    best_forecasts_found += 1
-                else:
-                    useful_extra_regressors = reduce(lambda x, y: x.join(y), useful_extra_regressors)
-                    log.info(f"Found useful extra-regressors: {useful_extra_regressors.columns}. "
-                             f"Re-compute the prediction for {col}")
-
-                    timeseries_data = ingested_data[[col]]
-
-                    tr = best_transformations[model][col]
-
-                    predictor = model_factory(model, param_config, transformation=tr)
-                    _result = predictor.launch_model(timeseries_data.copy(),
-                                                     extra_regressors=useful_extra_regressors.copy(),
-                                                     max_threads=max_threads)
-                    old_this_container = next(filter(lambda x: x.timeseries_data.columns[0] == col, timeseries_containers))
-
-                    old_errors = [x.testing_performances.MAE for x in old_this_container.models[model].results]
-                    min_old_error = min(old_errors)
-                    min_new_error = min([x.testing_performances.MAE for x in _result.results])
-
-                    if min_new_error < min_old_error:
-                        log.info(f"Obtained a better error: {min_new_error} vs old {min_old_error}")
-                        new_model_results = old_this_container.models
-                        new_model_results[model] = _result
-                        new_container = TimeSeriesContainer(timeseries_data, new_model_results, local_xcorr)
-                        timeseries_containers = [new_container if x.timeseries_data.columns[0] == col else x for x in timeseries_containers]
-                    else:
-                        log.info(f"No improvements.")
-                        best_forecasts_found += 1
-            iterations += 1
-
-    log.info(f"Found the optimal prediction for all the {best_forecasts_found} time-series in {iterations} iterations!")
-    return timeseries_containers
-    """
-    log.info(f"Best_multivariate in progress!")
+    timeseries_containers.append(
+        TimeSeriesContainer(timeseries_data, model_results, xcorr)
+    )
     
+    #return best_transformations, timeseries_containers 
+    return timeseries_containers 
+
 
 def get_best_clusters(ingested_data: DataFrame, param_config: dict):
     """
     Starting from `ingested_data`, using the models/cross correlation settings set in `param_config`, return the best
     possible clustering in a `timexseries_c.timeseries_container.TimeSeriesContainer` for all the time-series in `ingested_data`.
-
     Parameters
     ----------
     ingested_data : DataFrame
         Initial data of the time-series.
-
     param_config : dict
         TIMEX CLUSTERING configuration dictionary. `get_best_univariate_clusters` and `get_best_multivariate_clusters` (multivariate_clustering will be realased in timexseries_c 2.0.0) will
         use the various settings in `param_config`.
-
     Returns
     -------
     list
         A list of `timexseries_c.timeseries_container.TimeSeriesContainer` objects, one for each time-series.
-
     Examples
     --------
     This is basically the function on top of `get_best_univariate_clusters` and `get_best_multivariate_predictions`:
     it will call first the univariate and then the multivariate if the cross-correlation section is present in `param_config`.
-
     Create some data:
     >>> dates = pd.date_range('2000-01-01', periods=30)  # Last index is 2000-01-30
     >>> ds = pd.DatetimeIndex(dates, freq="D")
@@ -383,7 +183,6 @@ def get_best_clusters(ingested_data: DataFrame, param_config: dict):
     >>> b = np.arange(60, 90)
     >>>
     >>> timeseries_dataframe = DataFrame(data={"a": a, "b": b}, index=ds)
-
     Simply compute the clustering and get the returned `timexseries_c.timeseries_container.TimeSeriesContainer` objects:
     >>> timeseries_outputs = get_best_clusters(timeseries_dataframe, param_config)
     """
@@ -394,7 +193,8 @@ def get_best_clusters(ingested_data: DataFrame, param_config: dict):
     else:
         total_xcorr = None
 
-    best_transformations, timeseries_containers = get_best_univariate_clusters(ingested_data, param_config, total_xcorr)
+    timeseries_containers = get_best_univariate_clusters(ingested_data, param_config, total_xcorr)
+    #best_transformations, timeseries_containers = get_best_univariate_clusters(ingested_data, param_config, total_xcorr)
     """ **
     if total_xcorr is not None or "additional_regressors" in param_config:
         timeseries_containers = get_best_multivariate_predictions(timeseries_containers=timeseries_containers, ingested_data=ingested_data,
@@ -403,206 +203,6 @@ def get_best_clusters(ingested_data: DataFrame, param_config: dict):
                                                       param_config=param_config)
     """
     return timeseries_containers
-
-
-def compute_historical_predictions(ingested_data, param_config):
-    """
-    Compute the historical predictions, i.e. the predictions for (part) of the history of the time-series.
-
-    Parameters
-    ----------
-    ingested_data : DataFrame
-        Initial data of the time-series.
-    param_config : dict
-        TIMEX configuration dictionary. In particular, the `historical_prediction_parameters` sub-dictionary will be
-        used. In `historical_prediction_parameters` the following options has to be specified:
-
-        - `initial_index`: the point from which the historical computations will be made;
-        - `save_path`: the historical computations are saved on a file, serialized with pickle. This allows the re-use
-        of these predictions if TIMEX is restarted in the future.
-
-        Additionally, the parameter `delta` can be specified: this indicates how many data points should be predicted
-        every run. The default is `1`; a number greater than `1` will reduce the accuracy of the predictions because
-        multiple points are predicted with the same model, but it will speed up the computation.
-
-        `input_parameters` will be used because the `initial_index` date will be parsed with the same format provided in
-        `input_parameters`, if any. Otherwise the standard `yyyy-mm-dd` format will be used.
-
-    Returns
-    -------
-    list
-        A list of `timexseries.timeseries_container.TimeSeriesContainer` objects, one for each time-series. These containers
-        have the `historical_prediction` attribute; the predictions in `model_results` are the more recent available
-        ones.
-
-    Notes
-    -----
-    Historical predictions are predictions computed on past points of the time-series, but using only the data available
-    until that point.
-
-    Consider a time-series with length `p`. Consider that we want to find the historical predictions starting from the
-    middle of the time-series, i.e. from index `s=p/2`.
-
-    To do that, we take the data available from the start of the time-series to `s`, compute the prediction for the
-    instant `s + 1`, and then move forward.
-
-    When all the data has been used, we have `s` predictions, but also the real data corresponding to that predictions;
-    this allows the user to check error metrics and understand the real performances of a model, on data never seen.
-
-    These metrics can give an idea of the future performance of the model.
-
-    Examples
-    --------
-    Create some sample data.
-    >>> dates = pd.date_range('2000-01-01', periods=30)  # Last index is 2000-01-30
-    >>> ds = pd.DatetimeIndex(dates, freq="D")
-    >>> a = np.arange(30, 60)
-    >>> b = np.arange(60, 90)
-    >>>
-    >>> timeseries_dataframe = DataFrame(data={"a": a, "b": b}, index=ds)
-
-    Create the configuration parameters dictionary:
-    >>> param_config = {
-    ...     "input_parameters": {
-    ...     },
-    ...     "model_parameters": {
-    ...         "models": "fbprophet",
-    ...         "possible_transformations": "none,log_modified",
-    ...         "main_accuracy_estimator": "mae",
-    ...         "delta_training_percentage": 20,
-    ...         "test_values": 5,
-    ...         "prediction_lags": 7,
-    ...     },
-    ...     "historical_prediction_parameters": {
-    ...         "initial_index": "2000-01-25",
-    ...         "save_path": "example.pkl"
-    ...     }
-    ... }
-
-    Launch the computation.
-    >>> timeseries_outputs = compute_historical_predictions(timeseries_dataframe, param_config)
-
-    Similarly to `get_best_clusters`, we have a list of `timexseries.timeseries_container.TimeSeriesContainer` objects.
-    However, these objects also have an historical prediction:
-    >>> timeseries_outputs[0].historical_prediction
-    {'fbprophet':                  a
-                 2000-01-26       55
-                 2000-01-27       56
-                 2000-01-28  56.3552
-                 2000-01-29  58.1709
-                 2000-01-30  58.9167
-    }
-
-    If multiple models were specified, `historical_prediction` dictionary would have other entries.
-    """
-
-    """
-    input_parameters = param_config["input_parameters"]
-    models = [*param_config["model_parameters"]["models"].split(",")]
-    save_path = param_config["historical_prediction_parameters"]["save_path"]
-    try:
-        hist_pred_delta = param_config["historical_prediction_parameters"]["delta"]
-    except KeyError:
-        hist_pred_delta = 1
-
-    try:
-        with open(save_path, 'rb') as file:
-            historical_prediction = pickle.load(file)
-        log.info(f"Loaded historical prediction from file...")
-        current_index = historical_prediction[models[0]].index[-1]
-    except FileNotFoundError:
-        log.info(f"Historical prediction file not found: computing from the start...")
-        starting_index = param_config["historical_prediction_parameters"]["initial_index"]
-
-        if "dateparser_options" in input_parameters:
-            dateparser_options = input_parameters["dateparser_options"]
-            current_index = dateparser.parse(starting_index, **dateparser_options)
-        else:
-            current_index = dateparser.parse(starting_index)
-
-        historical_prediction = {}
-        for model in models:
-            historical_prediction[model] = DataFrame(columns=ingested_data.columns)
-
-    final_index = ingested_data.index[-1]
-    log.info(f"Starting index: {current_index}")
-    log.info(f"Final index: {final_index}")
-    delta_time = 1 * ingested_data.index.freq
-
-    if current_index == final_index:
-        log.warning(f"Initial and final index are the same. I am recomputing the last point of historical prediction.")
-        current_index = current_index - delta_time * hist_pred_delta
-
-    iterations = 0
-    cur = current_index
-    fin = final_index
-
-    while cur + delta_time * hist_pred_delta <= fin:
-        cur += delta_time * hist_pred_delta
-        iterations += 1
-
-    additional_computation = cur != fin
-    log.debug(f"Historical computations iterations: {iterations}")
-    log.debug(f"Historical additional computation: {additional_computation}")
-
-    for i in range(0, iterations):
-        available_data = ingested_data[:current_index]  # Remember: this includes current_index
-        log.info(f"Using data from {available_data.index[0]} to {current_index} for training...")
-
-        timeseries_containers = get_best_clusters(available_data, param_config)
-
-        log.info(f"Assigning the historical predictions from {current_index + delta_time} to "
-                 f"{current_index + hist_pred_delta * delta_time}")
-        for s in timeseries_containers:
-            for model in s.models:
-                p = s.models[model].best_prediction
-                timeseries_name = s.timeseries_data.columns[0]
-                next_preds = p.loc[current_index + delta_time:current_index + hist_pred_delta * delta_time, 'yhat']
-
-                for index, value in next_preds.items():
-                    historical_prediction[model].loc[index, timeseries_name] = value
-
-        current_index += delta_time * hist_pred_delta
-
-        log.info(f"Saving partial historical prediction to file...")
-        with open(save_path, 'wb') as file:
-            pickle.dump(historical_prediction, file, protocol=pickle.HIGHEST_PROTOCOL)
-
-    if additional_computation:
-        log.info(f"Remaining data less than requested delta time. Computing the best predictions with last data...")
-        available_data = ingested_data[:current_index]  # Remember: this includes current_index
-        log.info(f"Using data from {available_data.index[0]} to {current_index} for training...")
-
-        timeseries_containers = get_best_clusters(available_data, param_config)
-
-        log.info(f"Assigning the historical predictions from {current_index + delta_time} to "
-                 f"{final_index}")
-        for s in timeseries_containers:
-            for model in s.models:
-                p = s.models[model].best_prediction
-                timeseries_name = s.timeseries_data.columns[0]
-                next_preds = p.loc[current_index + delta_time:final_index, 'yhat']
-
-                for index, value in next_preds.items():
-                    historical_prediction[model].loc[index, timeseries_name] = value
-
-        log.info(f"Saving partial historical prediction to file...")
-        with open(save_path, 'wb') as file:
-            pickle.dump(historical_prediction, file, protocol=pickle.HIGHEST_PROTOCOL)
-
-    available_data = ingested_data
-    timeseries_containers = get_best_clusters(available_data, param_config)
-
-    for s in timeseries_containers:
-        timeseries_name = s.timeseries_data.columns[0]
-        timeseries_historical_predictions = {}
-        for model in historical_prediction:
-            timeseries_historical_predictions[model] = DataFrame(historical_prediction[model].loc[:, timeseries_name])
-        s.set_historical_prediction(timeseries_historical_predictions)
-
-    return timeseries_containers
-    """
-    log.info(f"compute_historical_predictions in progress!")    
 
 
 def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
@@ -683,7 +283,7 @@ def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
     return timeseries_containers
 
 
-def model_factory(clustering_approach: str, model_class: str, distance_measure: str, param_config: dict, transformation: str = None) -> ClustersModel:
+def model_factory(clustering_approach: str, model_class: str, distance_metric: str, param_config: dict, transformation: str = None) -> ClustersModel:
     """
     Given the clustering_approach and name of the model, return the corresponding ClustersModel.
 
@@ -695,7 +295,7 @@ def model_factory(clustering_approach: str, model_class: str, distance_measure: 
         Model type, e.g. "k_means"
     param_config : dict
         TIMEX configuration dictionary, to pass to the just created model.
-    distance_measure : str, e.g. **
+    distance_metric : str, e.g. **
         Distance/similarity measure type, e.g. "DTW, ED" **
     transformation : str, optional, default None
         Optional `transformation` parameter to pass to the just created model.
@@ -724,18 +324,24 @@ def model_factory(clustering_approach: str, model_class: str, distance_measure: 
 
     if clustering_approach == "observation_based":
         if model_class == "k_means": #fbprophet
-            return KMeansModel(params=param_config, dis_metric=distance_measure)
+            #return KMeansModel(params=param_config, distance_metric=distance_metric, transformation=transformation)
+            seed=0
+            if distance_metric == "ED": #fbprophet
+                km = TimeSeriesKMeans(n_clusters=3, metric="euclidean", verbose=True, random_state=seed)
+            if distance_metric == "DTW":
+                km = TimeSeriesKMeans(n_clusters=3, metric="dtw", verbose=True, max_iter_barycenter=10, random_state=seed)
+            if distance_metric == "soft_DTW":
+                km = TimeSeriesKMeans(n_clusters=3, metric="softdtw", verbose=True, metric_params={"gamma": .01}, random_state=seed)
+            return km
         if model_class == "LSTM": #LSTM
-            return LSTMModel(param_config, distance_measure)
-        # if model_class == "neuralprophet": #neuralprophet
-        #     return NeuralProphetModel(param_config, dis_metric)
+            return LSTMModel(param_config, distance_metric)
         if model_class == "mockup":
-            return MockUpModel(param_config, distance_measure)
+            return MockUpModel(param_config, distance_metric)
         else:
-            return ARIMAModel(params=param_config, dis_metric=distance_measure)
+            return ARIMAModel(params=param_config, dis_metric=distance_metric)
     
     if clustering_approach == "feature_based":
-        if model_class == "k_means": #fbprophet
+        if model_class == "k_means":
             print("feature_based in progress")
     
     if clustering_approach == "model_based":

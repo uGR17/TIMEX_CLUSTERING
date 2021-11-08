@@ -1,7 +1,6 @@
 import itertools
 import json
 import pkgutil
-
 import logging
 import os
 import numpy as np
@@ -16,15 +15,15 @@ from pandas import DataFrame
 # from timexseries_c.data_clustering.data_prediction import ClustersModel, TestingPerformance
 from timexseries_c.data_clustering import ClustersModel
 
-logging.getLogger('fbprophet').setLevel(logging.WARNING)
+logging.getLogger('kMeansModel').setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
 
 
 class KMeansModel(ClustersModel):
     """K Means clustering model."""
 
-    def __init__(self, params: dict, transformation: str = None):
-        super().__init__(params, name="KMeansModel", transformation=transformation)
+    def __init__(self, params: dict, distance_metric: str = None, transformation: str = None):
+        super().__init__(params, name="KMeansModel", distance_metric=distance_metric, transformation=transformation)
 
         try:
             self.kMeans_parameters = params["model_parameters"]["KMeans_parameters"]
@@ -54,7 +53,14 @@ class KMeansModel(ClustersModel):
                 pass
 
         else:
-            pass
+            seed = 0
+            if self.distance_metric == "ED": #fbprophet
+                km = TimeSeriesKMeans(n_clusters=3, metric="euclidean", verbose=True, random_state=seed)
+            if self.distance_metric == "DTW":
+                km = TimeSeriesKMeans(n_clusters=3, metric="dtw", verbose=True, max_iter_barycenter=10, random_state=seed)
+            if self.distance_metric == "soft_DTW":
+                km = TimeSeriesKMeans(n_clusters=3, metric="softdtw", verbose=True, metric_params={"gamma": .01}, random_state=seed)
+
             #self.fbmodel = Prophet()
         """
         if extra_regressors is not None:
@@ -72,8 +78,8 @@ class KMeansModel(ClustersModel):
             input_data.reset_index(inplace=True)
             input_data.columns = ['ds', 'y']
         """
-        with self.suppress_stdout_stderr():
-            self.fbmodel.fit(input_data)
+        #with self.suppress_stdout_stderr():
+        #    self.fbmodel.fit(input_data)
 
         #######################
         # param_grid = {
