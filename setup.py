@@ -6,6 +6,7 @@ with open("README.md", "r") as readme_file:
 requirements = ["dateparser<2.0.0,>=1.0.0",\
     "torch>=1.7.0",\
     "tslearn>=0.5.0",\
+    "matplotlib>=3.4.3",\
     #"prophet<2.0.0,>=1.0.1",\
     "colorhash<2.0.0,>=1.0.3",\
     "networkx>=2.5.0",\
@@ -19,7 +20,7 @@ requirements = ["dateparser<2.0.0,>=1.0.0",\
 
 setup(
     name="timexseries_c",
-    version="0.0.16",
+    version="0.0.17",
     author="Uriel Guadarrama Ramirez",
     author_email="u.guadarrama@hotmail.com",
     description="TIMEX-CLUSTERING is a framework for time-series-clustering-as-a-service",
