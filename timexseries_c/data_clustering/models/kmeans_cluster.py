@@ -54,8 +54,9 @@ class KMeansModel(ClustersModel):
                 pass
 
         else:
-            self.fbmodel = Prophet()
-
+            pass
+            #self.fbmodel = Prophet()
+        """
         if extra_regressors is not None:
             # We could apply self.transformation also on the extra regressors.
             # From tests, it looks like it doesn't change much/it worsens the forecasts.
@@ -70,7 +71,7 @@ class KMeansModel(ClustersModel):
         else:
             input_data.reset_index(inplace=True)
             input_data.columns = ['ds', 'y']
-
+        """
         with self.suppress_stdout_stderr():
             self.fbmodel.fit(input_data)
 
