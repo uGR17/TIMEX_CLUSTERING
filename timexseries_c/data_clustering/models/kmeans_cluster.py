@@ -1,16 +1,19 @@
 import itertools
 import json
 import pkgutil
+
 import logging
 import os
-
-#from fbprophet import Prophet
-import pandas as pd
-#from fbprophet.diagnostics import cross_validation, performance_metrics
-from pandas import DataFrame
 import numpy as np
+import pandas as pd
+import tslearn
 
-# from timexseries_c.data_prediction.data_prediction import ClustersModel, TestingPerformance
+from tslearn.clustering import TimeSeriesKMeans
+from tslearn.datasets import CachedDatasets
+from tslearn.preprocessing import TimeSeriesScalerMeanVariance, TimeSeriesResampler
+from pandas import DataFrame
+
+# from timexseries_c.data_clustering.data_prediction import ClustersModel, TestingPerformance
 from timexseries_c.data_clustering import ClustersModel
 
 logging.getLogger('fbprophet').setLevel(logging.WARNING)
@@ -18,33 +21,30 @@ log = logging.getLogger(__name__)
 
 
 class KMeansModel(ClustersModel):
-    '''
-    """Facebook's Prophet prediction model."""
+    """K Means clustering model."""
 
     def __init__(self, params: dict, transformation: str = None):
-        super().__init__(params, name="FBProphet", transformation=transformation)
+        super().__init__(params, name="KMeansModel", transformation=transformation)
 
-        # Stuff needed to make Prophet shut up during training.
-        self.suppress_stdout_stderr = suppress_stdout_stderr
-        self.fbmodel = Prophet()
         try:
-            self.fbprophet_parameters = params["model_parameters"]["fbprophet_parameters"]
+            self.kMeans_parameters = params["model_parameters"]["KMeans_parameters"]
         except KeyError:
-            self.fbprophet_parameters = None
+            self.kMeans_parameters = None
 
-    def train(self, input_data: DataFrame, extra_regressors: DataFrame = None):
+    def train(self, input_data: DataFrame):
         """Overrides ClustersModel.train()"""
 
-        if self.fbprophet_parameters is not None:
+        if self.kMeans_parameters is not None:
             try:
                 timeseries_name = input_data.columns[0]
-                date_format = self.fbprophet_parameters["holidays_dataframes"]["date_format"]
-                holidays = pd.read_csv(self.fbprophet_parameters["holidays_dataframes"][timeseries_name])
+                date_format = self.kMeans_parameters["holidays_dataframes"]["date_format"]
+                holidays = pd.read_csv(self.kMeans_parameters["holidays_dataframes"][timeseries_name])
                 holidays.loc[:, "ds"].apply(lambda x: pd.to_datetime(x, format=date_format))
-                self.fbmodel = Prophet(holidays=holidays)
+                #self.fbmodel = Prophet(holidays=holidays)
                 log.debug(f"Using a dataframe for holidays...")
             except KeyError:
-                self.fbmodel = Prophet()
+                pass
+                #self.fbmodel = Prophet()
 
             try:
                 holiday_country = self.fbprophet_parameters["holiday_country"]
@@ -138,7 +138,6 @@ class KMeansModel(ClustersModel):
         forecast.set_index('ds', inplace=True)
 
         return forecast
-        '''
 
 
 class suppress_stdout_stderr(object):

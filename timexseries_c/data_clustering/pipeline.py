@@ -97,8 +97,8 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
     """
 
     clustering_approach = [*param_config["model_parameters"]["clustering_approach"]]
-    transformations_to_test = [*param_config["model_parameters"]["possible_transformations"].split(",")]
-    dist_measure = [*param_config["model_parameters"]["distance_measure"].split(",")]
+    transformations = [*param_config["model_parameters"]["possible_transformations"].split(",")]
+    dist_measures_to_test = [*param_config["model_parameters"]["distance_measure"].split(",")]
     models = [*param_config["model_parameters"]["models"].split(",")]
     main_accuracy_estimator = param_config["model_parameters"]["main_accuracy_estimator"]
 
@@ -126,16 +126,16 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
             log.info(f"Using model {model}...")
 
-            for transf in transformations_to_test:
-                log.info(f"Computing univariate prediction for {col} using transformation: {transf}...")
-                predictor = model_factory(clustering_approach, model, param_config=param_config, transformation=transf)
+            for metric in dist_measures_to_test:
+                log.info(f"Computing univariate distance measurement for {col} using distance metric: {metric}...")
+                predictor = model_factory(clustering_approach, model, metric, param_config=param_config, transformation=transformations)
                 _result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
 
                 performances = _result.results
                 performances.sort(key=lambda x: getattr(x.testing_performances, main_accuracy_estimator.upper()))
                 performances = getattr(performances[0].testing_performances, main_accuracy_estimator.upper())
 
-                this_model_performances.append((_result, performances, transf))
+                this_model_performances.append((_result, performances, metric))
 
             this_model_performances.sort(key=lambda x: x[1])
             best_tr = this_model_performances[0][2]
@@ -683,7 +683,7 @@ def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
     return timeseries_containers
 
 
-def model_factory(clustering_approach: str, model_class: str, param_config: dict, transformation: str = None) -> ClustersModel:
+def model_factory(clustering_approach: str, model_class: str, distance_measure: str, param_config: dict, transformation: str = None) -> ClustersModel:
     """
     Given the clustering_approach and name of the model, return the corresponding ClustersModel.
 
@@ -695,8 +695,8 @@ def model_factory(clustering_approach: str, model_class: str, param_config: dict
         Model type, e.g. "k_means"
     param_config : dict
         TIMEX configuration dictionary, to pass to the just created model.
-    distance_measure : str, e.g. "k_means" **
-        Distance/similarity measure type, e.g. "DTW" **
+    distance_measure : str, e.g. **
+        Distance/similarity measure type, e.g. "DTW, ED" **
     transformation : str, optional, default None
         Optional `transformation` parameter to pass to the just created model.
 
@@ -717,22 +717,22 @@ def model_factory(clustering_approach: str, model_class: str, param_config: dict
     ...    },
     ...}
 
-    >>> model = model_factory("fbprophet", param_config, "none")
+    >>> model = model_factory("fbprophet", param_config, "none")me
     >>> print(type(model))
     <class 'timexseries.data_prediction.models.prophet_predictor.FBProphetModel'>
     """
 
     if clustering_approach == "observation_based":
         if model_class == "k_means": #fbprophet
-            return KMeansModel(params=param_config, transformation=transformation)
+            return KMeansModel(params=param_config, dis_metric=distance_measure)
         if model_class == "LSTM": #LSTM
-            return LSTMModel(param_config, transformation)
+            return LSTMModel(param_config, distance_measure)
         # if model_class == "neuralprophet": #neuralprophet
-        #     return NeuralProphetModel(param_config, transformation)
+        #     return NeuralProphetModel(param_config, dis_metric)
         if model_class == "mockup":
-            return MockUpModel(param_config, transformation)
+            return MockUpModel(param_config, distance_measure)
         else:
-            return ARIMAModel(params=param_config, transformation=transformation)
+            return ARIMAModel(params=param_config, dis_metric=distance_measure)
     
     if clustering_approach == "feature_based":
         if model_class == "k_means": #fbprophet
