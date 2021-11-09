@@ -29,7 +29,7 @@ the main characteristics of TIMEX CLUSTERING. A Notebook explaining the covid-ti
 along with the source code of the site, [here](https://github.com/AlexMV12/covid-timex.it).
 
 ## Documentation
-The full documentation is available at [here](https://alexmv12.github.io/TIMEX/timexseries/index.html).
+The full documentation is available at [here](https://ugr17.github.io/TIMEX_CLUSTERING/timexseries/).
 
 ## Contacts
 If you have questions, suggestions or problems, feel free to open an Issue.
