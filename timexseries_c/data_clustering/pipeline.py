@@ -327,24 +327,32 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
     if clustering_approach == "observation_based":
         if model_class == "k_means": #fbprophet
             #return KMeansModel(params=param_config, distance_metric=distance_metric, transformation=transformation)
+            try:
+                n_clusters = param_config["model_parameters"]["n_clusters"]
+            except KeyError:
+                n_clusters = 3
+            try:
+                gamma = param_config["model_parameters"]["gamma"]
+            except KeyError:
+                gamma = 0.01
+            
             seed=0
             if distance_metric == "ED": #fbprophet
                 log.info(f"Computing k means with ED metric...")
-                km = TimeSeriesKMeans(n_clusters=3, metric="euclidean", verbose=True, random_state=seed)
-                X_train = ingested_data.transpose()
-                clusters = km.fit_predict(X_train)
-                return clusters
-            if distance_metric == "DTW":
-                km = TimeSeriesKMeans(n_clusters=3, metric="dtw", verbose=True, max_iter_barycenter=10, random_state=seed)
-                X_train = ingested_data.transpose()
-                clusters = km.fit_predict(X_train)
-                return clusters
-            if distance_metric == "soft_DTW":
-                km = TimeSeriesKMeans(n_clusters=3, metric="softdtw", verbose=True, metric_params={"gamma": .01}, random_state=seed)
+                km = TimeSeriesKMeans(n_clusters=n_clusters, metric="euclidean", verbose=True, random_state=seed)
                 clusters = km.fit_predict(ingested_data.transpose())
                 return clusters
-        if model_class == "LSTM": #LSTM
-            return LSTMModel(param_config, distance_metric)
+            if distance_metric == "DTW":
+                log.info(f"Computing k means with DTW metric...")
+                km = TimeSeriesKMeans(n_clusters=n_clusters, metric="dtw", verbose=True, max_iter_barycenter=10, random_state=seed)
+                clusters = km.fit_predict(ingested_data.transpose())
+                clts_centers = km.fit_predict(ingested_data.transpose())
+                return clusters
+            if distance_metric == "soft_DTW":
+                log.info(f"Computing k means with soft_DTW metric...")
+                km = TimeSeriesKMeans(n_clusters=n_clusters, metric="softdtw", verbose=True, metric_params={"gamma": gamma}, random_state=seed)
+                clusters = km.fit_predict(ingested_data.transpose())
+                return clusters
         if model_class == "mockup":
             return MockUpModel(param_config, distance_metric)
         else:
