@@ -26,7 +26,7 @@ However, installation is as simple as running:
 ## Get started
 Please, refer to the Examples folder. You will find some Jupyter Notebook which illustrate
 the main characteristics of TIMEX CLUSTERING. A Notebook explaining the covid-timex.it website is present,
-along with the source code of the site, [here](https://github.com/AlexMV12/covid-timex.it).
+along with the source code of the site, [here](https://github.com/uGR17/TIMEX_CLUSTERING).
 
 ## Documentation
 The full documentation is available at [here](https://ugr17.github.io/TIMEX_CLUSTERING/timexseries/).
