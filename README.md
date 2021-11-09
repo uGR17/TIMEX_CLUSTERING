@@ -13,28 +13,23 @@ platforms, able to provide the clustering of time-series in the "as-a-service" m
 
 This means that users should interact with the service as less as possible.
 
-An example of the capabilities of TIMEX can be found at [covid-timex.it](https://covid-timex.it)  
-That website is built using the [Dash](https://dash.plotly.com/), on which the visualization
-part of TIMEX is built. A deep explanation is available in the 
-[dedicated repository](https://github.com/AlexMV12/covid-timex.it).
 
 ## Installation
-The main two dependencies of TIMEX are [Facebook Prophet](https://github.com/facebook/prophet)
-and [PyTorch](https://pytorch.org/). 
+The main two dependencies of TIMEX CLUSTERING are [Tslearn] and [PyTorch](https://pytorch.org/). 
 If you prefer, you can install them beforehand, maybe because you want to choose the CUDA/CPU
 version of Torch.
 
 However, installation is as simple as running:
 
-`pip install timexseries`
+`pip install timexseries_c`
 
 ## Get started
 Please, refer to the Examples folder. You will find some Jupyter Notebook which illustrate
-the main characteristics of TIMEX CLUSERING. A Notebook explaining the covid-timex.it website is present,
-along with the source code of the site, [here](https://github.com/AlexMV12/covid-timex.it).
+the main characteristics of TIMEX CLUSTERING. A Notebook explaining the covid-timex.it website is present,
+along with the source code of the site, [here](https://github.com/uGR17/TIMEX_CLUSTERING).
 
 ## Documentation
-The full documentation is available at [here](https://alexmv12.github.io/TIMEX/timexseries/index.html).
+The full documentation is available at [here](https://ugr17.github.io/TIMEX_CLUSTERING/timexseries/).
 
 ## Contacts
 If you have questions, suggestions or problems, feel free to open an Issue.
