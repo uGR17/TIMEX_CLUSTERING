@@ -126,7 +126,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
     for model in models:
         this_model_performances = []
-
+        model_results[model] = {}
         log.info(f"Using model {model}...")
 
         for metric in dist_measures_to_test:
@@ -141,6 +141,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
            #this_model_performances.append((_result, performances, transf))
             this_model_performances.append((_result, metric))
+            model_results[model][metric] = _result
 
         #this_model_performances.sort(key=lambda x: x[1])
         #best_tr = this_model_performances[0][2]
@@ -148,7 +149,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         #                                                    map(lambda x: x[1], this_model_performances))]
         #log.info(f"Best transformation for {col} using {model}: {best_tr}")
         #best_transformations[model][col] = best_tr
-        model_results[model] = this_model_performances[0][0]
+        #model_results[model] = this_model_performances[0][0]
 
     timeseries_containers.append(
         TimeSeriesContainer(ingested_data, model_results, xcorr)
