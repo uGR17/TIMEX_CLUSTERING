@@ -328,11 +328,11 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
         if model_class == "k_means": #fbprophet
             #return KMeansModel(params=param_config, distance_metric=distance_metric, transformation=transformation)
             try:
-                n_clusters = param_config["model_parameters"]["n_clusters"]
+                n_clusters = int(param_config["model_parameters"]["n_clusters"])
             except KeyError:
                 n_clusters = 3
             try:
-                gamma = param_config["model_parameters"]["gamma"]
+                gamma = int(param_config["model_parameters"]["gamma"])
             except KeyError:
                 gamma = 0.01
             
@@ -353,10 +353,10 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric="softdtw", verbose=True, metric_params={"gamma": gamma}, random_state=seed)
                 clusters = km.fit_predict(ingested_data.transpose())
                 return clusters
-        if model_class == "mockup":
-            return MockUpModel(param_config, distance_metric)
-        else:
-            return ARIMAModel(param_config, distance_metric)
+        #if model_class == "mockup":
+        #    return MockUpModel(param_config, distance_metric)
+        #else:
+        #    return ARIMAModel(param_config, distance_metric)
     
     if clustering_approach == "feature_based":
         if model_class == "k_means":
