@@ -5,6 +5,7 @@ from functools import reduce
 from typing import Tuple, List
 
 import dateparser
+import numpy
 import tslearn
 from pandas import DataFrame
 
@@ -131,7 +132,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
         for metric in dist_measures_to_test:
             log.info(f"Computing univariate clustering using approach: {clustering_approach} and distance metric: {metric}...")
-            _result = model_factory(ingested_data, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transformations)
+            _result,_centroid = model_factory(ingested_data, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transformations)
             #_result = predictor.fit_predict(ingested_data.copy())
             #_result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
 
@@ -142,6 +143,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
            #this_model_performances.append((_result, performances, transf))
             this_model_performances.append((_result, metric))
             model_results[model][metric] = _result
+            model_results[model][metric]['centroids'] = _centroid
 
         #this_model_performances.sort(key=lambda x: x[1])
         #best_tr = this_model_performances[0][2]
@@ -306,7 +308,10 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
     Returns
     -------
     array
-        Array with the results of the clustering, Index of the cluster each time series belongs to.
+        Array with the results of the clustering, it has the index of the cluster each time series belongs to.
+    -------
+    list
+        List with the centroid of each cluster, each centroid is an array of lenght equal of the time-series.
 
     Examples
     --------
@@ -338,22 +343,31 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 gamma = 0.01
             
             seed=0
+            centroid = []
             if distance_metric == "ED": #fbprophet
                 log.info(f"Computing k means with ED metric...")
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric="euclidean", verbose=False, random_state=seed)
                 clusters = km.fit_predict(ingested_data.transpose())
-                return clusters
+                for yi in range(n_clusters):
+                    centrd = km.cluster_centers_[yi].ravel()
+                    centroid = numpy.append(centroid, centrd, 0)
+                return clusters, centroid
             if distance_metric == "DTW":
                 log.info(f"Computing k means with DTW metric...")
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric="dtw", verbose=False, max_iter_barycenter=10, random_state=seed)
                 clusters = km.fit_predict(ingested_data.transpose())
-                clts_centers = km.fit_predict(ingested_data.transpose())
-                return clusters
+                for yi in range(n_clusters):
+                    centrd = km.cluster_centers_[yi].ravel()
+                    centroid = numpy.append(centroid, centrd, 0)
+                return clusters, centroid
             if distance_metric == "soft_DTW":
                 log.info(f"Computing k means with soft_DTW metric...")
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric="softdtw", verbose=False, metric_params={"gamma": gamma}, random_state=seed)
                 clusters = km.fit_predict(ingested_data.transpose())
-                return clusters
+                for yi in range(n_clusters):
+                    centrd = km.cluster_centers_[yi].ravel()
+                    centroid = numpy.append(centroid, centrd, 0)
+                return clusters, centroid
         #if model_class == "mockup":
         #    return MockUpModel(param_config, distance_metric)
         #else:
