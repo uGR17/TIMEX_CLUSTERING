@@ -151,6 +151,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         #best_transformations[model][col] = best_tr
         #model_results[model] = this_model_performances[0][0]
 
+    log.info(f"Process of {clustering_approach} clustering finished")
     timeseries_containers.append(
         TimeSeriesContainer(ingested_data, model_results, xcorr)
     )
@@ -305,7 +306,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
     Returns
     -------
     array
-        Array with the results of the clustering.
+        Array with the results of the clustering, Index of the cluster each time series belongs to.
 
     Examples
     --------
@@ -339,18 +340,18 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
             seed=0
             if distance_metric == "ED": #fbprophet
                 log.info(f"Computing k means with ED metric...")
-                km = TimeSeriesKMeans(n_clusters=n_clusters, metric="euclidean", verbose=True, random_state=seed)
+                km = TimeSeriesKMeans(n_clusters=n_clusters, metric="euclidean", verbose=False, random_state=seed)
                 clusters = km.fit_predict(ingested_data.transpose())
                 return clusters
             if distance_metric == "DTW":
                 log.info(f"Computing k means with DTW metric...")
-                km = TimeSeriesKMeans(n_clusters=n_clusters, metric="dtw", verbose=True, max_iter_barycenter=10, random_state=seed)
+                km = TimeSeriesKMeans(n_clusters=n_clusters, metric="dtw", verbose=False, max_iter_barycenter=10, random_state=seed)
                 clusters = km.fit_predict(ingested_data.transpose())
                 clts_centers = km.fit_predict(ingested_data.transpose())
                 return clusters
             if distance_metric == "soft_DTW":
                 log.info(f"Computing k means with soft_DTW metric...")
-                km = TimeSeriesKMeans(n_clusters=n_clusters, metric="softdtw", verbose=True, metric_params={"gamma": gamma}, random_state=seed)
+                km = TimeSeriesKMeans(n_clusters=n_clusters, metric="softdtw", verbose=False, metric_params={"gamma": gamma}, random_state=seed)
                 clusters = km.fit_predict(ingested_data.transpose())
                 return clusters
         #if model_class == "mockup":
