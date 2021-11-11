@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 def ingest_timeseries(param_config: dict):
     """Retrieve the time-series data at the URL specified in `param_config['input parameters']` and return it in a
     Pandas' DataFrame.
-    This can be used for the initial data ingestion, i.e. to ingest the initial time-series which will be predicted.
+    This can be used for the initial data ingestion, i.e. to ingest the initial time-series which will be clustered.
 
     Parameters
     ----------
@@ -46,27 +46,28 @@ def ingest_timeseries(param_config: dict):
     --------
     >>> timex_dict = {
     ...  "input_parameters": {
-    ...    "source_data_url": "tests/test_datasets/covid_example_data_ingestion.csv",
-    ...    "columns_to_load_from_url": "data,nuovi_positivi,terapia_intensiva",
-    ...    "index_column_name": "data",
+    ...    "source_data_url": "https://raw.githubusercontent.com/uGR17/TIMEX_CLUSTERING/main/examples/datasets/k_means_example_5ts.csv",
+    ...    "columns_to_load_from_url": "date,ts1,ts2,ts3,ts4,ts5,ts6,ts7,ts8,ts9,ts10,ts11,ts12",
+    ...    "index_column_name": "date",
+    ...    "frequency": "D",  
     ...    "timeseries_names": {
-    ...        "data": "Date",
-    ...        "nuovi_positivi": "Daily cases",
-    ...        "terapia_intensiva": "Total intensive care"
+    ...        "date": "Data",
+    ...        "ts1": "time_series1",
+    ...        "ts2": "time_series2",
     ...    }
     ...  }
     ...}
     >>> ingest_timeseries(timex_dict)
-                    Daily cases  Total intensive care  Daily intensive care
-    Date
-    2020-02-25           93                    35                   9.0
-    2020-02-26           78                    36                   1.0
-    ...                 ...                   ...                   ...
-    2021-02-10        12956                  2128                 -15.0
-    2021-02-11        15146                  2126                  -2.0
-
-    [353 rows x 3 columns]
+            time_series1	time_series2	ts3	ts4	ts5	ts6	ts7	ts8	ts9	ts10	ts11	ts12
+    Data												
+    2020-01-03	0.718000	0.805000	-1.490000	0.732000	-2.030000	0.726000	0.587000	0.600000	0.6970	-1.3800	-1.660000	-1.590000
+    2020-01-04	0.537000	0.706000	0.726000	0.692000	0.582000	0.656000	0.522000	0.593000	0.5620	0.7920	0.623000	0.725000
+    ...	...	...	...	...	...	...	...	...	...	...	...	...
+    2020-12-02	-1.147667	-1.166667	0.671433	-2.011667	0.526933	-2.052333	-1.920333	-1.613000	-1.7320	0.6178	0.692367	0.672567
+    2020-12-03	-1.240000	-1.160000	0.673000	-2.010000	0.527000	-2.050000	-1.920000	-1.610000	-1.7300	0.6280	0.694000	0.674000
+    [336 rows × 12 columns]
     """
+    
     log.info('Starting the data ingestion phase.')
     input_parameters = param_config["input_parameters"]
 
