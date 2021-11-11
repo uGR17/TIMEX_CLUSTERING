@@ -11,8 +11,7 @@ import numpy as np
 
 from .context import timexseries
 
-from timexseries_c.data_ingestion import ingest_timeseries, add_freq, select_timeseries_portion, \
-    ingest_additional_regressors
+from timexseries_c.data_ingestion import ingest_timeseries, add_freq, select_timeseries_portion
 from .utilities import get_fake_df
 
 
@@ -310,33 +309,6 @@ class TestDataIngestion:
         df = ingest_timeseries(param_config)
         assert len(df.columns) == 1
         assert df.index.name == "first_column"
-
-    @pytest.mark.parametrize("is_index_specified", [True, False])
-    @pytest.mark.parametrize("are_dateparser_options_specified", [True, False])
-    def test_ingest_additional_regressors(self, is_index_specified, are_dateparser_options_specified):
-        # Test the loading of additional regressors CSV files.
-        # Check that data is interpolated.
-        param_config = {
-            "input_parameters": {
-                "source_data_url": os.path.join("test_datasets", "test_6.csv"),
-            }
-        }
-
-        if is_index_specified:
-            param_config["input_parameters"]["index_column_name"] = "first_column"
-
-        if are_dateparser_options_specified:
-            param_config["input_parameters"]["dateparser_options"] = {
-                "date_formats": ["%Y-%m-%dT%H:%M:%S"]
-            }
-
-        df = ingest_additional_regressors(os.path.join("test_datasets", "test_6.csv"), param_config)
-
-        expected = pd.read_csv(os.path.join("test_datasets", "test_6_expected.csv"), parse_dates=["first_column"],
-                               index_col="first_column")
-        expected = expected.asfreq("D")
-
-        pd.testing.assert_frame_equal(df, expected)
 
 
 class TestAddFreq:
