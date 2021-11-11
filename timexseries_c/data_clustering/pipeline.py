@@ -338,7 +338,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
             except KeyError:
                 n_clusters = 3
             try:
-                gamma = int(param_config["model_parameters"]["gamma"])
+                gamma = float(param_config["model_parameters"]["gamma"])
             except KeyError:
                 gamma = 0.01
             
@@ -350,7 +350,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 clusters = km.fit_predict(ingested_data.transpose())
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
-                    centroid = numpy.append(centroid, centrd, 0)
+                    centroid.append(centrd)
                 return clusters, centroid
             if distance_metric == "DTW":
                 log.info(f"Computing k means with DTW metric...")
@@ -358,7 +358,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 clusters = km.fit_predict(ingested_data.transpose())
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
-                    centroid = numpy.append(centroid, centrd, 0)
+                    centroid.append(centrd)
                 return clusters, centroid
             if distance_metric == "soft_DTW":
                 log.info(f"Computing k means with soft_DTW metric...")
@@ -366,7 +366,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 clusters = km.fit_predict(ingested_data.transpose())
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
-                    centroid = numpy.append(centroid, centrd, 0)
+                    centroid.append(centrd)
                 return clusters, centroid
         #if model_class == "mockup":
         #    return MockUpModel(param_config, distance_metric)
