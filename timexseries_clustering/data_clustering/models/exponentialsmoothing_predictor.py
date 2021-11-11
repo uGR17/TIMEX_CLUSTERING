@@ -6,7 +6,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from statsmodels.tsa.stattools import adfuller
 
-from timexseries_c.data_clustering import ClusterModel
+from timexseries_clustering.data_clustering import ClusterModel
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm

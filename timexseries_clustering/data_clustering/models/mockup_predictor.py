@@ -2,7 +2,7 @@ import logging
 
 from pandas import DataFrame
 
-from timexseries_c.data_clustering import ClustersModel
+from timexseries_clustering.data_clustering import ClustersModel
 log = logging.getLogger(__name__)
 
 

@@ -6,7 +6,7 @@ Library for time-series-clustering-as-a-service.
 ![PyPI](https://img.shields.io/pypi/v/timexseries)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/timexseries)
 
-TIMEX_CLUSTERING (referred in code as `timexseries_c`) is a framework for time-series-clustering-as-a-service.
+TIMEX_CLUSTERING (referred in code as `timexseries_clustering`) is a framework for time-series-clustering-as-a-service.
 
 Its main goal is to provide a simple and generic tool to build websites and, more in general,
 platforms, able to provide the clustering of time-series in the "as-a-service" manner.
@@ -21,7 +21,7 @@ version of Torch.
 
 However, installation is as simple as running:
 
-`pip install timexseries_c`
+`pip install timexseries_clustering`
 
 ## Get started
 Please, refer to the Examples folder. You will find some Jupyter Notebook which illustrate

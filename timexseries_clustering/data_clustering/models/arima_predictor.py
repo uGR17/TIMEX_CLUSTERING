@@ -4,7 +4,7 @@ import itertools
 import statsmodels.api as sm
 import pandas as pd
 
-from timexseries_c.data_clustering import ClustersModel
+from timexseries_clustering.data_clustering import ClustersModel
 
 
 class ARIMAModel(ClustersModel):

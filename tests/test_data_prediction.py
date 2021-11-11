@@ -12,23 +12,23 @@ import pandas as pd
 import numpy as np
 from scipy.stats import yeojohnson
 
-from timexseries_c.data_clustering.models.arima_predictor import ARIMAModel
-from timexseries_c.data_clustering.models.exponentialsmoothing_predictor import ExponentialSmoothingModel
-from timexseries_c.data_clustering.models.lstm_predictor import LSTMModel
-from timexseries_c.data_clustering.models.mockup_predictor import MockUpModel
-# from timexseries_c.data_clustering.models.neuralprophet_predictor import NeuralProphetModel
-from timexseries_c.data_clustering.models.predictor import ModelResult
-from timexseries_c.data_clustering.xcorr import calc_xcorr, calc_all_xcorr
+from timexseries_clustering.data_clustering.models.arima_predictor import ARIMAModel
+from timexseries_clustering.data_clustering.models.exponentialsmoothing_predictor import ExponentialSmoothingModel
+from timexseries_clustering.data_clustering.models.lstm_predictor import LSTMModel
+from timexseries_clustering.data_clustering.models.mockup_predictor import MockUpModel
+# from timexseries_clustering.data_clustering.models.neuralprophet_predictor import NeuralProphetModel
+from timexseries_clustering.data_clustering.models.predictor import ModelResult
+from timexseries_clustering.data_clustering.xcorr import calc_xcorr, calc_all_xcorr
 
 from tests.utilities import get_fake_df
-from timexseries_c.data_ingestion import add_freq
+from timexseries_clustering.data_ingestion import add_freq
 
-from timexseries_c.data_clustering.pipeline import get_best_univariate_clusters, \
+from timexseries_clustering.data_clustering.pipeline import get_best_univariate_clusters, \
     get_best_multivariate_predictions, compute_historical_predictions, get_best_clusters, \
     create_timeseries_containers
-#from timexseries_c.data_clustering.models.prophet_predictor import FBProphetModel, suppress_stdout_stderr
-from timexseries_c.data_clustering.transformation import transformation_factory, Identity
-from timexseries_c.timeseries_container import TimeSeriesContainer
+#from timexseries_clustering.data_clustering.models.prophet_predictor import FBProphetModel, suppress_stdout_stderr
+from timexseries_clustering.data_clustering.transformation import transformation_factory, Identity
+from timexseries_clustering.timeseries_container import TimeSeriesContainer
 
 xcorr_modes = ['pearson', 'kendall', 'spearman', 'matlab_normalized']
 

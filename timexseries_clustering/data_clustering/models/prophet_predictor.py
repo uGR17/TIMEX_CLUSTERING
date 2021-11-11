@@ -5,7 +5,7 @@ import os
 import pandas as pd
 from pandas import DataFrame
 
-from timexseries_c.data_clustering import PredictionModel
+from timexseries_clustering.data_clustering import PredictionModel
 
 logging.getLogger('fbprophet').setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
