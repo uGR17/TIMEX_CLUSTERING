@@ -1,10 +1,10 @@
 import pickle
 import pytest
-from timexseries.data_visualization import create_timeseries_dash_children
+from timexseries_c.data_visualization import create_timeseries_dash_children
 
-from timexseries.data_prediction import create_timeseries_containers
+from timexseries_c.data_clustering import create_timeseries_containers
 
-from timexseries.data_ingestion import ingest_timeseries
+from timexseries_c.data_ingestion import ingest_timeseries
 
 # Testing data visualization is tricky.
 # Pre-computed Dash children are saved in a sample pkl file; these visualizations have been checked by a human.

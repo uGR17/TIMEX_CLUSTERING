@@ -492,7 +492,7 @@ class Test_Models_Specific:
         "model_class,check_multivariate",
         # [(FBProphetModel, True), (LSTMModel, True), (ARIMAModel, False), (NeuralProphetModel, True),
         #  (MockUpModel, True), (ExponentialSmoothingModel, False)]
-        [(FBProphetModel, True), (LSTMModel, True), (ARIMAModel, False),
+        [(LSTMModel, True), (ARIMAModel, False),
          (MockUpModel, True), (ExponentialSmoothingModel, False)]
     )
     def test_models(self, model_class, check_multivariate):
@@ -531,25 +531,6 @@ class Test_Models_Specific:
 
 class TestGetPredictions:
 
-    def test_prepare_extra_regressors(self):
-        ing_data = DataFrame({"a": np.arange(0, 10), "b": np.arange(10, 20)})
-        ing_data.set_index("a", inplace=True)
-
-        # Simulate the best forecast with overlapping index with time-series data...
-        forecast = DataFrame({"a": np.arange(8, 15), "yhat": np.arange(40, 47)})
-        forecast.set_index("a", inplace=True)
-
-        models = {'fbprophet': ModelResult(None, None, forecast)}
-        timeseries_container = TimeSeriesContainer(ing_data, models, None)
-
-        result = prepare_extra_regressor(timeseries_container, 'fbprophet')
-
-        expected = DataFrame({"a": np.arange(0, 15),
-                              "b": np.array([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 42.0, 43.0,
-                                             44.0, 45.0, 46.0])})
-        expected.set_index("a", inplace=True)
-
-        assert expected.equals(result)
 
     def test_get_best_univariate_and_multivariate_predictions(self):
         # Check that results are in the correct form.
