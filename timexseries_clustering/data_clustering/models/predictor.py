@@ -10,23 +10,23 @@ import pandas as pd
 from pandas import DataFrame, Series
 import numpy as np
 
-from timexseries_c.data_clustering.transformation import transformation_factory
-from timexseries_c.data_clustering.distance_metric import distance_metric_factory
-from timexseries_c.data_clustering.validation_performances import ValidationPerformance
+from timexseries_clustering.data_clustering.transformation import transformation_factory
+from timexseries_clustering.data_clustering.distance_metric import distance_metric_factory
+from timexseries_clustering.data_clustering.validation_performances import ValidationPerformance
 
 log = logging.getLogger(__name__)
 
 
 class SingleResult:
     """
-    Class for the result of a model, trained on a specific training set.
+    Class for the result of a model, trained on specific model parameter (e.g using a specific number of clusters).
 
     Parameters
     ----------
-    prediction : DataFrame
-        Estimated prediction, using this training set
+    cluster : DataFrame
+        Clustering, using this model parameters
     testing_performances : ValidationPerformance
-        Testing performance (`timexseries.data_prediction.validation_performances.ValidationPerformance`), on the validation
+        Testing performance (`timexseries_clustering.data_prediction.validation_performances.ValidationPerformance`), on the validation
         set, obtained using this training set to train the model.
     """
 
@@ -37,20 +37,20 @@ class SingleResult:
 
 class ModelResult:
     """
-    Class for to collect the global results of a model clustering all the time-series.
+    Class to collect the global results of a model clustering of all the time-series.
 
     Parameters
     ----------
     results : [SingleResult]
-        List of all the results obtained using all the possible training set for this model, on the time series.
-        This is useful to create plots which show how the performance vary changing the training data (e.g.
-        `timexseries.data_visualization.functions.performance_plot`).
+        List of all the results obtained using all the possible configurations for this model on the time series.
+        This is useful to create plots which show how the performance vary changing the model parameters (e.g.
+        `timexseries_clustering.data_visualization.functions.performance_plot`).
     characteristics : dict
-        Model parameters. This dictionary collects human-readable characteristics of the model, e.g. the used number of
-        validation points used, the length of the sliding training window, etc.
+        Model parameters. This dictionary collects human-readable characteristics of the model, e.g. the number
+        of clusters used, the distance metric applied, etc.
     best_clustering : DataFrame
-        Prediction obtained using the best training window and _all_ the available points in the time-series. This is
-        the prediction that users are most likely to want.
+        Clustering obtained using the best model parameters and _all_ the available time-series. This is
+        the cluster indexes that users are most likely to want.
     """
 
     def __init__(self, results: List[SingleResult], characteristics: dict, best_clustering: DataFrame):
@@ -70,6 +70,8 @@ class ClustersModel:
         The various attributes, described below, will be extracted from this.
         If `params` does not contain the entry `model_parameters`, then TIMEX will attempt to load a default
         configuration parameter dictionary.
+    approach : str
+        Clustering approach use, it can be of three types: Observation based, Feature based or Model based.
     name : str
         Class of the model.
     distance_metric : str
@@ -81,22 +83,22 @@ class ClustersModel:
     ----------
     freq : str
         If available, the frequency of the time-series.
-    test_values : int
+    test_values : int **
         Number of the last points of the time-series to use for the validation set. Default 0. If this is not available
         in the configuration parameter dictionary, `test_percentage` will be used.
-    test_percentage : float
+    test_percentage : float **
         Percentage of the time-series length to used for the validation set. Default 0
     distance_metric : str
         Distance metric to to meausure similarity among time series. Default ED
     transformation : str
         Transformation to apply to the time series before using it. Default None
-    prediction_lags : int
+    prediction_lags : int **
         Number of future lags for which the prediction has to be made. Default 0
-    delta_training_percentage : float
+    delta_training_percentage : float **
         Length, in percentage of the time-series length, of the training windows.
-    delta_training_values : int
+    delta_training_values : int **
         Length of the training windows, obtained by computing `delta_training_percentage * length of the time-series`.
-    main_accuracy_estimator : str
+    main_accuracy_estimator : str **
         Error metric to use when deciding which prediction is better. Default: MAE.
     min_values : dict
         Key-values where key is the name of a column and value is the minimum expected value in that column.
@@ -111,10 +113,11 @@ class ClustersModel:
         Dictionary of values containing the main characteristics and parameters of the model. Default {}
     """
 
-    def __init__(self, params: dict, name: str, distance_metric: str = None, transformation: str = None) -> None:
+    def __init__(self, params: dict, approach: str, name: str, distance_metric: str = None, transformation: str = None) -> None:
         self.name = name
+        self.approach = approach
 
-        log.info(f"Creating a {self.name} model...")
+        log.info(f"Creating a {self.name} model using {self.approach} clustering approach...")
 
         if "model_parameters" not in params:
             log.debug(f"Loading default settings...")
@@ -153,17 +156,12 @@ class ClustersModel:
         self.main_accuracy_estimator = model_parameters["main_accuracy_estimator"]
         self.delta_training_values = 0
         self.model_characteristics = {}
-
         self.freq = ""
         log.debug(f"Finished model creation.")
 
-    def train(self, ingested_data: DataFrame, extra_regressor: DataFrame = None):
+    def train(self, ingested_data: DataFrame):
         """
-        Train the model on the first column of `ingested_data`. Additional time-series, which will be used to improve
-        the training in the case of a multivariate model can be passed in the `extra_regressor` DataFrame, one for each
-        column.
-
-        The predictor, after launching `train`, is ready to make predictions for the future.
+        Train the model using all the columns of `ingested_data`. The predictor, after launching `train`, is ready to make predictions for the future.
 
         Note that this and `predict` do not split anything in training data/validation data; this is done with other
         functions, like `launch_model`.
@@ -173,12 +171,9 @@ class ClustersModel:
         ingested_data : DataFrame
             Training set. The entire time-series in the first column of `ingested_data` will be used for training.
 
-        extra_regressor : DataFrame, optional, default None
-            Additional time-series to use for better predictions.
-
         Examples
         --------
-        We will use as example the `timexseries.data_prediction.models.prophet_predictor.FBProphetModel`, an instance of
+        We will use as example the `timexseries_clustering.data_prediction.models.prophet_predictor.FBProphetModel`, an instance of
         `Predictor`.
 
         >>> param_config = {}  # This will make the predictor use default values...
@@ -197,7 +192,7 @@ class ClustersModel:
         """
         pass
 
-    def predict(self, future_dataframe: DataFrame, extra_regressor: DataFrame = None) -> DataFrame:
+    def predict(self, future_dataframe: DataFrame) -> DataFrame:
         """
         Return a DataFrame with the shape of `future_dataframe`, filled with predicted values.
 
@@ -213,11 +208,6 @@ class ClustersModel:
             DataFrame which will be filled with prediction values. This DataFrame should have the same index of the data
             used for training (plus the number of predicted values), and a column named `yhat`, which corresponds to the
             prediction that should be computed.
-
-        extra_regressor : DataFrame, optional, default None
-            DataFrame which contain optional time-series which will be used to improve the prediction. It should have
-            the same shape of `future_dataframe` but with one column for each time-series. All the values should be
-            present.
 
         Returns
         -------
@@ -263,7 +253,7 @@ class ClustersModel:
         """
         pass
 
-    def _compute_trainings(self, train_ts: DataFrame, test_ts: DataFrame, extra_regressors: DataFrame, max_threads: int):
+    def _compute_trainings(self, train_ts: DataFrame, test_ts: DataFrame, max_threads: int):
         """
         Compute the training of a model on a set of different training sets, of increasing length.
         `train_ts` is split in `n` different training sets, according to the length of `train_ts` and the value of
@@ -298,14 +288,14 @@ class ClustersModel:
 
                 log.debug(f"Trying with last {len(tr)} values as training set, in thread {thread_number}")
 
-                self.train(tr.copy(), extra_regressors)
+                self.train(tr.copy())
 
                 future_df = pd.DataFrame(index=pd.date_range(freq=self.freq,
                                                              start=tr.index.values[0],
                                                              periods=len(tr) + self.test_values + self.prediction_lags),
                                          columns=["yhat"], dtype=tr.iloc[:, 0].dtype)
 
-                forecast = self.predict(future_df, extra_regressors)
+                forecast = self.predict(future_df)
 
                 forecast.loc[:, 'yhat'] = self.transformation.inverse(forecast['yhat'])
 
@@ -371,8 +361,7 @@ class ClustersModel:
 
         return results
 
-    def _compute_best_prediction(self, ingested_data: DataFrame, training_results: List[SingleResult],
-                                 extra_regressors: DataFrame = None):
+    def _compute_best_prediction(self, ingested_data: DataFrame, training_results: List[SingleResult]):
         """
         Given the ingested data and the training results, identify the best training window and compute a prediction
         using all the possible data, till the end of the series (hence, including the validation set).
@@ -382,8 +371,6 @@ class ClustersModel:
             Initial time-series data, in a DataFrame. The first column of the DataFrame is the time-series.
         training_results : [SingleResult]
             List of `SingleResult` object: each one is the result of the model on a specific training-set.
-        extra_regressors : DataFrame, optional, default None
-            Additional time-series to use for better predictions.
         Returns
         -------
         DataFrame
@@ -396,14 +383,14 @@ class ClustersModel:
 
         training_data.iloc[:, 0] = self.transformation.apply(training_data.iloc[:, 0])
 
-        self.train(training_data.copy(), extra_regressors)
+        self.train(training_data.copy())
 
         future_df = pd.DataFrame(index=pd.date_range(freq=self.freq,
                                                      start=training_data.index.values[0],
                                                      periods=len(training_data) + self.prediction_lags),
                                  columns=["yhat"], dtype=training_data.iloc[:, 0].dtype)
 
-        forecast = self.predict(future_df, extra_regressors)
+        forecast = self.predict(future_df)
         forecast.loc[:, 'yhat'] = self.transformation.inverse(forecast['yhat'])
 
         try:
@@ -416,7 +403,7 @@ class ClustersModel:
 
         return forecast
 
-    def launch_model(self, ingested_data: DataFrame, extra_regressors: DataFrame = None, max_threads: int = 1):
+    def launch_model(self, ingested_data: DataFrame, extra_regressors: DataFrame = None, max_threads: int = 1)-> ModelResult:
         """
         Train the model on `ingested_data` and returns a `ModelResult` object.
         This function is at the highest possible level of abstraction to train a model on a time-series.

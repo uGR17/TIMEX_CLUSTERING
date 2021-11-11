@@ -9,15 +9,13 @@ import numpy
 import tslearn
 from pandas import DataFrame
 
-#from timexseries_c.data_ingestion import ingest_additional_regressors
-from timexseries_c.data_clustering import ClustersModel
-from timexseries_c.data_clustering.models.arima_predictor import ARIMAModel
-from timexseries_c.data_clustering.models.lstm_predictor import LSTMModel
-from timexseries_c.data_clustering.models.mockup_predictor import MockUpModel
-#from timexseries.data_prediction.models.neuralprophet_predictor import NeuralProphetModel
-from timexseries_c.data_clustering.models.kmeans_cluster import KMeansModel
-from timexseries_c.data_clustering.xcorr import calc_all_xcorr
-from timexseries_c.timeseries_container import TimeSeriesContainer
+from timexseries_clustering.data_clustering import ClustersModel
+from timexseries_clustering.data_clustering.models.arima_predictor import ARIMAModel
+from timexseries_clustering.data_clustering.models.lstm_predictor import LSTMModel
+from timexseries_clustering.data_clustering.models.mockup_predictor import MockUpModel
+from timexseries_clustering.data_clustering.models.kmeans_cluster import KMeansModel
+from timexseries_clustering.data_clustering.xcorr import calc_all_xcorr
+from timexseries_clustering.timeseries_container import TimeSeriesContainer
 from tslearn.clustering import TimeSeriesKMeans
 
 log = logging.getLogger(__name__)
@@ -143,7 +141,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
            #this_model_performances.append((_result, performances, transf))
             this_model_performances.append((_result, metric))
             model_results[model][metric] = _result
-            model_results[model][metric]['centroids'] = _centroid
+            #model_results[model][metric]['centroids'] = _centroid
 
         #this_model_performances.sort(key=lambda x: x[1])
         #best_tr = this_model_performances[0][2]
@@ -165,18 +163,18 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 def get_best_clusters(ingested_data: DataFrame, param_config: dict):
     """
     Starting from `ingested_data`, using the models/cross correlation settings set in `param_config`, return the best
-    possible clustering in a `timexseries_c.timeseries_container.TimeSeriesContainer` for all the time-series in `ingested_data`.
+    possible clustering in a `timexseries_clustering.timeseries_container.TimeSeriesContainer` for all the time-series in `ingested_data`.
     Parameters
     ----------
     ingested_data : DataFrame
         Initial data of the time-series.
     param_config : dict
-        TIMEX CLUSTERING configuration dictionary. `get_best_univariate_clusters` and `get_best_multivariate_clusters` (multivariate_clustering will be realased in timexseries_c 2.0.0) will
+        TIMEX CLUSTERING configuration dictionary. `get_best_univariate_clusters` and `get_best_multivariate_clusters` (multivariate_clustering will be realased in timexseries_clustering 2.0.0) will
         use the various settings in `param_config`.
     Returns
     -------
     list
-        A list of `timexseries_c.timeseries_container.TimeSeriesContainer` objects, one for each time-series.
+        A list of `timexseries_clustering.timeseries_container.TimeSeriesContainer` objects, one for each time-series.
     Examples
     --------
     This is basically the function on top of `get_best_univariate_clusters` and `get_best_multivariate_predictions`:
@@ -188,7 +186,7 @@ def get_best_clusters(ingested_data: DataFrame, param_config: dict):
     >>> b = np.arange(60, 90)
     >>>
     >>> timeseries_dataframe = DataFrame(data={"a": a, "b": b}, index=ds)
-    Simply compute the clustering and get the returned `timexseries_c.timeseries_container.TimeSeriesContainer` objects:
+    Simply compute the clustering and get the returned `timexseries_clustering.timeseries_container.TimeSeriesContainer` objects:
     >>> timeseries_outputs = get_best_clusters(timeseries_dataframe, param_config)
     """
 
@@ -230,7 +228,7 @@ def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
     Returns
     -------
     list
-        A list of `timexseries_c.timeseries_container.TimeSeriesContainer` objects, one for each time-series.
+        A list of `timexseries_clustering.timeseries_container.TimeSeriesContainer` objects, one for each time-series.
 
     Examples
     --------
@@ -288,7 +286,7 @@ def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
     return timeseries_containers
 
 
-def model_factory(ingested_data: DataFrame, clustering_approach: str, model_class: str, distance_metric: str, param_config: dict, transformation: str = None): 
+def model_factory(ingested_data: DataFrame, clustering_approach: str, model_class: str, distance_metric: str, param_config: dict, transformation: str = None): #-> ClustersModel:
     """
     Given the clustering_approach and name of the model, return the corresponding ClustersModel.
 

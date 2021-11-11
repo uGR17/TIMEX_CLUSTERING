@@ -12,8 +12,8 @@ from tslearn.datasets import CachedDatasets
 from tslearn.preprocessing import TimeSeriesScalerMeanVariance, TimeSeriesResampler
 from pandas import DataFrame
 
-# from timexseries_c.data_clustering.data_prediction import ClustersModel, TestingPerformance
-from timexseries_c.data_clustering import ClustersModel
+# from timexseries_clustering.data_clustering.data_prediction import TestingPerformance**
+from timexseries_clustering.data_clustering import ClustersModel
 
 logging.getLogger('kMeansModel').setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
@@ -22,8 +22,8 @@ log = logging.getLogger(__name__)
 class KMeansModel(ClustersModel):
     """K Means clustering model."""
 
-    def __init__(self, params: dict, distance_metric: str = None, transformation: str = None):
-        super().__init__(params, name="KMeansModel", distance_metric=distance_metric, transformation=transformation)
+    def __init__(self, params: dict, approach: str, distance_metric: str = None, transformation: str = None):
+        super().__init__(params, approach=approach, name="KMeansModel", distance_metric=distance_metric, transformation=transformation)
 
         try:
             self.kMeans_parameters = params["model_parameters"]["KMeans_parameters"]

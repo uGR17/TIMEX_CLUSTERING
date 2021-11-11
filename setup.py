@@ -16,11 +16,12 @@ requirements = ["dateparser<2.0.0,>=1.0.0",\
     "gunicorn<21.0.0,>=20.0.4",\
     "sklearn>=0.0,<0.1",\
     "scipy<2.0.0,>=1.6.0",\
-    "statsmodels<0.13.0,>=0.12.2"]
+    "statsmodels<0.13.0,>=0.12.2",\
+    "pytest>=4.3.0"]
 
 setup(
     name="timexseries_c",
-    version="0.0.39",
+    version="0.0.40",
     author="Uriel Guadarrama Ramirez",
     author_email="u.guadarrama@hotmail.com",
     description="TIMEX-CLUSTERING is a framework for time-series-clustering-as-a-service",

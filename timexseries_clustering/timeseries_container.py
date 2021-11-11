@@ -3,15 +3,15 @@ from pandas import DataFrame
 
 class TimeSeriesContainer:
     """
-    A TimeSeriesContainer collect all the relevant information useful to characterize a single time-series coming from
+    A TimeSeriesContainer collect all the relevant information useful to characterizethe time-series coming from
     the ingested dataset.
 
     Parameters
     ----------
     timeseries_data : DataFrame
-        Historical time-series data, in the form of a DataFrame with a index and a single data column.
+        Historical time-series data, in the form of a DataFrame with a index and more than one data column.
     models : dict
-        Dictionary of ModelResult objects, all trained on this time-series.
+        Dictionary of ModelResult objects, all trained on these time-series.
     xcorr : dict
         Cross-correlation between the data of this time-series and all the other ones.
     historical_prediction : dict
