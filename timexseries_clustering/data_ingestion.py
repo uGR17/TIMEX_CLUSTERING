@@ -89,6 +89,12 @@ def ingest_timeseries(param_config: dict):
 
     log.debug(f"Parsing {index_column_name} as datetime column...")
 
+    dateparser_options = {
+        "settings": {
+            "PREFER_DAY_OF_MONTH": "first"
+        }
+    }
+
     if "dateparser_options" in input_parameters:
         dateparser_options = input_parameters["dateparser_options"]
         df_ingestion[index_column_name] = df_ingestion[index_column_name].apply(
@@ -104,6 +110,10 @@ def ingest_timeseries(param_config: dict):
     log.debug(f"Removing duplicates rows from dataframe; keep the last...")
     df_ingestion = df_ingestion[~df_ingestion.index.duplicated(keep='last')]
 
+    if not df_ingestion.index.is_monotonic_increasing:
+        log.warning(f"Dataframe is not ordered. Ordering it...")
+        df_ingestion = df_ingestion.sort_index()
+        
     try:
         mappings = input_parameters["timeseries_names"]
         df_ingestion.reset_index(inplace=True)
