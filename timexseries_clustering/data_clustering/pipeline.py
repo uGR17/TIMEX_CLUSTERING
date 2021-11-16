@@ -10,6 +10,7 @@ import tslearn
 from pandas import DataFrame
 
 from timexseries_clustering.data_clustering import ClustersModel
+from timexseries_clustering.data_clustering.models.predictor import ModelResult
 from timexseries_clustering.data_clustering.models.arima_predictor import ARIMAModel
 from timexseries_clustering.data_clustering.models.lstm_predictor import LSTMModel
 from timexseries_clustering.data_clustering.models.mockup_predictor import MockUpModel
@@ -130,7 +131,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
         for metric in dist_measures_to_test:
             log.info(f"Computing univariate clustering using approach: {clustering_approach} and distance metric: {metric}...")
-            _result,_centroid = model_factory(ingested_data, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transformations)
+            _result = model_factory(ingested_data, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transformations)
             #_result = predictor.fit_predict(ingested_data.copy())
             #_result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
 
@@ -138,9 +139,12 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
             #performances.sort(key=lambda x: getattr(x.testing_performances, main_accuracy_estimator.upper()))
             #performances = getattr(performances[0].testing_performances, main_accuracy_estimator.upper())
 
-           #this_model_performances.append((_result, performances, transf))
-            this_model_performances.append((_result, metric))
-            model_results[model][metric] = _result
+            #this_model_performances.append((_result, performances, transf))
+            clusters_vector = _result.best_clustering
+            characteristics = _result.characteristics
+            results_centroids = _result.results
+            this_model_performances.append((clusters_vector, metric))
+            model_results[model][metric] = clusters_vector
             #model_results[model][metric]['centroids'] = _centroid
 
         #this_model_performances.sort(key=lambda x: x[1])
@@ -341,31 +345,51 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 gamma = 0.01
             
             seed=0
-            centroid = []
+            model_centroids = []
+            model_characteristics = {}
             if distance_metric == "ED": #fbprophet
                 log.info(f"Computing k means with ED metric...")
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric="euclidean", verbose=False, random_state=seed)
-                clusters = km.fit_predict(ingested_data.transpose())
+                best_clusters = km.fit_predict(ingested_data.transpose())
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
-                    centroid.append(centrd)
-                return clusters, centroid
+                    model_centroids.append(centrd)
+                model_characteristics["clustering_approach"] = clustering_approach
+                model_characteristics["model"] = model_class
+                model_characteristics["distance_metric"] = distance_metric
+                model_characteristics["transformation"] = transformation
+                return ModelResult(results=model_centroids, characteristics=model_characteristics,
+                            best_clustering=best_clusters)
+                #return best_clusters, model_centroids
+                
             if distance_metric == "DTW":
                 log.info(f"Computing k means with DTW metric...")
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric="dtw", verbose=False, max_iter_barycenter=10, random_state=seed)
-                clusters = km.fit_predict(ingested_data.transpose())
+                best_clusters = km.fit_predict(ingested_data.transpose())
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
-                    centroid.append(centrd)
-                return clusters, centroid
+                    model_centroids.append(centrd)
+                model_characteristics["clustering_approach"] = clustering_approach
+                model_characteristics["model"] = model_class
+                model_characteristics["distance_metric"] = distance_metric
+                model_characteristics["transformation"] = transformation
+                return ModelResult(results=model_centroids, characteristics=model_characteristics,
+                            best_clustering=best_clusters)
+                #return best_clusters, model_centroids
             if distance_metric == "soft_DTW":
                 log.info(f"Computing k means with soft_DTW metric...")
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric="softdtw", verbose=False, metric_params={"gamma": gamma}, random_state=seed)
-                clusters = km.fit_predict(ingested_data.transpose())
+                best_clusters = km.fit_predict(ingested_data.transpose())
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
-                    centroid.append(centrd)
-                return clusters, centroid
+                    model_centroids.append(centrd)
+                model_characteristics["clustering_approach"] = clustering_approach
+                model_characteristics["model"] = model_class
+                model_characteristics["distance_metric"] = distance_metric
+                model_characteristics["transformation"] = transformation
+                return ModelResult(results=model_centroids, characteristics=model_characteristics,
+                            best_clustering=best_clusters)
+                #return best_clusters, model_centroids
         #if model_class == "mockup":
         #    return MockUpModel(param_config, distance_metric)
         #else:
