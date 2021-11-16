@@ -9,7 +9,7 @@ from pandas._libs.tslibs.timestamps import Timestamp
 import pandas as pd
 import numpy as np
 
-from .context import timexseries
+from .context import timexseries_clustering
 
 from timexseries_clustering.data_ingestion import ingest_timeseries, add_freq, select_timeseries_portion
 from .utilities import get_fake_df
