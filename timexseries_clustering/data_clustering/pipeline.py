@@ -128,6 +128,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
     for model in models:
         this_model_performances = []
         model_results[model] = {}
+        model_centroids[model] = {}
         log.info(f"Using model {model}...")
 
         for metric in dist_measures_to_test:

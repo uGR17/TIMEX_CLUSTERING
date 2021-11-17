@@ -14,15 +14,15 @@ class TimeSeriesContainer:
         Dictionary of ModelResult objects, all trained on these time-series.
     xcorr : dict
         Cross-correlation between the data of this time-series and all the other ones.
-    centroids : dict **
-        The centroids of the best clusters obtained. This is useful to verify the performances of each model. 
+    cluster_centers : dict **
+        The cluster centers of the best clusters obtained. This is useful to verify the performances of each model. 
         This dictionary contains one entry for each modeltested.
     """
-    def __init__(self, timeseries_data: DataFrame, models: dict, xcorr: dict, centroids: dict = None):
+    def __init__(self, timeseries_data: DataFrame, models: dict, xcorr: dict, cluster_centers: dict = None):
         self.timeseries_data = timeseries_data
         self.models = models
         self.xcorr = xcorr
-        self.centroids = centroids
+        self.cluster_centers = cluster_centers
 
-    def set_centroids(self, centroids):
-        self.centroids = centroids
+    def set_cluster_centers(self, cluster_centers):
+        self.cluster_centers = cluster_centers
