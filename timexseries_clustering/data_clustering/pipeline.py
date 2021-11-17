@@ -121,6 +121,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
     for col in columns:
         model_results = {}
+        model_centroids = {}
         timeseries_data = ingested_data[[col]]
         xcorr = total_xcorr[col] if total_xcorr is not None else None
 
@@ -140,11 +141,13 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
             #performances = getattr(performances[0].testing_performances, main_accuracy_estimator.upper())
 
             #this_model_performances.append((_result, performances, transf))
-            clusters_vector = _result.best_clustering
+            centroids_centroids = _result.results #**
             characteristics = _result.characteristics
-            results_centroids = _result.results
+            clusters_vector = _result.best_clustering
+
             this_model_performances.append((clusters_vector, metric))
             model_results[model][metric] = clusters_vector
+            model_centroids[model][metric] = centroids_centroids
             #model_results[model][metric]['centroids'] = _centroid
 
         #this_model_performances.sort(key=lambda x: x[1])
@@ -157,7 +160,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
     log.info(f"Process of {clustering_approach} clustering finished")
     timeseries_containers.append(
-        TimeSeriesContainer(ingested_data, model_results, xcorr)
+        TimeSeriesContainer(ingested_data, model_results, xcorr, model_centroids)
     )
     
     #return best_transformations, timeseries_containers 

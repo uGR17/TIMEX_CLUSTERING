@@ -14,11 +14,9 @@ class TimeSeriesContainer:
         Dictionary of ModelResult objects, all trained on these time-series.
     xcorr : dict
         Cross-correlation between the data of this time-series and all the other ones.
-    centroids : dict
-        The historical prediction, i.e. the predictions computed on a rolling window on the historical data.
-        This is useful to verify the performances of each model not only on the very last data, but throughout the
-        history of the time-series, in a cross-validation fashion. This dictionary contains one entry for each model
-        tested.
+    centroids : dict **
+        The centroids of the best clusters obtained. This is useful to verify the performances of each model. 
+        This dictionary contains one entry for each modeltested.
     """
     def __init__(self, timeseries_data: DataFrame, models: dict, xcorr: dict, centroids: dict = None):
         self.timeseries_data = timeseries_data
