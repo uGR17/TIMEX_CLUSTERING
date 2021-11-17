@@ -121,14 +121,14 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
     for col in columns:
         model_results = {}
-        model_centroids = {}
+        model_centers = {}
         timeseries_data = ingested_data[[col]]
         xcorr = total_xcorr[col] if total_xcorr is not None else None
 
     for model in models:
         this_model_performances = []
         model_results[model] = {}
-        model_centroids[model] = {}
+        model_centers[model] = {}
         log.info(f"Using model {model}...")
 
         for metric in dist_measures_to_test:
@@ -142,14 +142,13 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
             #performances = getattr(performances[0].testing_performances, main_accuracy_estimator.upper())
 
             #this_model_performances.append((_result, performances, transf))
-            centroids_centroids = _result.results #**
+            cluster_centers = _result.results #**
             characteristics = _result.characteristics
             clusters_vector = _result.best_clustering
 
             this_model_performances.append((clusters_vector, metric))
             model_results[model][metric] = clusters_vector
-            model_centroids[model][metric] = centroids_centroids
-            #model_results[model][metric]['centroids'] = _centroid
+            model_centers[model][metric] = cluster_centers
 
         #this_model_performances.sort(key=lambda x: x[1])
         #best_tr = this_model_performances[0][2]
@@ -161,7 +160,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
     log.info(f"Process of {clustering_approach} clustering finished")
     timeseries_containers.append(
-        TimeSeriesContainer(ingested_data, model_results, xcorr, model_centroids)
+        TimeSeriesContainer(ingested_data, model_results, xcorr, model_centers)
     )
     
     #return best_transformations, timeseries_containers 
@@ -313,11 +312,11 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
 
     Returns
     -------
-    array
-        Array with the results of the clustering, it has the index of the cluster each time series belongs to.
-    -------
-    list
-        List with the centroid of each cluster, each centroid is an array of lenght equal of the time-series.
+    ModelResult
+        Model Result of the class specified in `model_class`, it contains the 
+        results of the best clustering with the index of the cluster each time 
+        series belongs to. Contains also the model characteristics and the 
+        centers of each cluster.
 
     Examples
     --------
@@ -349,7 +348,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 gamma = 0.01
             
             seed=0
-            model_centroids = []
+            model_centers = []
             model_characteristics = {}
             if distance_metric == "ED": #fbprophet
                 log.info(f"Computing k means with ED metric...")
@@ -357,14 +356,14 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 best_clusters = km.fit_predict(ingested_data.transpose())
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
-                    model_centroids.append(centrd)
+                    model_centers.append(centrd)
                 model_characteristics["clustering_approach"] = clustering_approach
                 model_characteristics["model"] = model_class
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["transformation"] = transformation
-                return ModelResult(results=model_centroids, characteristics=model_characteristics,
+                return ModelResult(results=model_centers, characteristics=model_characteristics,
                             best_clustering=best_clusters)
-                #return best_clusters, model_centroids
+                #return best_clusters, model_centers
                 
             if distance_metric == "DTW":
                 log.info(f"Computing k means with DTW metric...")
@@ -372,28 +371,26 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 best_clusters = km.fit_predict(ingested_data.transpose())
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
-                    model_centroids.append(centrd)
+                    model_centers.append(centrd)
                 model_characteristics["clustering_approach"] = clustering_approach
                 model_characteristics["model"] = model_class
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["transformation"] = transformation
-                return ModelResult(results=model_centroids, characteristics=model_characteristics,
+                return ModelResult(results=model_centers, characteristics=model_characteristics,
                             best_clustering=best_clusters)
-                #return best_clusters, model_centroids
             if distance_metric == "soft_DTW":
                 log.info(f"Computing k means with soft_DTW metric...")
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric="softdtw", verbose=False, metric_params={"gamma": gamma}, random_state=seed)
                 best_clusters = km.fit_predict(ingested_data.transpose())
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
-                    model_centroids.append(centrd)
+                    model_centers.append(centrd)
                 model_characteristics["clustering_approach"] = clustering_approach
                 model_characteristics["model"] = model_class
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["transformation"] = transformation
-                return ModelResult(results=model_centroids, characteristics=model_characteristics,
+                return ModelResult(results=model_centers, characteristics=model_characteristics,
                             best_clustering=best_clusters)
-                #return best_clusters, model_centroids
         #if model_class == "mockup":
         #    return MockUpModel(param_config, distance_metric)
         #else:
