@@ -18,11 +18,11 @@ import dash_bootstrap_components as dbc
 from colorhash import ColorHash
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from timexseries_c.data_clustering import ValidationPerformance
-from timexseries_c.data_clustering.models.predictor import SingleResult
+from timexseries_clustering.data_clustering import ValidationPerformance
+from timexseries_clustering.data_clustering.models.predictor import SingleResult
 import calendar
 
-from timexseries_c.timeseries_container import TimeSeriesContainer
+from timexseries_clustering.timeseries_container import TimeSeriesContainer
 
 log = logging.getLogger(__name__)
 
@@ -150,7 +150,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
                 characteristics_list(model_characteristic, testing_performances),
                 # html.Div("Testing performance:"),
                 # html.Ul([html.Li(key + ": " + str(testing_performances[key])) for key in testing_performances]),
-                prediction_plot(timeseries_data, best_prediction, test_values),
+                cluster_plot(timeseries_data, best_prediction, test_values),
                 performance_plot(timeseries_data, best_prediction, testing_performances, test_values),
             ])
 
@@ -778,7 +778,7 @@ def box_plot_aggregate(df: DataFrame, visualization_parameters: dict) -> dcc.Gra
     return g
 
 
-def prediction_plot(df: DataFrame, predicted_data: DataFrame, test_values: int = 0) -> dcc.Graph:
+def cluster_plot(df: DataFrame, predicted_data: DataFrame, test_values: int = 0) -> dcc.Graph:
     """
     Create and return a plot which contains the prediction for a dataframe.
     The plot is built using two dataframe: `ingested_data` and `predicted_data`.
@@ -946,7 +946,7 @@ def plot_every_prediction(df: DataFrame, model_results: List[SingleResult],
     for r in model_results:
         predicted_data = r.prediction
         testing_performance = r.testing_performances
-        plot = prediction_plot(df, predicted_data, test_values)
+        plot = cluster_plot(df, predicted_data, test_values)
         plot.figure.update_layout(title="")
         new_childrens.extend([
             html.Div(main_accuracy_estimator.upper()

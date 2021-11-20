@@ -41,20 +41,20 @@ class ModelResult:
 
     Parameters
     ----------
-    results : [SingleResult]
-        List of all the results obtained using all the possible configurations for this model on the time series.
+    cluster_centers : [SingleResult]
+        List of all the cluster centers obtained using all the possible configurations for this model on the time series.
         This is useful to create plots which show how the performance vary changing the model parameters (e.g.
         `timexseries_clustering.data_visualization.functions.performance_plot`).
     characteristics : dict
         Model parameters. This dictionary collects human-readable characteristics of the model, e.g. the number
         of clusters used, the distance metric applied, etc.
     best_clustering : DataFrame
-        Clustering obtained using the best model parameters and _all_ the available time-series. This is
+        Clustering obtained using the best model parameters and _all_ the available time-series. This are
         the cluster indexes that users are most likely to want.
     """
 
-    def __init__(self, results: List[SingleResult], characteristics: dict, best_clustering: DataFrame):
-        self.results = results
+    def __init__(self, cluster_centers: List[SingleResult], characteristics: dict, best_clustering: DataFrame):
+        self.cluster_centers = cluster_centers
         self.characteristics = characteristics
         self.best_clustering = best_clustering
 

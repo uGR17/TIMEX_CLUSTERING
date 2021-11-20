@@ -142,12 +142,12 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
             #performances = getattr(performances[0].testing_performances, main_accuracy_estimator.upper())
 
             #this_model_performances.append((_result, performances, transf))
-            cluster_centers = _result.results #**
+            cluster_centers = _result.cluster_centers #**
             characteristics = _result.characteristics
             clusters_vector = _result.best_clustering
 
             this_model_performances.append((clusters_vector, metric))
-            model_results[model][metric] = clusters_vector
+            model_results[model][metric] = _result #clusters_vector
             model_centers[model][metric] = cluster_centers
 
         #this_model_performances.sort(key=lambda x: x[1])
@@ -314,8 +314,8 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
     -------
     ModelResult
         Model Result of the class specified in `model_class`, it contains the 
-        results of the best clustering with the index of the cluster each time 
-        series belongs to. Contains also the model characteristics and the 
+        results of the best clustering with the index of the cluster that each 
+        time series belongs to. Contains also the model characteristics and the 
         centers of each cluster.
 
     Examples
@@ -359,9 +359,10 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                     model_centers.append(centrd)
                 model_characteristics["clustering_approach"] = clustering_approach
                 model_characteristics["model"] = model_class
+                model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["transformation"] = transformation
-                return ModelResult(results=model_centers, characteristics=model_characteristics,
+                return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,
                             best_clustering=best_clusters)
                 #return best_clusters, model_centers
                 
@@ -376,7 +377,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 model_characteristics["model"] = model_class
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["transformation"] = transformation
-                return ModelResult(results=model_centers, characteristics=model_characteristics,
+                return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,
                             best_clustering=best_clusters)
             if distance_metric == "soft_DTW":
                 log.info(f"Computing k means with soft_DTW metric...")
@@ -389,7 +390,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 model_characteristics["model"] = model_class
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["transformation"] = transformation
-                return ModelResult(results=model_centers, characteristics=model_characteristics,
+                return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,
                             best_clustering=best_clusters)
         #if model_class == "mockup":
         #    return MockUpModel(param_config, distance_metric)
