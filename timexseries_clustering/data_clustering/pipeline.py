@@ -375,6 +375,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                     model_centers.append(centrd)
                 model_characteristics["clustering_approach"] = clustering_approach
                 model_characteristics["model"] = model_class
+                model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["transformation"] = transformation
                 return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,
@@ -388,6 +389,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                     model_centers.append(centrd)
                 model_characteristics["clustering_approach"] = clustering_approach
                 model_characteristics["model"] = model_class
+                model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["transformation"] = transformation
                 return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,

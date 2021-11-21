@@ -778,28 +778,25 @@ def box_plot_aggregate(df: DataFrame, visualization_parameters: dict) -> dcc.Gra
     return g
 
 
-def cluster_plot(df: DataFrame, predicted_data: DataFrame, test_values: int = 0) -> dcc.Graph:
+def cluster_plot(df: DataFrame, cluster_data: dict, test_values: int = 0) -> dcc.Graph:
     """
-    Create and return a plot which contains the prediction for a dataframe.
-    The plot is built using two dataframe: `ingested_data` and `predicted_data`.
+    Create and return a plot which contains the clustering for a dataframe.
+    The plot is built using a dataframe: `ingested_data` and dictionary: `cluster_data`.
 
-    `ingested_data` includes the raw data ingested by the app, while `predicted_data` contains the actual prediction
-    made by a model.
+    `ingested_data` includes the raw data ingested by the app, while `cluster_data` contains the cluster indexes, cluster characteristics
+    and cluster centers made by a model.
 
-    Note that `predicted_data` starts at the first value used for training.
+    Note that `cluster_data` its is a dictionary with distance metric as keys and ModelResult objects as values.
 
-    The data not used for training is plotted in black, the data used for training is plotted in green and the
-    validation values dashed.
-
-    Note that `predicted_data` may or not have the columns "yhat_lower" and "yhat_upper".
+    The time-series are plotted in black and the cluster centers are plotted in red.
 
     Parameters
     ----------
     df : DataFrame
         Raw values ingested by the app.
 
-    predicted_data : DataFrame
-        Prediction created by a model.
+    cluster_data : DataFrame
+        Clustering created by a model.
 
     test_values : int, optional, default 0
         Number of validation values used in the testing.
@@ -812,47 +809,44 @@ def cluster_plot(df: DataFrame, predicted_data: DataFrame, test_values: int = 0)
     --------
     Check `create_timeseries_dash_children` to check the use.
     """
-    fig = go.Figure()
 
-    not_training_data = df.loc[:predicted_data.index[0]]
-    training_data = df.loc[predicted_data.index[0]:]
-    training_data = training_data.iloc[:-test_values]
+    dframe = df.copy()
+    df_array = dframe.to_numpy()
+    df_array = df_array.transpose()
 
-    fig.add_trace(go.Scatter(x=not_training_data.index, y=not_training_data.iloc[:, 0],
-                             line=dict(color='black'),
-                             mode='markers',
-                             name=_('unused data')))
-    fig.add_trace(go.Scatter(x=training_data.index, y=training_data.iloc[:, 0],
-                             line=dict(color='green', width=4, dash='dash'),
-                             mode='markers',
-                             name=_('training data'),
-                             ))
+    num_dist_metrics = len(cluster_data)
+    subplotmult = 0
+    first_key = list(cluster_data)[0]
+    num_clusters = cluster_data[first_key].characteristics['n_clusters']
+    model = cluster_data[first_key].characteristics['model']
 
-    if test_values > 0:
-        test_data = df.iloc[-test_values:]
-        fig.add_trace(go.Scatter(x=test_data.index, y=test_data.iloc[:, 0],
-                                 line=dict(color='green', width=3, dash='dot'),
-                                 name=_('validation data')))
+    titles = []
+    for key, value in cluster_data.items() :
+        for i in range(1,len(cluster_data)+1):
+            titles.append('Metric: '+str(key)+', Cluster '+str(i))
+    
+    fig = make_subplots(rows = num_dist_metrics, cols = num_clusters, subplot_titles=(titles))
 
-    fig.add_trace(go.Scatter(x=predicted_data.index, y=predicted_data['yhat'],
-                             line=dict(color='blue'),
-                             mode='lines+markers',
-                             name=_('yhat')))
-    try:
-        fig.add_trace(go.Scatter(x=predicted_data.index, y=predicted_data['yhat_lower'],
-                                 line=dict(color='lightgreen', dash='dash'),
-                                 name=_('yhatlower')))
-        fig.add_trace(go.Scatter(x=predicted_data.index, y=predicted_data['yhat_upper'],
-                                 line=dict(color='lightgreen', dash='dash'),
-                                 name=_('yhatupper')))
-    except:
-        pass
+    subplotmult = 1
+    for key, value in cluster_data.items() :
+        for yi in range(num_clusters):
+            for xx in df_array[value.best_clustering == yi]:
+                fig.add_trace(go.Scatter(x=df.index, y=xx,
+                                    line=dict(color='grey'),
+                                    mode='lines'),
+                                    row=subplotmult, col=yi+1)
+                                    #name=i))
+            fig.add_trace(go.Scatter(x=df.index, y=value.cluster_centers[yi],
+                                line=dict(color='red'),
+                                mode='lines',
+                                name='cluster center'),
+                                row=subplotmult, col=yi+1)
+        subplotmult = subplotmult + 1
 
-    fig.update_layout(title=_("Best prediction for the validation set"), xaxis_title=df.index.name,
-                      yaxis_title=df.columns[0])
+    fig.update_layout(title=_("Best clustering for the dataset, Model: "+str(model)))
+
     g = dcc.Graph(
-        figure=fig
-    )
+        figure=fig )
     return g
 
 
