@@ -813,6 +813,7 @@ def cluster_plot(df: DataFrame, cluster_data: dict, test_values: int = 0) -> dcc
     dframe = df.copy()
     df_array = dframe.to_numpy()
     df_array = df_array.transpose()
+    column_names = df.columns.values
 
     num_dist_metrics = len(cluster_data)
     subplotmult = 0
@@ -830,21 +831,24 @@ def cluster_plot(df: DataFrame, cluster_data: dict, test_values: int = 0) -> dcc
     subplotmult = 1
     for key, value in cluster_data.items() :
         for yi in range(num_clusters):
+            i = 0
+            cluster_names = column_names[value.best_clustering == yi]
             for xx in df_array[value.best_clustering == yi]:
                 fig.add_trace(go.Scatter(x=df.index, y=xx,
-                                    line=dict(color='grey'),
-                                    mode='lines'),
+                                    line=dict(color='grey',width= 0.6),
+                                    mode='lines',name=cluster_names[i]),
                                     row=subplotmult, col=yi+1)
-                                    #name=i))
+                i = i+1
             fig.add_trace(go.Scatter(x=df.index, y=value.cluster_centers[yi],
                                 line=dict(color='red'),
                                 mode='lines',
-                                name='cluster center'),
+                                name= (str(key)+', cluster center '+ str(yi+1))),
                                 row=subplotmult, col=yi+1)
         subplotmult = subplotmult + 1
 
     fig.update_layout(title=_("Best clustering for the dataset, Model: "+str(model)))
-
+    fig.update_yaxes(matches='y')
+    
     g = dcc.Graph(
         figure=fig )
     return g
