@@ -6,6 +6,7 @@ import os
 import pandas
 from pandas import Grouper, DataFrame
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 import numpy as np
 from typing import List
 
@@ -778,6 +779,42 @@ def box_plot_aggregate(df: DataFrame, visualization_parameters: dict) -> dcc.Gra
     return g
 
 
+def timeseries_plot(df: DataFrame) -> dcc.Graph:
+    """
+    Create and return a plot which contains the time series of a dataframe.
+    The plot is built using a dataframe: `ingested_data`.
+
+    `ingested_data` includes the raw data ingested by the app, while `cluster_data` contains the cluster indexes, cluster characteristics
+    and cluster centers made by a model.
+
+    Parameters
+    ----------
+    df : DataFrame
+        Raw values ingested by the app.
+
+    Returns
+    -------
+    g : dcc.Graph
+
+    See Also
+    --------
+    Check `create_timeseries_dash_children` to check the use.
+    """
+
+    fig = go.Figure()
+
+    for i in df.columns[0:]:
+        fig.add_trace(go.Scatter(x=df.index, y=df[i],
+                            mode='lines',
+                            name=i))
+        
+    fig.update_layout(title=("Time-Series ingested"), xaxis_title=df.index.name)
+
+    g = dcc.Graph(
+        figure=fig )
+    return g
+
+
 def cluster_plot(df: DataFrame, cluster_data: dict, test_values: int = 0) -> dcc.Graph:
     """
     Create and return a plot which contains the clustering for a dataframe.
@@ -852,6 +889,58 @@ def cluster_plot(df: DataFrame, cluster_data: dict, test_values: int = 0) -> dcc
     g = dcc.Graph(
         figure=fig )
     return g
+
+def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict, test_values: int = 0):
+    """
+    Create and return a plot using cluster_plot_matplotlib which contains the clustering for a dataframe.
+    The plot is built using a dataframe: `ingested_data` and dictionary: `cluster_data`.
+
+    `ingested_data` includes the raw data ingested by the app, while `cluster_data` contains the cluster indexes, cluster characteristics
+    and cluster centers made by a model.
+
+    Note that `cluster_data` its is a dictionary with distance metric as keys and ModelResult objects as values.
+
+    The time-series are plotted in black and the cluster centers are plotted in red.
+
+    Parameters
+    ----------
+    df : DataFrame
+        Raw values ingested by the app.
+
+    cluster_data : DataFrame
+        Clustering created by a model.
+
+    test_values : int, optional, default 0
+        Number of validation values used in the testing.
+
+    """
+    plt.pyplot.figure()
+    plt.pyplotlt.figure(figsize=(13, 8))
+
+    X_train = df.to_numpy()
+    X_train = X_train.transpose()
+    num_dist_metrics = len(cluster_data)
+    subplotmult = 0
+    first_key = list(cluster_data)[0]
+    num_clusters = cluster_data[first_key].characteristics['n_clusters']
+    subplotmult = 0
+    sz = len(df)
+
+    for key, value in cluster_data.items() :
+        for yi in range(num_clusters):
+            plt.subplot(num_dist_metrics, num_clusters, yi + 1 + num_clusters*subplotmult)
+            for xx in X_train[value.best_clustering == yi]:
+                plt.plot(xx.ravel(), "k-", alpha=.2)
+            plt.plot(value.cluster_centers[yi], "r-")
+            plt.xlim(0, sz)
+            plt.text(0.55, 0.85,'Cluster %d' % (yi + 1),
+                    transform=plt.gca().transAxes)
+            if yi == 1:
+                plt.title('Model: '+str(value.characteristics['model'])+', Distance metric: '+str(value.characteristics['distance_metric']))
+        subplotmult = subplotmult + 1
+
+    plt.tight_layout()
+    plt.show()
 
 
 def performance_plot(df: DataFrame, predicted_data: DataFrame, testing_performances: List[ValidationPerformance],
