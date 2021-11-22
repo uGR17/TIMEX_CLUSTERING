@@ -914,8 +914,8 @@ def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict, test_values: int 
         Number of validation values used in the testing.
 
     """
-    plt.pyplot.figure()
-    plt.pyplotlt.figure(figsize=(13, 8))
+    plt.figure()
+    plt.figure(figsize=(13, 8))
 
     X_train = df.to_numpy()
     X_train = X_train.transpose()
