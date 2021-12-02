@@ -85,7 +85,8 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
     name = timeseries_data.columns[0]
 
     locale_dir = pathlib.Path(os.path.abspath(__file__)).parent / "locales"
-
+    
+    """
     global _
     try:
         gt = gettext.translation('messages', localedir=locale_dir, languages=[visualization_parameters["language"]])
@@ -95,17 +96,17 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
         gt = gettext.translation('messages', localedir=locale_dir, languages=['en'])
         gt.install()
         _ = gt.gettext
-
+    """
     # Data visualization with plots
     children.extend([
-        html.H2(children=name + _(' analysis'), id=name),
-        html.H3(_("Data visualization")),
+        html.H2(children=name + (' analysis'), id=name),
+        html.H3(("Data visualization")),
         line_plot(timeseries_data),
-        histogram_plot(timeseries_data),
-        box_plot(timeseries_data, visualization_parameters),
-        box_plot_aggregate(timeseries_data, visualization_parameters),
-        components_plot(timeseries_data),
-        autocorrelation_plot(timeseries_data),
+        #histogram_plot(timeseries_data),
+        #box_plot(timeseries_data, visualization_parameters),
+        #box_plot_aggregate(timeseries_data, visualization_parameters),
+        #components_plot(timeseries_data),
+        #autocorrelation_plot(timeseries_data),
     ])
 
     # Plot cross-correlation plot and graphs, if requested.
@@ -114,17 +115,18 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
             "xcorr_graph_threshold"] if "xcorr_graph_threshold" in visualization_parameters else None
 
         children.extend([
-            html.H3(_("Cross-correlation")),
-            html.Div(_("Negative lags (left part) show the correlation between this scenario and the future of the "
+            html.H3(("Cross-correlation")),
+            html.Div(("Negative lags (left part) show the correlation between this scenario and the future of the "
                        "others.")),
-            html.Div(_("Meanwhile, positive lags (right part) shows the correlation between this scenario "
+            html.Div(("Meanwhile, positive lags (right part) shows the correlation between this scenario "
                        "and the past of the others.")),
             cross_correlation_plot(timeseries_container.xcorr),
-            html.Div(_("The peaks found using each cross-correlation modality are shown in the graphs:")),
+            html.Div(("The peaks found using each cross-correlation modality are shown in the graphs:")),
             cross_correlation_graph(name, timeseries_container.xcorr, graph_corr_threshold)
         ])
 
     # Plot the prediction results, if requested.
+    """
     if timeseries_container.models is not None:
         model_parameters = param_config["model_parameters"]
 
@@ -158,7 +160,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
             # EXTRA
             # Warning: this will plot every model result, with every training set used!
             # children.extend(plot_every_prediction(ingested_data, model_results, main_accuracy_estimator, test_values))
-
+    """
     return children
 
 
@@ -890,7 +892,7 @@ def cluster_plot(df: DataFrame, cluster_data: dict, test_values: int = 0) -> dcc
         figure=fig )
     return g
 
-def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict, test_values: int = 0):
+def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict):
     """
     Create and return a plot using cluster_plot_matplotlib which contains the clustering for a dataframe.
     The plot is built using a dataframe: `ingested_data` and dictionary: `cluster_data`.
