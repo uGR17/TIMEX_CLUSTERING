@@ -101,7 +101,9 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
     children.extend([
         html.H2(children=name + (' analysis'), id=name),
         html.H3(("Data visualization")),
-        line_plot(timeseries_data),
+        #line_plot(timeseries_data),
+        timeseries_plot(timeseries_data),
+        cluster_plot(timeseries_data),
         #histogram_plot(timeseries_data),
         #box_plot(timeseries_data, visualization_parameters),
         #box_plot_aggregate(timeseries_data, visualization_parameters),
