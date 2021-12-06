@@ -1,7 +1,4 @@
 import logging
-import gettext
-import pathlib
-import os
 
 import pandas
 from pandas import Grouper, DataFrame
@@ -83,27 +80,13 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
     timeseries_data = timeseries_container.timeseries_data
 
     name = timeseries_data.columns[0]
-
-    locale_dir = pathlib.Path(os.path.abspath(__file__)).parent / "locales"
     
-    """
-    global _
-    try:
-        gt = gettext.translation('messages', localedir=locale_dir, languages=[visualization_parameters["language"]])
-        gt.install()
-        _ = gt.gettext
-    except:
-        gt = gettext.translation('messages', localedir=locale_dir, languages=['en'])
-        gt.install()
-        _ = gt.gettext
-    """
     # Data visualization with plots
     children.extend([
         html.H2(children=name + (' analysis'), id=name),
-        html.H3(("Data visualization")),
+        html.H3("Data visualization"),
         #line_plot(timeseries_data),
         timeseries_plot(timeseries_data),
-        cluster_plot(timeseries_data),
         #histogram_plot(timeseries_data),
         #box_plot(timeseries_data, visualization_parameters),
         #box_plot_aggregate(timeseries_data, visualization_parameters),
@@ -117,13 +100,13 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
             "xcorr_graph_threshold"] if "xcorr_graph_threshold" in visualization_parameters else None
 
         children.extend([
-            html.H3(("Cross-correlation")),
-            html.Div(("Negative lags (left part) show the correlation between this scenario and the future of the "
-                       "others.")),
-            html.Div(("Meanwhile, positive lags (right part) shows the correlation between this scenario "
-                       "and the past of the others.")),
+            html.H3("Cross-correlation"),
+            html.Div("Negative lags (left part) show the correlation between this scenario and the future of the "
+                       "others."),
+            html.Div("Meanwhile, positive lags (right part) shows the correlation between this scenario "
+                       "and the past of the others."),
             cross_correlation_plot(timeseries_container.xcorr),
-            html.Div(("The peaks found using each cross-correlation modality are shown in the graphs:")),
+            html.Div("The peaks found using each cross-correlation modality are shown in the graphs:"),
             cross_correlation_graph(name, timeseries_container.xcorr, graph_corr_threshold)
         ])
 
@@ -135,7 +118,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
         models = timeseries_container.models
 
         children.append(
-            html.H3(_("Training & Validation results")),
+            html.H3("Training & Validation results"),
         )
 
         for model_name in models:
