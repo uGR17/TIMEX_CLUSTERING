@@ -173,6 +173,30 @@ def create_dash_children(timeseries_containers: List[TimeSeriesContainer], param
 
     return children
 
+def line_plot(df: DataFrame) -> dcc.Graph:
+    """
+    Create and return the line plot for a dataframe.
+    Parameters
+    ----------
+    df : DataFrame
+        Dataframe to plot.
+    Returns
+    -------
+    g : dcc.Graph
+        Dash object containing the line plot.
+    Examples
+    --------
+    Get the `figure` attribute if you want to display this in a Jupyter notebook.
+    >>> line_plot = line_plot(timeseries_container.timeseries_data).figure
+    >>> line_plot.show()
+    """
+    fig = go.Figure(data=go.Scatter(x=df.index, y=df.iloc[:, 0], mode='lines+markers'))
+    fig.update_layout(title='Line plot', xaxis_title=df.index.name, yaxis_title=df.columns[0])
+
+    g = dcc.Graph(
+        figure=fig
+    )
+    return g
 
 def line_plot_multiIndex(df: DataFrame) -> dcc.Graph:
     """
@@ -847,6 +871,7 @@ def cluster_plot(df: DataFrame, cluster_data: dict, test_values: int = 0) -> dcc
     g = dcc.Graph(
         figure=fig )
     return g
+
 
 def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict):
     """
