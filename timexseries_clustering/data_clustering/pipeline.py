@@ -160,7 +160,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
     log.info(f"Process of {clustering_approach} clustering finished")
     timeseries_containers.append(
-        TimeSeriesContainer(ingested_data, model_results, xcorr, model_centers)
+        TimeSeriesContainer(ingested_data, model_results, xcorr)
     )
     
     #return best_transformations, timeseries_containers 
@@ -350,6 +350,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
             seed=0
             model_centers = []
             model_characteristics = {}
+            
             if distance_metric == "ED": #fbprophet
                 log.info(f"Computing k means with ED metric...")
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric="euclidean", verbose=False, random_state=seed)
@@ -359,8 +360,8 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                     model_centers.append(centrd)
                 model_characteristics["clustering_approach"] = clustering_approach
                 model_characteristics["model"] = model_class
-                model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["distance_metric"] = distance_metric
+                model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["transformation"] = transformation
                 return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,
                             best_clustering=best_clusters)
@@ -375,8 +376,8 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                     model_centers.append(centrd)
                 model_characteristics["clustering_approach"] = clustering_approach
                 model_characteristics["model"] = model_class
-                model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["distance_metric"] = distance_metric
+                model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["transformation"] = transformation
                 return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,
                             best_clustering=best_clusters)
@@ -389,8 +390,8 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                     model_centers.append(centrd)
                 model_characteristics["clustering_approach"] = clustering_approach
                 model_characteristics["model"] = model_class
-                model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["distance_metric"] = distance_metric
+                model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["transformation"] = transformation
                 return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,
                             best_clustering=best_clusters)

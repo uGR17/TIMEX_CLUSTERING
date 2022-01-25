@@ -22,7 +22,7 @@ requirements = ["dateparser<2.0.0,>=1.0.0",\
 
 setup(
     name="timexseries_clustering",
-    version="0.0.62",
+    version="0.0.64",
     author="Uriel Guadarrama Ramirez",
     author_email="u.guadarrama@hotmail.com",
     description="TIMEX-CLUSTERING is a framework for time-series-clustering-as-a-service",
@@ -31,6 +31,7 @@ setup(
     url="https://github.com/uGR17/TIMEX_CLUSTERING",
     packages=find_packages(),
     install_requires=requirements,
+    license='GNU General Public License v3 (GPLv3)',
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

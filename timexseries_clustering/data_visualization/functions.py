@@ -797,7 +797,7 @@ def timeseries_plot(df: DataFrame) -> dcc.Graph:
     return g
 
 
-def cluster_plot(df: DataFrame, cluster_data: dict, test_values: int = 0) -> dcc.Graph:
+def cluster_plot(df: DataFrame, cluster_data: dict) -> dcc.Graph:
     """
     Create and return a plot which contains the clustering for a dataframe.
     The plot is built using a dataframe: `ingested_data` and dictionary: `cluster_data`.
@@ -816,9 +816,6 @@ def cluster_plot(df: DataFrame, cluster_data: dict, test_values: int = 0) -> dcc
 
     cluster_data : DataFrame
         Clustering created by a model.
-
-    test_values : int, optional, default 0
-        Number of validation values used in the testing.
 
     Returns
     -------

@@ -4,6 +4,7 @@ numpy==1.19.3
 torch==1.7.0
 tslearn==0.5.2
 matplotlib==3.4.3
+plotly==5.5.0
 Cython==0.29.24
 pystan==3.3.0
 colorhash==1.19.0
