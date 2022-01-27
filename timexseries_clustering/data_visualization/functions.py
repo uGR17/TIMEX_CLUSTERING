@@ -78,15 +78,18 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
 
     visualization_parameters = param_config["visualization_parameters"]
     timeseries_data = timeseries_container.timeseries_data
-
-    name = timeseries_data.columns[0]
+    clustering_approach = timeseries_container.approach
+    clustering_models = timeseries_container.models['k_means']
     
     # Data visualization with plots
     children.extend([
-        html.H2(children=name + (' analysis'), id=name),
+        html.H2(children = clustering_approach + (' approach analysis'), id=clustering_approach),
         html.H3("Data visualization"),
         #line_plot(timeseries_data),
         timeseries_plot(timeseries_data),
+        cluster_plot(timeseries_data, clustering_models),
+#        for key, value in clustering_models.items() :
+#            cluster_plot(timeseries_data, value),
         #histogram_plot(timeseries_data),
         #box_plot(timeseries_data, visualization_parameters),
         #box_plot_aggregate(timeseries_data, visualization_parameters),
@@ -831,6 +834,7 @@ def cluster_plot(df: DataFrame, cluster_data: dict) -> dcc.Graph:
     df_array = df_array.transpose()
     column_names = df.columns.values
 
+    num_model = len(cluster_data)
     num_dist_metrics = len(cluster_data)
     subplotmult = 0
     first_key = list(cluster_data)[0]
@@ -899,6 +903,7 @@ def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict):
 
     X_train = df.to_numpy()
     X_train = X_train.transpose()
+    cluster_data
     num_dist_metrics = len(cluster_data)
     subplotmult = 0
     first_key = list(cluster_data)[0]
