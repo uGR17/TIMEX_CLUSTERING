@@ -121,14 +121,14 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
     for col in columns:
         model_results = {}
-        model_centers = {}
+        #model_centers = {}
         timeseries_data = ingested_data[[col]]
         xcorr = total_xcorr[col] if total_xcorr is not None else None
 
     for model in models:
         this_model_performances = []
         model_results[model] = {}
-        model_centers[model] = {}
+        #model_centers[model] = {}
         log.info(f"Using model {model}...")
 
         for metric in dist_measures_to_test:
@@ -147,8 +147,8 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
             clusters_vector = _result.best_clustering
 
             this_model_performances.append((clusters_vector, metric))
-            model_results[model][metric] = _result #clusters_vector
-            model_centers[model][metric] = cluster_centers
+            model_results[model][metric] = _result #object ModelResult
+            #model_centers[model][metric] = cluster_centers
 
         #this_model_performances.sort(key=lambda x: x[1])
         #best_tr = this_model_performances[0][2]
@@ -160,7 +160,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
     log.info(f"Process of {clustering_approach} clustering finished")
     timeseries_containers.append(
-        TimeSeriesContainer(ingested_data, model_results, xcorr)
+        TimeSeriesContainer(ingested_data, str(characteristics['clustering_approach']), model_results, xcorr)
     )
     
     #return best_transformations, timeseries_containers 
@@ -287,7 +287,7 @@ def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
             timeseries_data = ingested_data[[col]]
             timeseries_xcorr = total_xcorr[col] if total_xcorr is not None else None
             timeseries_containers.append(
-                TimeSeriesContainer(timeseries_data, None, timeseries_xcorr)
+                TimeSeriesContainer(timeseries_data, None, None, timeseries_xcorr)
             )
 
     return timeseries_containers
@@ -358,7 +358,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
                     model_centers.append(centrd)
-                model_characteristics["clustering_approach"] = clustering_approach
+                model_characteristics["clustering_approach"] = "Observation based"
                 model_characteristics["model"] = model_class
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["n_clusters"] = n_clusters
@@ -374,7 +374,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
                     model_centers.append(centrd)
-                model_characteristics["clustering_approach"] = clustering_approach
+                model_characteristics["clustering_approach"] = "Observation based"
                 model_characteristics["model"] = model_class
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["n_clusters"] = n_clusters
@@ -388,7 +388,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
                     model_centers.append(centrd)
-                model_characteristics["clustering_approach"] = clustering_approach
+                model_characteristics["clustering_approach"] = "Observation based"
                 model_characteristics["model"] = model_class
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["n_clusters"] = n_clusters
