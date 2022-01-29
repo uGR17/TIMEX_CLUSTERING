@@ -79,7 +79,8 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
     visualization_parameters = param_config["visualization_parameters"]
     timeseries_data = timeseries_container.timeseries_data
     clustering_approach = timeseries_container.approach
-    clustering_models = timeseries_container.models['k_means']
+    
+    #clustering_models = timeseries_container.models['k_means']
     
     # Data visualization with plots
     children.extend([
@@ -87,7 +88,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
         html.H3("Data visualization"),
         #line_plot(timeseries_data),
         timeseries_plot(timeseries_data),
-        cluster_plot(timeseries_data, clustering_models),
+        #cluster_plot(timeseries_data, clustering_models),
 #        for key, value in clustering_models.items() :
 #            cluster_plot(timeseries_data, value),
         #histogram_plot(timeseries_data),
@@ -97,6 +98,46 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
         #autocorrelation_plot(timeseries_data),
     ])
 
+    
+    # Plot the prediction results, if requested.
+    if timeseries_container.models is not None:
+        model_parameters = param_config["model_parameters"]
+
+        models = timeseries_container.models
+
+        children.append(
+            html.H3("Clustering results"),
+        )
+
+        for model_name in models:
+            model = models[model_name]
+            
+            for metric_key in model:
+                metric = model[metric_key]
+                #model_results = metric.cluster_centers
+                model_characteristic = metric.characteristics
+
+            #test_values = model_characteristic["test_values"]
+            #main_accuracy_estimator = model_parameters["main_accuracy_estimator"]
+            ##model_results.sort(key=lambda x: getattr(x.testing_performances, main_accuracy_estimator.upper()))
+
+            #best_prediction = model_results[0].prediction
+            #testing_performances = [x.testing_performances for x in model_results]
+
+            children.extend([
+                html.H4(f"{model_name}"),
+                characteristics_list(model_characteristic),
+                # html.Div("Testing performance:"),
+                # html.Ul([html.Li(key + ": " + str(testing_performances[key])) for key in testing_performances]),
+                cluster_plot(timeseries_data, model),
+                #cluster_plot(timeseries_data, best_prediction, test_values),
+                #performance_plot(timeseries_data, best_prediction, testing_performances, test_values),
+            ])
+
+            # EXTRA
+            # Warning: this will plot every model result, with every distance metric used!
+            # children.extend(plot_every_prediction(ingested_data, model_results, main_accuracy_estimator, test_values))
+    
     # Plot cross-correlation plot and graphs, if requested.
     if timeseries_container.xcorr is not None:
         graph_corr_threshold = visualization_parameters[
@@ -113,42 +154,6 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
             cross_correlation_graph(clustering_approach, timeseries_container.xcorr, graph_corr_threshold)
         ])
 
-    # Plot the prediction results, if requested.
-    """
-    if timeseries_container.models is not None:
-        model_parameters = param_config["model_parameters"]
-
-        models = timeseries_container.models
-
-        children.append(
-            html.H3("Training & Validation results"),
-        )
-
-        for model_name in models:
-            model = models[model_name]
-            model_results = model.results
-            model_characteristic = model.characteristics
-
-            test_values = model_characteristic["test_values"]
-            main_accuracy_estimator = model_parameters["main_accuracy_estimator"]
-            model_results.sort(key=lambda x: getattr(x.testing_performances, main_accuracy_estimator.upper()))
-
-            best_prediction = model_results[0].prediction
-            testing_performances = [x.testing_performances for x in model_results]
-
-            children.extend([
-                html.H4(f"{model_name}"),
-                characteristics_list(model_characteristic, testing_performances),
-                # html.Div("Testing performance:"),
-                # html.Ul([html.Li(key + ": " + str(testing_performances[key])) for key in testing_performances]),
-                cluster_plot(timeseries_data, best_prediction, test_values),
-                performance_plot(timeseries_data, best_prediction, testing_performances, test_values),
-            ])
-
-            # EXTRA
-            # Warning: this will plot every model result, with every training set used!
-            # children.extend(plot_every_prediction(ingested_data, model_results, main_accuracy_estimator, test_values))
-    """
     return children
 
 
@@ -1029,7 +1034,7 @@ def plot_every_prediction(df: DataFrame, model_results: List[SingleResult],
     return new_childrens
 
 
-def characteristics_list(model_characteristics: dict, testing_performances: List[ValidationPerformance]) -> html.Div:
+def characteristics_list(model_characteristics: dict)-> html.Div: #, testing_performances: List[ValidationPerformance]) -> html.Div:
     """
     Create and return an HTML Div which contains a list of natural language characteristic
     relative to a prediction model.
@@ -1050,22 +1055,21 @@ def characteristics_list(model_characteristics: dict, testing_performances: List
     def get_text_char(key: str, value: any) -> str:
         value = str(value)
         switcher = {
-            "name": _("Model type: ") + value,
-            "test_values": _('Values used for testing: last ') + value + _(' values'),
-            "delta_training_percentage": _('The length of the training windows is the ') + value
-                                         + "%" + _(' of the length of the time series.'),
-            "delta_training_values": _('Training windows are composed of ') + value + _(' values.'),
-            "extra_regressors": _("The model has used ") + value + _(" as extra-regressor(s) to improve the training."),
-            "transformation": _('The model has used a ') + value + _(
-                ' transformation on the input data.') if value != "none "
-            else _('The model has not used any pre/post transformation on input data.')
+            "clustering_approach": "Clustering approach: " + value,
+            "model": "Model type: " + value,
+            "distance_metric": 'Distance metrics used: ' + value,
+            "n_clusters":'The number of clusters that grouped better the time series are ' + value,
+            "transformation": ('The model has used a ') + value + (
+                ' transformation on the input data.') if value != "none"
+            else ('The model has not used any pre/post transformation on input data.')
         }
         return switcher.get(key, "Invalid choice!")
 
-    elems = [html.Div(_('Model characteristics:')),
-             html.Ul([html.Li(get_text_char(key, model_characteristics[key])) for key in model_characteristics]),
-             html.Div(_("This model, using the best training window, reaches these performances:")),
-             show_errors(testing_performances[0])]
+    elems = [html.Div('Model characteristics:'),
+             html.Ul([html.Li(get_text_char(key, model_characteristics[key])) for key in model_characteristics])
+             #html.Div(("This model, using the best training window, reaches these performances:")),
+             #show_errors(testing_performances[0])]
+            ]
 
     return html.Div(elems)
 

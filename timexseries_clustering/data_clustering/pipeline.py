@@ -100,7 +100,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
     case_name = [param_config["activity_title"]]
     clustering_approach = param_config["model_parameters"]["clustering_approach"]
-    transformations = [*param_config["model_parameters"]["possible_transformations"].split(",")]
+    transformations_to_test = [*param_config["model_parameters"]["possible_transformations"].split(",")]
     dist_measures_to_test = [*param_config["model_parameters"]["distance_metric"].split(",")]
     models = [*param_config["model_parameters"]["models"].split(",")]
     main_accuracy_estimator = param_config["model_parameters"]["main_accuracy_estimator"]
@@ -132,23 +132,24 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         log.info(f"Using model {model}...")
 
         for metric in dist_measures_to_test:
-            log.info(f"Computing univariate clustering using approach: {clustering_approach} and distance metric: {metric}...")
-            _result = model_factory(ingested_data, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transformations)
-            #_result = predictor.fit_predict(ingested_data.copy())
-            #_result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
+            for transf in transformations_to_test:
+                log.info(f"Computing univariate clustering using approach: {clustering_approach}, distance metric: {metric} and transformation: {transf}...")
+                _result = model_factory(ingested_data, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transf)
+                #_result = predictor.fit_predict(ingested_data.copy())
+                #_result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
 
-            #performances = _result.results
-            #performances.sort(key=lambda x: getattr(x.testing_performances, main_accuracy_estimator.upper()))
-            #performances = getattr(performances[0].testing_performances, main_accuracy_estimator.upper())
+                #performances = _result.results
+                #performances.sort(key=lambda x: getattr(x.testing_performances, main_accuracy_estimator.upper()))
+                #performances = getattr(performances[0].testing_performances, main_accuracy_estimator.upper())
 
-            #this_model_performances.append((_result, performances, transf))
-            cluster_centers = _result.cluster_centers #**
-            characteristics = _result.characteristics
-            clusters_vector = _result.best_clustering
+                #this_model_performances.append((_result, performances, transf))
+                cluster_centers = _result.cluster_centers #**
+                characteristics = _result.characteristics
+                clusters_vector = _result.best_clustering
 
-            this_model_performances.append((clusters_vector, metric))
-            model_results[model][metric] = _result #object ModelResult
-            #model_centers[model][metric] = cluster_centers
+                this_model_performances.append((clusters_vector, metric))
+                model_results[model][metric] = _result #object ModelResult
+                #model_centers[model][metric] = cluster_centers
 
         #this_model_performances.sort(key=lambda x: x[1])
         #best_tr = this_model_performances[0][2]
@@ -359,7 +360,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                     centrd = km.cluster_centers_[yi].ravel()
                     model_centers.append(centrd)
                 model_characteristics["clustering_approach"] = "Observation based"
-                model_characteristics["model"] = model_class
+                model_characteristics["model"] = "K Means"
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["transformation"] = transformation
@@ -375,7 +376,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                     centrd = km.cluster_centers_[yi].ravel()
                     model_centers.append(centrd)
                 model_characteristics["clustering_approach"] = "Observation based"
-                model_characteristics["model"] = model_class
+                model_characteristics["model"] = "K Means"
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["transformation"] = transformation
@@ -389,7 +390,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                     centrd = km.cluster_centers_[yi].ravel()
                     model_centers.append(centrd)
                 model_characteristics["clustering_approach"] = "Observation based"
-                model_characteristics["model"] = model_class
+                model_characteristics["model"] = "K Means"
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["transformation"] = transformation
