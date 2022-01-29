@@ -110,7 +110,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
                        "and the past of the others."),
             cross_correlation_plot(timeseries_container.xcorr),
             html.Div("The peaks found using each cross-correlation modality are shown in the graphs:"),
-            cross_correlation_graph(name, timeseries_container.xcorr, graph_corr_threshold)
+            cross_correlation_graph(clustering_approach, timeseries_container.xcorr, graph_corr_threshold)
         ])
 
     # Plot the prediction results, if requested.
@@ -866,11 +866,11 @@ def cluster_plot(df: DataFrame, cluster_data: dict) -> dcc.Graph:
                                 row=subplotmult, col=yi+1)
         subplotmult = subplotmult + 1
 
-    fig.update_layout(title=_("Best clustering for the dataset, Model: "+str(model)))
+    fig.update_layout(title="Best clustering for the dataset", height=750)
     fig.update_yaxes(matches='y')
     
     g = dcc.Graph(
-        figure=fig )
+        figure=fig)
     return g
 
 
