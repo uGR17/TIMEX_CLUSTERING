@@ -17,7 +17,7 @@ from timexseries_clustering.data_clustering.models.mockup_predictor import MockU
 from timexseries_clustering.data_clustering.models.kmeans_cluster import KMeansModel
 from timexseries_clustering.data_clustering.xcorr import calc_all_xcorr
 from timexseries_clustering.timeseries_container import TimeSeriesContainer
-from tslearn.clustering import TimeSeriesKMeans
+from tslearn.clustering import TimeSeriesKMeans, silhouette_score
 
 log = logging.getLogger(__name__)
 
@@ -340,11 +340,11 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
         if model_class == "k_means": #fbprophet
             #return KMeansModel(params=param_config, distance_metric=distance_metric, transformation=transformation)
             try:
-                n_clusters = int(param_config["model_parameters"]["n_clusters"])
+                n_clusters = param_config["model_parameters"]["n_clusters"]
             except KeyError:
                 n_clusters = 3
             try:
-                gamma = float(param_config["model_parameters"]["gamma"])
+                gamma = param_config["model_parameters"]["gamma"]
             except KeyError:
                 gamma = 0.01
             
@@ -354,8 +354,10 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
             
             if distance_metric == "ED": #fbprophet
                 log.info(f"Computing k means with ED metric...")
+                dstnce_metric = "euclidean"
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric="euclidean", verbose=False, random_state=seed)
                 best_clusters = km.fit_predict(ingested_data.transpose())
+                performance = float(silhouette_score(ingested_data.transpose(), best_clusters, metric=dstnce_metric))
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
                     model_centers.append(centrd)
@@ -364,14 +366,17 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["transformation"] = transformation
+                model_characteristics["performance"] = performance
                 return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,
                             best_clustering=best_clusters)
                 #return best_clusters, model_centers
                 
             if distance_metric == "DTW":
                 log.info(f"Computing k means with DTW metric...")
+                dstnce_metric = "dtw"
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric="dtw", verbose=False, max_iter_barycenter=10, random_state=seed)
                 best_clusters = km.fit_predict(ingested_data.transpose())
+                performance = float(silhouette_score(ingested_data.transpose(), best_clusters, metric=dstnce_metric))
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
                     model_centers.append(centrd)
@@ -380,12 +385,15 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["transformation"] = transformation
+                model_characteristics["performance"] = performance
                 return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,
                             best_clustering=best_clusters)
             if distance_metric == "soft_DTW":
                 log.info(f"Computing k means with soft_DTW metric...")
+                dstnce_metric = "softdtw"
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric="softdtw", verbose=False, metric_params={"gamma": gamma}, random_state=seed)
                 best_clusters = km.fit_predict(ingested_data.transpose())
+                performance = float(silhouette_score(ingested_data.transpose(), best_clusters, metric=dstnce_metric))
                 for yi in range(n_clusters):
                     centrd = km.cluster_centers_[yi].ravel()
                     model_centers.append(centrd)
@@ -394,6 +402,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 model_characteristics["distance_metric"] = distance_metric
                 model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["transformation"] = transformation
+                model_characteristics["performance"] = performance
                 return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,
                             best_clustering=best_clusters)
         #if model_class == "mockup":
