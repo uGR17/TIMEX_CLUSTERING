@@ -43,7 +43,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
         Time-series for which the various plots and graphs will be returned.
     
     param_config : dict
-        TIMEX configuration parameters dictionary, used for `visualization_parameters` which contains settings to
+        TIMEX CLUSTERING configuration parameters dictionary, used for `visualization_parameters` which contains settings to
         customize some plots and graphs.
 
     Returns
@@ -95,7 +95,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
     
     # Plot the prediction results, if requested.
     if timeseries_container.models is not None:
-        model_parameters = param_config["model_parameters"]
+        param_configuration = param_config["model_parameters"]
 
         models = timeseries_container.models
 
@@ -103,14 +103,16 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
             html.H3("Clustering results"),
         )
 
+        model_performances = {}
         for model_name in models:
             model = models[model_name]
-            
+            model_performances[model_name] = {}
             for metric_key in model:
                 metric = model[metric_key]
                 #model_results = metric.cluster_centers
+                model_performances[model_name][metric_key] = metric.performances
                 model_characteristic = metric.characteristics
-
+            model_characteristic['distance_metric'] = param_configuration['distance_metric']
             #test_values = model_characteristic["test_values"]
             #main_accuracy_estimator = model_parameters["main_accuracy_estimator"]
             ##model_results.sort(key=lambda x: getattr(x.testing_performances, main_accuracy_estimator.upper()))
@@ -120,11 +122,10 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
 
             children.extend([
                 html.H4(f"{model_name}"),
-                characteristics_list(model_characteristic),
-                # html.Div("Testing performance:"),
+                characteristics_list(model_characteristic, model_performances),
+                html.Div("Clustering performance:"),
                 # html.Ul([html.Li(key + ": " + str(testing_performances[key])) for key in testing_performances]),
                 cluster_plot(timeseries_data, model),
-                #cluster_plot(timeseries_data, best_prediction, test_values),
                 #performance_plot(timeseries_data, best_prediction, testing_performances, test_values),
             ])
 
@@ -1038,7 +1039,7 @@ def characteristics_list(model_characteristics: dict)-> html.Div: #, testing_per
     model_characteristics : dict
         key-value for each characteristic to write in natural language.
 
-    testing_performances : [ValidationPerformance]
+    model_performances : [ValidationPerformance]
         Useful to write also information about the testing performances.
 
     Returns
@@ -1060,17 +1061,17 @@ def characteristics_list(model_characteristics: dict)-> html.Div: #, testing_per
         return switcher.get(key, "Invalid choice!")
 
     elems = [html.Div('Model characteristics:'),
-             html.Ul([html.Li(get_text_char(key, model_characteristics[key])) for key in model_characteristics])
-             #html.Div(("This model, using the best training window, reaches these performances:")),
+             html.Ul([html.Li(get_text_char(key, model_characteristics[key])) for key in model_characteristics]),
+             html.Div("This model, using the best clustering, reaches the next performances:")]#,
              #show_errors(testing_performances[0])]
-            ]
+            #]
 
     return html.Div(elems)
 
 
 def show_errors(testing_performances: ValidationPerformance) -> html.Ul:
     """
-    Create an HTML list with each error-metric in `testing_performances`.
+    Create an HTML list with each performance evaluation criteria result.
 
     Parameters
     ----------

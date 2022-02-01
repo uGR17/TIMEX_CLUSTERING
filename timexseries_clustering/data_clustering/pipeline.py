@@ -17,7 +17,9 @@ from timexseries_clustering.data_clustering.models.mockup_predictor import MockU
 from timexseries_clustering.data_clustering.models.kmeans_cluster import KMeansModel
 from timexseries_clustering.data_clustering.xcorr import calc_all_xcorr
 from timexseries_clustering.timeseries_container import TimeSeriesContainer
-from tslearn.clustering import TimeSeriesKMeans, silhouette_score
+from tslearn.clustering import TimeSeriesKMeans
+from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
+
 
 log = logging.getLogger(__name__)
 
@@ -143,9 +145,10 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                 #performances = getattr(performances[0].testing_performances, main_accuracy_estimator.upper())
 
                 #this_model_performances.append((_result, performances, transf))
+                clusters_vector = _result.best_clustering
+                model_performance = _result.performances
                 cluster_centers = _result.cluster_centers #**
                 characteristics = _result.characteristics
-                clusters_vector = _result.best_clustering
 
                 this_model_performances.append((clusters_vector, metric))
                 model_results[model][metric] = _result #object ModelResult
@@ -351,6 +354,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
             seed=0
             model_centers = []
             model_characteristics = {}
+            performance_dict = {}
             
             if distance_metric == "euclidean": #fbprophet
                 log.info(f"Computing k means with ED metric...")
@@ -365,9 +369,9 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 model_characteristics["distance_metric"] = "Euclidian"
                 model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["transformation"] = transformation
-                model_characteristics["performance"] = performance
-                return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,
-                            best_clustering=best_clusters)
+                performance_dict["silhouette_score"] = performance
+                return ModelResult(best_clustering=best_clusters, performances=performance_dict,characteristics=model_characteristics,
+                            cluster_centers=model_centers)
                 #return best_clusters, model_centers
                 
             if distance_metric == "dtw":
@@ -383,9 +387,9 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 model_characteristics["distance_metric"] = "DTW"
                 model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["transformation"] = transformation
-                model_characteristics["performance"] = performance
-                return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,
-                            best_clustering=best_clusters)
+                performance_dict["silhouette_score"] = performance
+                return ModelResult(best_clustering=best_clusters, performances=performance_dict,characteristics=model_characteristics,
+                            cluster_centers=model_centers)
             if distance_metric == "softdtw":
                 log.info(f"Computing k means with soft_DTW metric...")
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance_metric, verbose=False, metric_params={"gamma": gamma}, random_state=seed)
@@ -399,9 +403,9 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 model_characteristics["distance_metric"] = "SoftDTW"
                 model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["transformation"] = transformation
-                model_characteristics["performance"] = performance
-                return ModelResult(cluster_centers=model_centers, characteristics=model_characteristics,
-                            best_clustering=best_clusters)
+                performance_dict["silhouette_score"] = performance
+                return ModelResult(best_clustering=best_clusters, performances=performance_dict,characteristics=model_characteristics,
+                            cluster_centers=model_centers)
         #if model_class == "mockup":
         #    return MockUpModel(param_config, distance_metric)
         #else:
