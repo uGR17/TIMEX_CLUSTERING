@@ -86,16 +86,10 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
     children.extend([
         html.H2(children = clustering_approach + (' approach analysis'), id=clustering_approach),
         html.H3("Data visualization"),
-        #line_plot(timeseries_data),
         timeseries_plot(timeseries_data),
-        #cluster_plot(timeseries_data, clustering_models),
-#        for key, value in clustering_models.items() :
-#            cluster_plot(timeseries_data, value),
         #histogram_plot(timeseries_data),
         #box_plot(timeseries_data, visualization_parameters),
-        #box_plot_aggregate(timeseries_data, visualization_parameters),
         #components_plot(timeseries_data),
-        #autocorrelation_plot(timeseries_data),
     ])
 
     
