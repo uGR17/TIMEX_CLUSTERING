@@ -1,75 +1,69 @@
 from math import sqrt
 
-from pandas import DataFrame, Series
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from pandas import DataFrame
+from tslearn.clustering import silhouette_score
+from sklearn.metrics import davies_bouldin_score, calinski_harabasz_score
 
 
 class ValidationPerformance:
     """
-    Class for the summary of various statistical indexes relative to the performance of a prediction model.
+    Class for the summary of various statistical indexes relative to the performance of a clustering model.
 
     Parameters
     ----------
-    first_used_index, optional, default None
-        Index of the first value used in the time series to generate these results. This is a convenience if you already
-        know that initial index of the data this performance will refer to.
+    None
 
     Attributes
     ----------
-    MSE : float
-        Mean Squared Error. Default 0
-    RMSE: float
-        Root Mean Squared Error. Default 0
-    MAE: float
-        Mean Absolute Error. Default 0
-    AM: float
-        Arithmetic Mean of error. Default 0
-    SD: float
-        Standard deviation of error. Default 0
+    silhouette: float
+        Silhouette score. Default 0
+    davies_bouldin: float
+        Davies Bouldin score. Default 0
+    calinski_harabasz: float
+        Calinski Harabasz score. Default 0
     """
-    def __init__(self, first_used_index=None):
-        self.first_used_index = first_used_index
-        self.MSE = 0
-        self.RMSE = 0
-        self.MAE = 0
-        self.AM = 0
-        self.SD = 0
+    def __init__(self):
+        self.silhouette = 0
+        self.davies_bouldin = 0
+        self.calinski_harabasz = 0
 
-    def set_testing_stats(self, actual: Series, predicted: Series):
+    def set_performance_stats(self, dataset: DataFrame, labels: DataFrame, metric: str):
         """
         Set all the statistical indexes according to input data.
 
         Parameters
         ----------
-        actual : Series
-            Actual data stored in a Pandas Series.
-        predicted : Series
-            Data predicted by a model, stored in a Pandas Series.
+        dataset: DataFrame
+            Time series dataset stored in a Pandas DataFrame.
+        labels: DataFrame
+            Predicted labels for each time series.
+        metric : string
+            The metric to use when calculating distance between time series. Should be one of {‘dtw’, ‘softdtw’, ‘euclidean’} 
+            or a callable distance function or None. If ‘softdtw’ is passed, a normalized version of Soft-DTW is used that is 
+            defined as sdtw_(x,y) := sdtw(x,y) - 1/2(sdtw(x,x)+sdtw(y,y)). If X is the distance array itself, use metric="precomputed". If None, dtw is used.
 
         Examples
         --------
-        >>> dates = pd.date_range('2000-01-01', periods=5)
-        >>> ds = pd.DatetimeIndex(dates, freq="D")
-        >>> actual = np.array([1, 1, 1, 1, 1])
-        >>> predicted = np.array([3, 3, 3, 3, 3])
-        >>> actual_dataframe = DataFrame(data={"a": actual}, index=ds)
-        >>> predicted_dataframe = DataFrame(data={"yhat": predicted}, index=ds)
+        >>> from tslearn.generators import random_walks
+        >>> X = random_walks(n_ts=20, sz=16, d=1)
+        >>> from tslearn.clustering import TimeSeriesKMeans, silhouette_score
+        >>> from timexseries_clustering.data_clustering import ValidationPerformance
+        >>> km = TimeSeriesKMeans(n_clusters=2, metric="euclidean")
+        >>> labels = km.fit_predict(X)
 
         Calculate the performances.
         >>> perf = ValidationPerformance()
-        >>> perf.set_testing_stats(actual_dataframe['a'], predicted_dataframe['yhat'])
+        >>> perf.set_performance_stats(X, labels, 'euclidean')
 
-        >>> print(perf.MAE)
+        >>> print(perf.silhouette)
         2.0
 
-        >>> print(perf.MSE)
+        >>> print(perf.davies_bouldin)
         4.0
         """
-        self.MSE = mean_squared_error(actual, predicted)
-        self.MAE = mean_absolute_error(actual, predicted)
-        self.RMSE = sqrt(self.MSE)
-        self.AM = sum([y - yhat for y, yhat in zip(actual, predicted)]) / len(actual)
-        self.SD = (actual - predicted).std(ddof=0)
+        self.silhouette = silhouette_score(dataset, labels, metric)
+        self.davies_bouldin = davies_bouldin_score(dataset, labels)
+        self.calinski_harabasz = calinski_harabasz_score(dataset, labels)
 
     def get_dict(self) -> dict:
         """
@@ -83,7 +77,7 @@ class ValidationPerformance:
         Examples
         --------
         >>> perf = ValidationPerformance()
-        >>> perf.set_testing_stats(actual_dataframe['a'], predicted_dataframe['yhat'])
+        >>> perf.set_performance_stats(actual_dataframe['a'], predicted_dataframe['yhat'])
         >>> perf.get_dict()
         {'first_used_index': None, 'MSE': 4.0, 'RMSE': 2.0, 'MAE': 2.0, 'AM': -2.0, 'SD': 0.0}
         """

@@ -16,7 +16,7 @@ import dash_bootstrap_components as dbc
 from colorhash import ColorHash
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from timexseries_clustering.data_clustering import ValidationPerformance
+from timexseries_clustering.data_clustering import ValidationPerformance #**
 from timexseries_clustering.data_clustering.models.predictor import SingleResult
 import calendar
 
@@ -1029,7 +1029,7 @@ def plot_every_prediction(df: DataFrame, model_results: List[SingleResult],
     return new_childrens
 
 
-def characteristics_list(model_characteristics: dict)-> html.Div: #, testing_performances: List[ValidationPerformance]) -> html.Div:
+def characteristics_list(model_characteristics: dict, model_performances:dict)-> html.Div: #, testing_performances: List[ValidationPerformance]) -> html.Div:
     """
     Create and return an HTML Div which contains a list of natural language characteristic
     relative to a prediction model.
@@ -1039,7 +1039,7 @@ def characteristics_list(model_characteristics: dict)-> html.Div: #, testing_per
     model_characteristics : dict
         key-value for each characteristic to write in natural language.
 
-    model_performances : [ValidationPerformance]
+    ** model_performances : [ValidationPerformance]
         Useful to write also information about the testing performances.
 
     Returns
@@ -1062,20 +1062,19 @@ def characteristics_list(model_characteristics: dict)-> html.Div: #, testing_per
 
     elems = [html.Div('Model characteristics:'),
              html.Ul([html.Li(get_text_char(key, model_characteristics[key])) for key in model_characteristics]),
-             html.Div("This model, using the best clustering, reaches the next performances:")]#,
-             #show_errors(testing_performances[0])]
-            #]
+             html.Div("This model, using the best clustering, reaches the next performances:"),
+             show_errors(model_performances[0])]
 
     return html.Div(elems)
 
 
-def show_errors(testing_performances: ValidationPerformance) -> html.Ul:
+def show_errors(testing_performances: dict) -> html.Ul:
     """
     Create an HTML list with each performance evaluation criteria result.
 
     Parameters
     ----------
-    testing_performances : ValidationPerformance
+    testing_performances : dict
         Error metrics to show.
 
     Returns
@@ -1095,11 +1094,9 @@ def show_errors(testing_performances: ValidationPerformance) -> html.Ul:
 
     def get_text_perf(key: str, value: any) -> str:
         switcher = {
-            "MAE": "MAE: " + round_n(value),
-            "RMSE": "RMSE: " + round_n(value),
-            "MSE": "MSE: " + round_n(value),
-            "AM": _('Arithmetic mean of errors:') + round_n(value),
-            "SD": _('Standard deviation of errors: ') + round_n(value)
+            "silhouette": "Silhouette score: " + round_n(value),
+            "calinski": "Calinski Harabasz score: " + round_n(value),
+            "dvs_bouldin": "Davies Bouldin score: " + round_n(value)
         }
         return switcher.get(key, "Invalid choice!")
 
