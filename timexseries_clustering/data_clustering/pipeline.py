@@ -10,7 +10,7 @@ import tslearn
 from pandas import DataFrame
 
 from timexseries_clustering.data_clustering import ClustersModel
-from timexseries_clustering.data_clustering.models.predictor import ModelResult
+from timexseries_clustering.data_clustering.models.predictor import ModelResult, SingleResult
 from timexseries_clustering.data_clustering.models.arima_predictor import ARIMAModel
 from timexseries_clustering.data_clustering.models.lstm_predictor import LSTMModel
 from timexseries_clustering.data_clustering.models.mockup_predictor import MockUpModel
@@ -137,6 +137,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
         for metric in dist_measures_to_test:
             this_metric_performances = []
+            single_results = []
             for transf in transformations_to_test:
                 for n_clus in num_clusters_to_test:
                     log.info(f"Computing univariate clustering using approach: {clustering_approach}, number of clusters: {n_clus}, distance metric: {metric} and transformation: {transf}...")
@@ -146,11 +147,12 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                     
                     # _result is a ModelResul object
                     clusters_vector = _result.best_clustering #**
-                    model_performance = _result.performances #ValidationPerformance
+                    model_single_results = _result.results[0] #Single Result ValidationPerformance
                     cluster_centers = _result.cluster_centers #**
                     characteristics = _result.characteristics
                     
-                    performances = getattr(model_performance, main_accuracy_estimator)
+                    performances = getattr(model_single_results.performances, main_accuracy_estimator)
+                    single_results.append(model_single_results)
                     
                     this_metric_performances.append((_result, performances, n_clus, transf))
                     this_model_performances.append((_result, performances, n_clus, metric, transf))
@@ -165,8 +167,10 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
             best_result = this_metric_performances[0][0] #object ModelResult
             best_n_clusters = this_metric_performances[0][2]
             best_n_trans = this_metric_performances[0][3]
-            model_results[model][metric] = best_result #object ModelResult
             log.info(f"For the metric: {metric} the best clustering is obtained using {best_n_clusters} number of clusters and transfomation {best_n_trans}.")
+            
+            best_result.results = single_results
+            model_results[model][metric] = best_result #object ModelResult
 
         if main_accuracy_estimator=="silhouette":
             this_model_performances.sort(key=lambda x: x[1],reverse=True)
@@ -388,7 +392,8 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 model_characteristics["transformation"] = transformation
                 performance = ValidationPerformance()
                 performance.set_performance_stats(ingested_data.transpose(), best_clusters, distance_metric)
-                return ModelResult(best_clustering=best_clusters, performances=performance,characteristics=model_characteristics,
+                single_result = SingleResult(model_characteristics,performance)
+                return ModelResult(best_clustering=best_clusters, results=[single_result],characteristics=model_characteristics,
                             cluster_centers=model_centers)
                 #return best_clusters, model_centers
                 
@@ -407,7 +412,8 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 model_characteristics["transformation"] = transformation
                 performance = ValidationPerformance()
                 performance.set_performance_stats(ingested_data.transpose(), best_clusters, distance_metric)
-                return ModelResult(best_clustering=best_clusters, performances=performance,characteristics=model_characteristics,
+                single_result = SingleResult(model_characteristics,performance)
+                return ModelResult(best_clustering=best_clusters, results=[single_result],characteristics=model_characteristics,
                             cluster_centers=model_centers)
             if distance_metric == "softdtw":
                 log.info(f"Computing k means with soft_DTW metric...")
@@ -424,7 +430,8 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 model_characteristics["transformation"] = transformation
                 performance = ValidationPerformance()
                 performance.set_performance_stats(ingested_data.transpose(), best_clusters, distance_metric)
-                return ModelResult(best_clustering=best_clusters, performances=performance,characteristics=model_characteristics,
+                single_result = SingleResult(model_characteristics,performance)
+                return ModelResult(best_clustering=best_clusters, results=[single_result],characteristics=model_characteristics,
                             cluster_centers=model_centers)
         #if model_class == "mockup":
         #    return MockUpModel(param_config, distance_metric)

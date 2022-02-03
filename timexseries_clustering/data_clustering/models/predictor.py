@@ -19,20 +19,20 @@ log = logging.getLogger(__name__)
 
 class SingleResult:
     """
-    Class for the result of a model, trained on specific model parameter (e.g using a specific number of clusters).
+    Class for the result of a model, trained on specific model parameter (e.g using a specific number of clusters and transformation).
 
     Parameters
     ----------
-    cluster : DataFrame
-        Clustering, using this model parameters
-    testing_performances : ValidationPerformance
-        Testing performance (`timexseries_clustering.data_prediction.validation_performances.ValidationPerformance`), on the validation
-        set, obtained using this training set to train the model.
+    characteristics : dict
+        Characteristics, using this model parameters
+    performances : ValidationPerformance
+        Model performances (`timexseries_clustering.data_prediction.validation_performances.ValidationPerformance`),
+        obtained using different number of clusters and transformation.
     """
 
-    def __init__(self, clustering: DataFrame, testing_performances: ValidationPerformance):
-        self.clustering = clustering
-        self.testing_performances = testing_performances
+    def __init__(self, characteristics: dict, performances: ValidationPerformance):
+        self.characteristics = characteristics
+        self.performances = performances
 
 
 class ModelResult:
@@ -45,9 +45,10 @@ class ModelResult:
     Clustering obtained using the best model parameters and _all_ the available time-series. This are
     the cluster indexes that users are most likely to want.
         
-    performances : ValidationPerformance
-        This object collects the clustering method's performances, examples of performance criterias: silhouette_score, 
-        davies_bouldin_score,etc. This is useful to create plots which show how the performance vary changing the number of clusters.
+    results : [SingleResults]
+        List of all the results obtained using all the possible model parameters set for this model and metric, on the time series.
+        This is useful to create plots which show how the performance vary changing the number of clusters (e.g.
+        `timexseries.data_visualization.functions.performance_plot`).
         
     characteristics : dict
         Model parameters. This dictionary collects human-readable characteristics of the model, e.g. the number
@@ -58,11 +59,11 @@ class ModelResult:
       
      """
 
-    def __init__(self, best_clustering: DataFrame, performances: ValidationPerformance, characteristics: dict, cluster_centers: DataFrame):
+    def __init__(self, best_clustering: DataFrame, results: List[SingleResult], characteristics: dict, cluster_centers: DataFrame):
         self.best_clustering = best_clustering
-        self.performances = performances
+        self.results = results
         self.characteristics = characteristics
-        self.cluster_centers = cluster_centers #**List[SingleResult]
+        self.cluster_centers = cluster_centers
 
 class ClustersModel:
     """
