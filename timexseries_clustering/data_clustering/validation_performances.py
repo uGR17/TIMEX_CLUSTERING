@@ -27,7 +27,7 @@ class ValidationPerformance:
         self.davies_bouldin = 0
         self.calinski_harabasz = 0
 
-    def set_performance_stats(self, dataset: DataFrame, labels: DataFrame, metric: str):
+    def set_performance_stats(self, dataset: DataFrame, labels: DataFrame, metric: str = None):
         """
         Set all the statistical indexes according to input data.
 
@@ -37,29 +37,31 @@ class ValidationPerformance:
             Time series dataset stored in a Pandas DataFrame.
         labels: DataFrame
             Predicted labels for each time series.
-        metric : string
-            The metric to use when calculating distance between time series. Should be one of {‘dtw’, ‘softdtw’, ‘euclidean’} 
-            or a callable distance function or None. If ‘softdtw’ is passed, a normalized version of Soft-DTW is used that is 
-            defined as sdtw_(x,y) := sdtw(x,y) - 1/2(sdtw(x,x)+sdtw(y,y)). If X is the distance array itself, use metric="precomputed". If None, dtw is used.
+        metric : string, optional, default None
+            The metric to use when calculating distance between time series, optional because is used only for silhouette score. 
+            Should be one of {‘dtw’, ‘softdtw’, ‘euclidean’} or a callable distance function or None. If ‘softdtw’ is passed, a 
+            normalized version of Soft-DTW is used that is defined as sdtw_(x,y) := sdtw(x,y) - 1/2(sdtw(x,x)+sdtw(y,y)). If X 
+            is the distance array itself, use metric="precomputed". If None, dtw is used.
 
         Examples
         --------
+        >>> import numpy
         >>> from tslearn.generators import random_walks
-        >>> X = random_walks(n_ts=20, sz=16, d=1)
-        >>> from tslearn.clustering import TimeSeriesKMeans, silhouette_score
         >>> from timexseries_clustering.data_clustering import ValidationPerformance
-        >>> km = TimeSeriesKMeans(n_clusters=2, metric="euclidean")
-        >>> labels = km.fit_predict(X)
+        >>> numpy.random.seed(0)
+        >>> X = random_walks(n_ts=20, sz=16, d=1)
+        >>> X = numpy.resize(X,(20,16))
+        >>> labels = numpy.random.randint(2, size=20)
 
         Calculate the performances.
         >>> perf = ValidationPerformance()
         >>> perf.set_performance_stats(X, labels, 'euclidean')
 
         >>> print(perf.silhouette)
-        2.0
+        0.09
 
         >>> print(perf.davies_bouldin)
-        4.0
+        2.28
         """
         self.silhouette = silhouette_score(dataset, labels, metric)
         self.davies_bouldin = davies_bouldin_score(dataset, labels)

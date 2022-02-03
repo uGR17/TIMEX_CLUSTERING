@@ -16,7 +16,7 @@ import dash_bootstrap_components as dbc
 from colorhash import ColorHash
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from timexseries_clustering.data_clustering import ValidationPerformance #**
+from timexseries_clustering.data_clustering import ValidationPerformance
 from timexseries_clustering.data_clustering.models.predictor import SingleResult
 import calendar
 
@@ -109,7 +109,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
             model_performances[model_name] = {}
             for metric_key in model:
                 metric = model[metric_key]
-                #model_results = metric.cluster_centers
+                model_performances[model_name][metric_key] = metric.performances
                 model_performances[model_name][metric_key] = metric.performances
                 model_characteristic = metric.characteristics
             model_characteristic['distance_metric'] = param_configuration['distance_metric']
@@ -123,8 +123,8 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
             children.extend([
                 html.H4(f"{model_name}"),
                 characteristics_list(model_characteristic, model_performances),
-                html.Div("Clustering performance:"),
-                # html.Ul([html.Li(key + ": " + str(testing_performances[key])) for key in testing_performances]),
+                #html.Div("Clustering performance:"),
+                #html.Ul([html.Li(key + ": " + str(testing_performances[key])) for key in testing_performances]),
                 cluster_plot(timeseries_data, model),
                 #performance_plot(timeseries_data, best_prediction, testing_performances, test_values),
             ])
@@ -1029,7 +1029,7 @@ def plot_every_prediction(df: DataFrame, model_results: List[SingleResult],
     return new_childrens
 
 
-def characteristics_list(model_characteristics: dict, model_performances:dict)-> html.Div: #, testing_performances: List[ValidationPerformance]) -> html.Div:
+def characteristics_list(model_characteristics: dict, model_performances:ValidationPerformance)-> html.Div: #, testing_performances: List[ValidationPerformance]) -> html.Div:
     """
     Create and return an HTML Div which contains a list of natural language characteristic
     relative to a prediction model.
@@ -1039,7 +1039,7 @@ def characteristics_list(model_characteristics: dict, model_performances:dict)->
     model_characteristics : dict
         key-value for each characteristic to write in natural language.
 
-    ** model_performances : [ValidationPerformance]
+    model_performances : [ValidationPerformance]
         Useful to write also information about the testing performances.
 
     Returns
@@ -1063,18 +1063,18 @@ def characteristics_list(model_characteristics: dict, model_performances:dict)->
     elems = [html.Div('Model characteristics:'),
              html.Ul([html.Li(get_text_char(key, model_characteristics[key])) for key in model_characteristics]),
              html.Div("This model, using the best clustering, reaches the next performances:"),
-             show_errors(model_performances[0])]
+             show_errors(model_performances)]
 
     return html.Div(elems)
 
 
-def show_errors(testing_performances: dict) -> html.Ul:
+def show_errors(testing_performances: ValidationPerformance) -> html.Ul:
     """
     Create an HTML list with each performance evaluation criteria result.
 
     Parameters
     ----------
-    testing_performances : dict
+    testing_performances :  ValidationPerformance
         Error metrics to show.
 
     Returns
@@ -1101,6 +1101,5 @@ def show_errors(testing_performances: dict) -> html.Ul:
         return switcher.get(key, "Invalid choice!")
 
     testing_performances = testing_performances.get_dict()
-    del testing_performances["first_used_index"]
 
     return html.Ul([html.Li(get_text_perf(key, testing_performances[key])) for key in testing_performances])

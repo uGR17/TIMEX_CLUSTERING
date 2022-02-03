@@ -45,10 +45,9 @@ class ModelResult:
     Clustering obtained using the best model parameters and _all_ the available time-series. This are
     the cluster indexes that users are most likely to want.
         
-    performances : dict
-        This dictionary collects the clustering method's performances, specified in the parameter configuration 
-        dictionary of TIMEX CLUSTERINGL, examples of criterias: silhouette_score, rand_index,etc.
-        This is useful to create plots which show how the performance vary changing the number of clusters.
+    performances : ValidationPerformance
+        This object collects the clustering method's performances, examples of performance criterias: silhouette_score, 
+        davies_bouldin_score,etc. This is useful to create plots which show how the performance vary changing the number of clusters.
         
     characteristics : dict
         Model parameters. This dictionary collects human-readable characteristics of the model, e.g. the number
@@ -59,7 +58,7 @@ class ModelResult:
       
      """
 
-    def __init__(self, best_clustering: DataFrame, performances: dict, characteristics: dict, cluster_centers: DataFrame):
+    def __init__(self, best_clustering: DataFrame, performances: ValidationPerformance, characteristics: dict, cluster_centers: DataFrame):
         self.best_clustering = best_clustering
         self.performances = performances
         self.characteristics = characteristics

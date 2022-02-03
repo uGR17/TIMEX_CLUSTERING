@@ -103,8 +103,9 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
     case_name = [param_config["activity_title"]]
     clustering_approach = param_config["model_parameters"]["clustering_approach"]
-    transformations_to_test = [*param_config["model_parameters"]["possible_transformations"].split(",")]
+    num_clusters_to_test = param_config["model_parameters"]["n_clusters"]
     dist_measures_to_test = [*param_config["model_parameters"]["distance_metric"].split(",")]
+    transformations_to_test = [*param_config["model_parameters"]["possible_transformations"].split(",")]
     models = [*param_config["model_parameters"]["models"].split(",")]
     main_accuracy_estimator = param_config["model_parameters"]["main_accuracy_estimator"]
 
@@ -135,32 +136,47 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         log.info(f"Using model {model}...")
 
         for metric in dist_measures_to_test:
+            this_metric_performances = []
             for transf in transformations_to_test:
-                log.info(f"Computing univariate clustering using approach: {clustering_approach}, distance metric: {metric} and transformation: {transf}...")
-                _result = model_factory(ingested_data, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transf)
-                #_result = predictor.fit_predict(ingested_data.copy())
-                #_result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
+                for n_clus in num_clusters_to_test:
+                    log.info(f"Computing univariate clustering using approach: {clustering_approach}, number of clusters: {n_clus}, distance metric: {metric} and transformation: {transf}...")
+                    _result = model_factory(ingested_data, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transf, n_clusters=n_clus)
+                    #_result = predictor.fit_predict(ingested_data.copy())
+                    #_result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
+                    
+                    # _result is a ModelResul object
+                    clusters_vector = _result.best_clustering #**
+                    model_performance = _result.performances #ValidationPerformance
+                    cluster_centers = _result.cluster_centers #**
+                    characteristics = _result.characteristics
+                    
+                    performances = getattr(model_performance, main_accuracy_estimator)
+                    
+                    this_metric_performances.append((_result, performances, n_clus, transf))
+                    this_model_performances.append((_result, performances, n_clus, metric, transf))
+                    
+                    #model_results[model][metric] = _result #object ModelResult
+                    #model_centers[model][metric] = cluster_centers
+            
+            if main_accuracy_estimator=="silhouette":
+                this_metric_performances.sort(key=lambda x: x[1],reverse=True)
+            else:
+                this_metric_performances.sort(key=lambda x: x[1],)
+            best_result = this_metric_performances[0][0] #object ModelResult
+            best_n_clusters = this_metric_performances[0][2]
+            best_n_trans = this_metric_performances[0][3]
+            model_results[model][metric] = best_result #object ModelResult
+            log.info(f"For the metric: {metric} the best clustering is obtained using {best_n_clusters} number of clusters and transfomation {best_n_trans}.")
 
-                #performances = _result.results
-                #performances.sort(key=lambda x: getattr(x.testing_performances, main_accuracy_estimator.upper()))
-                #performances = getattr(performances[0].testing_performances, main_accuracy_estimator.upper())
+        if main_accuracy_estimator=="silhouette":
+            this_model_performances.sort(key=lambda x: x[1],reverse=True)
+        else:
+            this_model_performances.sort(key=lambda x: x[1],)
+        best_n_clusters = this_model_performances[0][2]
+        best_metric = this_model_performances[0][3]
+        best_n_trans = this_model_performances[0][4]
+        log.info(f"For the model: {model} the best clustering is obtained using metric {best_metric}, with {best_n_clusters} number of clusters, and transfomation {best_n_trans}.")
 
-                #this_model_performances.append((_result, performances, transf))
-                clusters_vector = _result.best_clustering
-                model_performance = _result.performances
-                cluster_centers = _result.cluster_centers #**
-                characteristics = _result.characteristics
-
-                this_model_performances.append((clusters_vector, metric))
-                model_results[model][metric] = _result #object ModelResult
-                #model_centers[model][metric] = cluster_centers
-
-        #this_model_performances.sort(key=lambda x: x[1])
-        #best_tr = this_model_performances[0][2]
-        #[log.debug(f"Error with {t}: {e}") for t, e in zip(map(lambda x: x[2], this_model_performances),
-        #                                                    map(lambda x: x[1], this_model_performances))]
-        #log.info(f"Best transformation for {col} using {model}: {best_tr}")
-        #best_transformations[model][col] = best_tr
         #model_results[model] = this_model_performances[0][0]
 
     log.info(f"Process of {clustering_approach} clustering finished")
@@ -168,7 +184,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         TimeSeriesContainer(ingested_data, str(characteristics['clustering_approach']), model_results, xcorr)
     )
     
-    #return best_transformations, timeseries_containers 
+    #return best_transformations, timeseries_containers
     return timeseries_containers 
 
 
@@ -298,7 +314,7 @@ def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
     return timeseries_containers
 
 
-def model_factory(ingested_data: DataFrame, clustering_approach: str, model_class: str, distance_metric: str, param_config: dict, transformation: str = None): #-> ClustersModel:
+def model_factory(ingested_data: DataFrame, clustering_approach: str, model_class: str, distance_metric: str, param_config: dict, transformation: str = None, n_clusters: int = 3): #-> ClustersModel:
     """
     Given the clustering_approach and name of the model, return the corresponding ClustersModel.
 
@@ -314,6 +330,8 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
         Distance/similarity measure type, e.g. "DTW, ED" **
     transformation : str, optional, default None
         Optional `transformation` parameter to pass to the just created model.
+    n_clusters : int, optional, default None
+        Optional `number of clusters` parameter to pass to the just created model.
 
     Returns
     -------
@@ -343,10 +361,10 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
     if clustering_approach == "observation_based":
         if model_class == "k_means": #fbprophet
             #return KMeansModel(params=param_config, distance_metric=distance_metric, transformation=transformation)
-            try:
-                n_clusters = param_config["model_parameters"]["n_clusters"]
-            except KeyError:
-                n_clusters = 3
+            #try:
+                #n_clusters = param_config["model_parameters"]["n_clusters"]
+            #except KeyError:
+                #n_clusters = 3
             try:
                 gamma = param_config["model_parameters"]["gamma"]
             except KeyError:
