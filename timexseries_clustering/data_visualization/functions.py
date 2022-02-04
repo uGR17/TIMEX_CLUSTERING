@@ -96,7 +96,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
     # Plot the prediction results, if requested.
     if timeseries_container.models is not None:
         param_configuration = param_config["model_parameters"]
-        main_accuracy_estimator = param_config["main_accuracy_estimator"]
+        main_accuracy_estimator = param_configuration["main_accuracy_estimator"]
         models = timeseries_container.models
 
         children.append(
@@ -1073,13 +1073,13 @@ def characteristics_list(model_characteristics: dict, best_performances: SingleR
     return html.Div(elems)
 
 
-def show_errors_html(best_performances: ValidationPerformance) -> html.Ul:
+def show_errors_html(best_performances: SingleResult) -> html.Ul:
     """
     Create an HTML list with the best performance evaluation criteria result.
 
     Parameters
     ----------
-    best_performances :  ValidationPerformance
+    best_performances :  SingleResult
         Error metrics to show.
 
     Returns
@@ -1106,6 +1106,6 @@ def show_errors_html(best_performances: ValidationPerformance) -> html.Ul:
         }
         return switcher.get(key, "Invalid choice!")
 
-    best_performances = best_performances.get_dict()
+    best_performances = best_performances.performances.get_dict()
 
     return html.Ul([html.Li(get_text_perf(key, best_performances[key])) for key in best_performances])
