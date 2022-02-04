@@ -145,10 +145,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                     #_result = predictor.fit_predict(ingested_data.copy())
                     #_result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
                     
-                    # _result is a ModelResul object
-                    clusters_vector = _result.best_clustering #**
-                    model_single_results = _result.results[0] #Single Result ValidationPerformance
-                    cluster_centers = _result.cluster_centers #**
+                    model_single_results = _result.results[0] #SingleResult
                     characteristics = _result.characteristics
                     
                     performances = getattr(model_single_results.performances, main_accuracy_estimator)
@@ -163,7 +160,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
             if main_accuracy_estimator=="silhouette":
                 this_metric_performances.sort(key=lambda x: x[1],reverse=True)
             else:
-                this_metric_performances.sort(key=lambda x: x[1],)
+                this_metric_performances.sort(key=lambda x: x[1])
             best_result = this_metric_performances[0][0] #object ModelResult
             best_n_clusters = this_metric_performances[0][2]
             best_n_trans = this_metric_performances[0][3]
@@ -175,7 +172,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         if main_accuracy_estimator=="silhouette":
             this_model_performances.sort(key=lambda x: x[1],reverse=True)
         else:
-            this_model_performances.sort(key=lambda x: x[1],)
+            this_model_performances.sort(key=lambda x: x[1])
         best_n_clusters = this_model_performances[0][2]
         best_metric = this_model_performances[0][3]
         best_n_trans = this_model_performances[0][4]
@@ -331,10 +328,10 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
     param_config : dict
         TIMEX configuration dictionary, to pass to the just created model.
     distance_metric : str, e.g. **
-        Distance/similarity measure type, e.g. "DTW, ED" **
+        Distance/similarity measure type, e.g. "euclidean, dtw, softdtw" **
     transformation : str, optional, default None
         Optional `transformation` parameter to pass to the just created model.
-    n_clusters : int, optional, default None
+    n_clusters : int, optional, default 3
         Optional `number of clusters` parameter to pass to the just created model.
 
     Returns
@@ -363,7 +360,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
     """
 
     if clustering_approach == "observation_based":
-        if model_class == "k_means": #fbprophet
+        if model_class == "k_means":
             #return KMeansModel(params=param_config, distance_metric=distance_metric, transformation=transformation)
             #try:
                 #n_clusters = param_config["model_parameters"]["n_clusters"]
@@ -378,8 +375,8 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
             model_centers = []
             model_characteristics = {}
                         
-            if distance_metric == "euclidean": #fbprophet
-                log.info(f"Computing k means with ED metric...")
+            if distance_metric == "euclidean":
+                #log.info(f"Computing k means with ED metric...")
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance_metric, verbose=False, random_state=seed)
                 best_clusters = km.fit_predict(ingested_data.transpose())
                 for yi in range(n_clusters):
@@ -398,7 +395,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 #return best_clusters, model_centers
                 
             if distance_metric == "dtw":
-                log.info(f"Computing k means with DTW metric...")
+                #log.info(f"Computing k means with DTW metric...")
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance_metric, verbose=False, max_iter_barycenter=10, random_state=seed)
                 best_clusters = km.fit_predict(ingested_data.transpose())
                 performance = float(silhouette_score(ingested_data.transpose(), best_clusters, metric=distance_metric))
@@ -416,7 +413,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                 return ModelResult(best_clustering=best_clusters, results=[single_result],characteristics=model_characteristics,
                             cluster_centers=model_centers)
             if distance_metric == "softdtw":
-                log.info(f"Computing k means with soft_DTW metric...")
+                #log.info(f"Computing k means with soft_DTW metric...")
                 km = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance_metric, verbose=False, metric_params={"gamma": gamma}, random_state=seed)
                 best_clusters = km.fit_predict(ingested_data.transpose())
                 performance = float(silhouette_score(ingested_data.transpose(), best_clusters, metric=distance_metric))

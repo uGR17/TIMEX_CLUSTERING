@@ -96,33 +96,35 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
     # Plot the prediction results, if requested.
     if timeseries_container.models is not None:
         param_configuration = param_config["model_parameters"]
-
+        main_accuracy_estimator = param_config["main_accuracy_estimator"]
         models = timeseries_container.models
 
         children.append(
             html.H3("Clustering results"),
         )
 
-        model_performances = {}
+        all_performances = []
+        
         for model_name in models:
             model = models[model_name]
-            model_performances[model_name] = {}
             for metric_key in model:
-                metric = model[metric_key]
-                model_performances[model_name][metric_key] = metric.performances
-                model_performances[model_name][metric_key] = metric.performances
-                model_characteristic = metric.characteristics
+                metric = model[metric_key] #ModelResult object
+                model_performances = metric.results #[SingleResult]
+                model_characteristic = metric.characteristics.copy()
+                all_performances.append(model_performances) #[[SingleResult]]
+            best_performances = [x[0] for x in all_performances] #[SingleResult]
             model_characteristic['distance_metric'] = param_configuration['distance_metric']
-            #test_values = model_characteristic["test_values"]
-            #main_accuracy_estimator = model_parameters["main_accuracy_estimator"]
-            ##model_results.sort(key=lambda x: getattr(x.testing_performances, main_accuracy_estimator.upper()))
+            model_characteristic['n_clusters'] = param_configuration['n_clusters']
+            
+            if main_accuracy_estimator=="silhouette":
+                best_performances.sort(key=lambda x: getattr(x.performances, main_accuracy_estimator), reverse=True)
+            else:
+                best_performances.sort(key=lambda x: getattr(x.performances, main_accuracy_estimator))
 
-            #best_prediction = model_results[0].prediction
-            #testing_performances = [x.testing_performances for x in model_results]
 
             children.extend([
                 html.H4(f"{model_name}"),
-                characteristics_list(model_characteristic, model_performances),
+                characteristics_list(model_characteristic, best_performances[0]),
                 #html.Div("Clustering performance:"),
                 #html.Ul([html.Li(key + ": " + str(testing_performances[key])) for key in testing_performances]),
                 cluster_plot(timeseries_data, model),
@@ -949,6 +951,9 @@ def performance_plot(df: DataFrame, predicted_data: DataFrame, testing_performan
 
     test_values : int
         Number of values used for testing performance.
+    
+    all_performances : List
+        Useful to write also information about the all the clustering performances.
 
     Returns
     -------
@@ -1029,7 +1034,7 @@ def plot_every_prediction(df: DataFrame, model_results: List[SingleResult],
     return new_childrens
 
 
-def characteristics_list(model_characteristics: dict, model_performances:ValidationPerformance)-> html.Div: #, testing_performances: List[ValidationPerformance]) -> html.Div:
+def characteristics_list(model_characteristics: dict, best_performances: SingleResult)-> html.Div: #, testing_performances: List[ValidationPerformance]) -> html.Div:
     """
     Create and return an HTML Div which contains a list of natural language characteristic
     relative to a prediction model.
@@ -1039,9 +1044,9 @@ def characteristics_list(model_characteristics: dict, model_performances:Validat
     model_characteristics : dict
         key-value for each characteristic to write in natural language.
 
-    model_performances : [ValidationPerformance]
-        Useful to write also information about the testing performances.
-
+    best_performances : SingleResult
+        Useful to write also information about the best clustering performance.
+    
     Returns
     -------
     html.Div()
@@ -1053,7 +1058,7 @@ def characteristics_list(model_characteristics: dict, model_performances:Validat
             "clustering_approach": "Clustering approach: " + value,
             "model": "Model type: " + value,
             "distance_metric": 'Distance metrics used: ' + value,
-            "n_clusters":'The number of clusters that grouped better the time series are ' + value,
+            "n_clusters":'Number of clusters tested: ' + value,
             "transformation": ('The model has used a ') + value + (
                 ' transformation on the input data.') if value != "none"
             else ('The model has not used any pre/post transformation on input data.')
@@ -1063,18 +1068,18 @@ def characteristics_list(model_characteristics: dict, model_performances:Validat
     elems = [html.Div('Model characteristics:'),
              html.Ul([html.Li(get_text_char(key, model_characteristics[key])) for key in model_characteristics]),
              html.Div("This model, using the best clustering, reaches the next performances:"),
-             show_errors(model_performances)]
+             show_errors_html(best_performances)]
 
     return html.Div(elems)
 
 
-def show_errors(testing_performances: ValidationPerformance) -> html.Ul:
+def show_errors_html(best_performances: ValidationPerformance) -> html.Ul:
     """
-    Create an HTML list with each performance evaluation criteria result.
+    Create an HTML list with the best performance evaluation criteria result.
 
     Parameters
     ----------
-    testing_performances :  ValidationPerformance
+    best_performances :  ValidationPerformance
         Error metrics to show.
 
     Returns
@@ -1095,11 +1100,12 @@ def show_errors(testing_performances: ValidationPerformance) -> html.Ul:
     def get_text_perf(key: str, value: any) -> str:
         switcher = {
             "silhouette": "Silhouette score: " + round_n(value),
-            "calinski": "Calinski Harabasz score: " + round_n(value),
-            "dvs_bouldin": "Davies Bouldin score: " + round_n(value)
+            "calinski_harabasz": "Calinski Harabasz score: " + round_n(value),
+            "davies_bouldin": "Davies Bouldin score: " + round_n(value)
+            #The Number of clusters that grouped better the time series are
         }
         return switcher.get(key, "Invalid choice!")
 
-    testing_performances = testing_performances.get_dict()
+    best_performances = best_performances.get_dict()
 
-    return html.Ul([html.Li(get_text_perf(key, testing_performances[key])) for key in testing_performances])
+    return html.Ul([html.Li(get_text_perf(key, best_performances[key])) for key in best_performances])
