@@ -1067,8 +1067,9 @@ def characteristics_list(model_characteristics: dict, best_performances: SingleR
 
     elems = [html.Div('Model characteristics:'),
              html.Ul([html.Li(get_text_char(key, model_characteristics[key])) for key in model_characteristics]),
-             html.Div("This model, using the best clustering, reaches the next performances:"),
-             show_errors_html(best_performances)]
+             html.Div("This model using the best clustering parameters, reaches the next performances:"),
+             show_errors_html(best_performances)
+            ]
 
     return html.Div(elems)
 
@@ -1101,11 +1102,18 @@ def show_errors_html(best_performances: SingleResult) -> html.Ul:
         switcher = {
             "silhouette": "Silhouette score: " + round_n(value),
             "calinski_harabasz": "Calinski Harabasz score: " + round_n(value),
-            "davies_bouldin": "Davies Bouldin score: " + round_n(value)
-            #The Number of clusters that grouped better the time series are
+            "davies_bouldin": "Davies Bouldin score: " + round_n(value),
+            "distance_metric": 'Best distance metric: ' + value,
+            "n_clusters":'Best number of clusters: ' + value,
+            "transformation": ('The best model has used a ') + value + (
+                ' transformation on the input data.') if value != "none"
+            else ('The model has not used any pre/post transformation on input data.')
         }
         return switcher.get(key, "Invalid choice!")
 
     best_performances = best_performances.performances.get_dict()
+    best_performances['distance_metric'] = best_performances.characteristics['distance_metric']
+    best_performances['n_clusters'] = best_performances.characteristics['n_clusters']
+    best_performances['transformation'] = best_performances.characteristics['transformation']
 
     return html.Ul([html.Li(get_text_perf(key, best_performances[key])) for key in best_performances])
