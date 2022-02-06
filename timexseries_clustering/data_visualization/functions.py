@@ -125,10 +125,8 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
             children.extend([
                 html.H4(f"{model_name}"),
                 characteristics_list(model_characteristic, best_performances[0]),
-                #html.Div("Clustering performance:"),
-                #html.Ul([html.Li(key + ": " + str(testing_performances[key])) for key in testing_performances]),
                 cluster_plot(timeseries_data, model),
-                #performance_plot(timeseries_data, best_prediction, testing_performances, test_values),
+                performance_plot(timeseries_data, best_performances, all_performances, model_characteristic['n_clusters']),
             ])
 
             # EXTRA
@@ -930,30 +928,27 @@ def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict):
     plt.show()
 
 
-def performance_plot(df: DataFrame, predicted_data: DataFrame, testing_performances: List[ValidationPerformance],
-                     test_values: int) -> dcc.Graph:
+def performance_plot(df: DataFrame, best_performances: SingleResult, all_performances: List,
+                     n_cluster_test_values: List) -> dcc.Graph:
     """
-    Create and return the performance plot of the model; for every error kind (i.e. MSE, MAE, etc) plot the values it
-    assumes using different training windows.
-    Plot the training data in the end.
+    Create and return the performance plot of the model; for every error kind (i.e. Silhouette, Davies Bouldin, etc) plot the values it
+    assumes using differentclustering model parameters.
+    Plot the best clustering data in the end. **
 
     Parameters
     ----------
     df : DataFrame
         Raw values ingested by the app.
 
-    predicted_data : DataFrame
-        Prediction created by a model.
+    best_performances : SingleResult
+        Useful to write also information about the best clustering performance.
 
-    testing_performances : [ValidationPerformance]
-        List of ValidationPerformance object. Every object is related to a specific training windows, hence
-        it shows the performance using that window.
-
-    test_values : int
-        Number of values used for testing performance.
-    
     all_performances : List
-        Useful to write also information about the all the clustering performances.
+        List of [SingleResults] objects. Every object is related to a different model parameter configuration,
+        hence it shows the performance using that configuration.
+
+    n_cluster_test_values : List
+        Number of clusters used for testing performance.
 
     Returns
     -------
@@ -963,51 +958,81 @@ def performance_plot(df: DataFrame, predicted_data: DataFrame, testing_performan
     --------
     Check `create_timeseries_dash_children` to check the use.
     """
-    fig = make_subplots(rows=4, cols=1, shared_xaxes=True, vertical_spacing=0.02)
+    fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.02)
 
-    training_data = df.iloc[:-test_values]
+    import numpy
+    n_cls = len(n_cluster_test_values)
+    nparray_performances = numpy.zeros((n_cls,9))
 
-    data_performances = []
+    for metric in all_performances:
+        nc=0
+        for n_cluster in metric:
+            if n_cluster.characteristics['distance_metric']=='Euclidean':
+                nparray_performances[nc][0] = n_cluster.performances.silhouette
+                nparray_performances[nc][1] = n_cluster.performances.davies_bouldin
+                nparray_performances[nc][2] = n_cluster.performances.calinski_harabasz
+            elif n_cluster.characteristics['distance_metric']=='DTW':
+                nparray_performances[nc][3] = n_cluster.performances.silhouette
+                nparray_performances[nc][4] = n_cluster.performances.davies_bouldin
+                nparray_performances[nc][5] = n_cluster.performances.calinski_harabasz        
+            elif n_cluster.characteristics['distance_metric']=='SoftDTW':
+                nparray_performances[nc][6] = n_cluster.performances.silhouette
+                nparray_performances[nc][7] = n_cluster.performances.davies_bouldin
+                nparray_performances[nc][8] = n_cluster.performances.calinski_harabasz
+            nc=nc+1
 
-    for tp in testing_performances:
-        data_performances.append([tp.first_used_index, tp.MAE, tp.MSE, tp.AM])
+    df_performances = pandas.DataFrame(nparray_performances, columns=['silhouette_ED', 'davies_bouldin_ED', 'calinski_harabasz_ED',
+                                                                'silhouette_DTW', 'davies_bouldin_DTW', 'calinski_harabasz_DTW',
+                                                                'silhouette_softDTW', 'davies_bouldin_softDTW', 'calinski_harabasz_softDTW'])
 
-    df_performances = pandas.DataFrame(data_performances, columns=['index', 'mae', 'mse', 'am'])
-    df_performances.set_index('index', drop=True, inplace=True)
-    df_performances.sort_index(inplace=True)
+    # Euclidian metric plots
+    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_ED'],
+                                line=dict(color='magenta'),
+                                mode="lines+markers",
+                                name='Silhouette ED'), row=1, col=1)
+    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_ED'],
+                                line=dict(color='yellow'),
+                                mode="lines+markers",
+                                name='Davies Bouldin ED'), row=2, col=1)
+    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_ED'],
+                                line=dict(color='DeepSkyBlue'),
+                                mode="lines+markers",
+                                name='Calinski Harabasz ED'), row=3, col=1)
 
-    fig.append_trace(go.Scatter(x=df_performances.index, y=df_performances['mae'],
+    # DTW metric plots
+    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_DTW'],
+                                line=dict(color='goldenrod'),
+                                mode="lines+markers",
+                                name='Silhouette DTW'), row=1, col=1)
+    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_DTW'],
+                                line=dict(color='limegreen'),
+                                mode="lines+markers",
+                                name='Davies Bouldin DTW'), row=2, col=1)
+    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_DTW'],
+                                line=dict(color='purple'),
+                                mode="lines+markers",
+                                name='Calinski Harabasz DTW'), row=3, col=1)
+
+    # SoftDTW metric plots
+    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_softDTW'],
                                 line=dict(color='red'),
                                 mode="lines+markers",
-                                name='MAE'), row=1, col=1)
-
-    fig.append_trace(go.Scatter(x=df_performances.index, y=df_performances['mse'],
+                                name='Silhouette Soft DTW'), row=1, col=1)
+    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_softDTW'],
                                 line=dict(color='green'),
                                 mode="lines+markers",
-                                name='MSE'), row=2, col=1)
-
-    fig.append_trace(go.Scatter(x=df_performances.index, y=df_performances['am'],
+                                name='Davies Bouldin Soft DTW'), row=2, col=1)
+    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_softDTW'],
                                 line=dict(color='blue'),
                                 mode="lines+markers",
-                                name='AM'), row=3, col=1)
+                                name='Calinski Harabasz Soft DTW'), row=3, col=1)
 
-    fig.append_trace(go.Scatter(x=training_data.index, y=training_data.iloc[:, 0],
-                                line=dict(color='black'),
-                                mode='markers',
-                                name=_('training data')), row=4, col=1)
+    fig.update_yaxes(title_text="Silhouette", row=1, col=1)
+    fig.update_yaxes(title_text="Davies Bouldin", row=2, col=1)
+    fig.update_yaxes(title_text="Calinski Harabasz", row=3, col=1)
+    fig.update_xaxes(title_text="Number of clusters", row=3, col=1)
 
-    # Small trick to make the x-axis have the same length of the "Prediction plot"
-    predicted_data.iloc[:, 0] = "nan"
-    fig.append_trace(go.Scatter(x=predicted_data.index, y=predicted_data.iloc[:, 0],
-                                mode='lines+markers',
-                                name='yhat', showlegend=False), row=4, col=1)
-
-    fig.update_yaxes(title_text="MAE", row=1, col=1)
-    fig.update_yaxes(title_text="MSE", row=2, col=1)
-    fig.update_yaxes(title_text="AM", row=3, col=1)
-    fig.update_yaxes(title_text=df.columns[0], row=4, col=1)
-
-    fig.update_layout(title=_('Performances with different training windows'), height=900)
+    fig.update_layout(title='Performances with different number of clusters', height=750)
     g = dcc.Graph(
         figure=fig
     )

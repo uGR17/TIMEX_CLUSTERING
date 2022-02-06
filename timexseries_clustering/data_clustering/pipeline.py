@@ -384,7 +384,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                     model_centers.append(centrd)
                 model_characteristics["clustering_approach"] = "Observation based"
                 model_characteristics["model"] = "K Means"
-                model_characteristics["distance_metric"] = "Euclidian"
+                model_characteristics["distance_metric"] = "Euclidean"
                 model_characteristics["n_clusters"] = n_clusters
                 model_characteristics["transformation"] = transformation
                 performance = ValidationPerformance()
