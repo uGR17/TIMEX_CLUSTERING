@@ -126,7 +126,8 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
                 html.H4(f"{model_name}"),
                 characteristics_list(model_characteristic, best_performances[0]),
                 cluster_plot(timeseries_data, model),
-                performance_plot(timeseries_data, best_performances, all_performances, model_characteristic['n_clusters']),
+                performance_plot(timeseries_data, param_config, all_performances),
+                validation_performance_info(),
             ])
 
             # EXTRA
@@ -176,6 +177,7 @@ def create_dash_children(timeseries_containers: List[TimeSeriesContainer], param
 
     return children
 
+
 def line_plot(df: DataFrame) -> dcc.Graph:
     """
     Create and return the line plot for a dataframe.
@@ -200,6 +202,7 @@ def line_plot(df: DataFrame) -> dcc.Graph:
         figure=fig
     )
     return g
+
 
 def line_plot_multiIndex(df: DataFrame) -> dcc.Graph:
     """
@@ -894,9 +897,6 @@ def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict):
     cluster_data : DataFrame
         Clustering created by a model.
 
-    test_values : int, optional, default 0
-        Number of validation values used in the testing.
-
     """
     plt.figure()
     plt.figure(figsize=(13, 8))
@@ -928,8 +928,7 @@ def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict):
     plt.show()
 
 
-def performance_plot(df: DataFrame, best_performances: SingleResult, all_performances: List,
-                     n_cluster_test_values: List) -> dcc.Graph:
+def performance_plot(df: DataFrame, param_config : dict, all_performances: List) -> dcc.Graph:
     """
     Create and return the performance plot of the model; for every error kind (i.e. Silhouette, Davies Bouldin, etc) plot the values it
     assumes using differentclustering model parameters.
@@ -940,15 +939,12 @@ def performance_plot(df: DataFrame, best_performances: SingleResult, all_perform
     df : DataFrame
         Raw values ingested by the app.
 
-    best_performances : SingleResult
-        Useful to write also information about the best clustering performance.
+    param_config : dict
+        TIMEX configuration parameters dictionary.
 
     all_performances : List
         List of [SingleResults] objects. Every object is related to a different model parameter configuration,
         hence it shows the performance using that configuration.
-
-    n_cluster_test_values : List
-        Number of clusters used for testing performance.
 
     Returns
     -------
@@ -958,6 +954,10 @@ def performance_plot(df: DataFrame, best_performances: SingleResult, all_perform
     --------
     Check `create_timeseries_dash_children` to check the use.
     """
+    
+    distance_metrics = [*param_config["model_parameters"]["distance_metric"].split(",")]
+    n_cluster_test_values = param_config['model_parameters']['n_clusters']
+    
     fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.02)
 
     import numpy
@@ -986,46 +986,49 @@ def performance_plot(df: DataFrame, best_performances: SingleResult, all_perform
                                                                 'silhouette_softDTW', 'davies_bouldin_softDTW', 'calinski_harabasz_softDTW'])
 
     # Euclidian metric plots
-    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_ED'],
-                                line=dict(color='magenta'),
-                                mode="lines+markers",
-                                name='Silhouette ED'), row=1, col=1)
-    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_ED'],
-                                line=dict(color='yellow'),
-                                mode="lines+markers",
-                                name='Davies Bouldin ED'), row=2, col=1)
-    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_ED'],
-                                line=dict(color='DeepSkyBlue'),
-                                mode="lines+markers",
-                                name='Calinski Harabasz ED'), row=3, col=1)
+    if 'euclidean' in distance_metrics:
+        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_ED'],
+                                    line=dict(color='magenta'),
+                                    mode="lines+markers",
+                                    name='Silhouette ED'), row=1, col=1)
+        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_ED'],
+                                    line=dict(color='yellow'),
+                                    mode="lines+markers",
+                                    name='Davies Bouldin ED'), row=2, col=1)
+        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_ED'],
+                                    line=dict(color='DeepSkyBlue'),
+                                    mode="lines+markers",
+                                    name='Calinski Harabasz ED'), row=3, col=1)
 
     # DTW metric plots
-    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_DTW'],
-                                line=dict(color='goldenrod'),
-                                mode="lines+markers",
-                                name='Silhouette DTW'), row=1, col=1)
-    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_DTW'],
-                                line=dict(color='limegreen'),
-                                mode="lines+markers",
-                                name='Davies Bouldin DTW'), row=2, col=1)
-    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_DTW'],
-                                line=dict(color='purple'),
-                                mode="lines+markers",
-                                name='Calinski Harabasz DTW'), row=3, col=1)
+    if 'dtw' in distance_metrics:
+        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_DTW'],
+                                    line=dict(color='goldenrod'),
+                                    mode="lines+markers",
+                                    name='Silhouette DTW'), row=1, col=1)
+        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_DTW'],
+                                    line=dict(color='limegreen'),
+                                    mode="lines+markers",
+                                    name='Davies Bouldin DTW'), row=2, col=1)
+        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_DTW'],
+                                    line=dict(color='purple'),
+                                    mode="lines+markers",
+                                    name='Calinski Harabasz DTW'), row=3, col=1)
 
     # SoftDTW metric plots
-    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_softDTW'],
-                                line=dict(color='red'),
-                                mode="lines+markers",
-                                name='Silhouette Soft DTW'), row=1, col=1)
-    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_softDTW'],
-                                line=dict(color='green'),
-                                mode="lines+markers",
-                                name='Davies Bouldin Soft DTW'), row=2, col=1)
-    fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_softDTW'],
-                                line=dict(color='blue'),
-                                mode="lines+markers",
-                                name='Calinski Harabasz Soft DTW'), row=3, col=1)
+    if 'softdtw' in distance_metrics:
+        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_softDTW'],
+                                    line=dict(color='red'),
+                                    mode="lines+markers",
+                                    name='Silhouette Soft DTW'), row=1, col=1)
+        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_softDTW'],
+                                    line=dict(color='green'),
+                                    mode="lines+markers",
+                                    name='Davies Bouldin Soft DTW'), row=2, col=1)
+        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_softDTW'],
+                                    line=dict(color='blue'),
+                                    mode="lines+markers",
+                                    name='Calinski Harabasz Soft DTW'), row=3, col=1)
 
     fig.update_yaxes(title_text="Silhouette", row=1, col=1)
     fig.update_yaxes(title_text="Davies Bouldin", row=2, col=1)
@@ -1144,3 +1147,47 @@ def show_errors_html(best_performances: SingleResult) -> html.Ul:
     best_performances_dict['transformation'] = best_performances.characteristics['transformation']
 
     return html.Ul([html.Li(get_text_char(key, best_performances_dict[key])) for key in best_performances_dict])
+
+
+def validation_performance_info()-> html.Div:
+    """
+    Create and return an HTML Div which contains a information of the performance scores..
+
+    Parameters
+    ----------
+    None
+    
+    Returns
+    -------
+    html.Div()
+    """
+    """
+    info = [html.Div('Silhouette Coefficient:'
+                     'The score is bounded between -1 for incorrect clustering and +1 for highly dense clustering.'
+                     'Scores around zero indicate overlapping clusters. The score is higher when clusters are dense and well separated, which relates to a standard concept of a cluster.'
+                     'The Silhouette Coefficient is generally higher for convex clusters than other concepts of clusters'),
+            html.Div('Calinski-Harabasz Index:'
+                     'Also known as the Variance Ratio Criterion.The score is higher when clusters are dense and well separated, which relates to a standard concept of a cluster.'
+                     'The index is the ratio of the sum of between-clusters dispersion and of within-cluster dispersion for all clusters (where dispersion is defined as the sum of distances squared)'),
+            html.Div('Davies-Bouldin Index:'
+                     'It can be used to evaluate the model, where a lower Davies-Bouldin index relates to a model with better separation between the clusters.'
+                     'Zero is the lowest possible score. Values closer to zero indicate a better partition.'),
+            ]
+    """
+    markdown_text = '''
+        **Silhouette Coefficient:**
+        The score is bounded between -1 for incorrect clustering and +1 for highly dense clustering.
+        Scores around zero indicate overlapping clusters. The score is higher when clusters are dense and well separated.
+        The Silhouette Coefficient is generally higher for convex clusters than other concepts of clusters.
+        
+        **Calinski-Harabasz Index:**
+        Also known as the Variance Ratio Criterion, the score is higher when clusters are dense and well separated.
+        The index is the ratio of the sum of between-clusters dispersion and of within-cluster dispersion for all clusters 
+        (where dispersion is defined as the sum of distances squared)
+        
+        **Davies-Bouldin Index:**
+        It can be used to evaluate the model, where a lower Davies-Bouldin index relates to a model with better separation between the clusters.
+        Zero is the lowest possible score. Values closer to zero indicate a better partition.
+        '''
+    
+    return html.Div(dcc.Markdown(children=markdown_text))
