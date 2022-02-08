@@ -122,6 +122,12 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
             else:
                 best_performances.sort(key=lambda x: getattr(x.performances, main_accuracy_estimator))
 
+            best_model = best_performances[0].characteristics['model']
+            best_metric = best_performances[0].characteristics['distance_metric']
+            if best_model=='K Means': best_model='k_means'
+            if best_metric=='Euclidean': best_metric='euclidean'
+            elif best_metric=='DTW': best_metric='dtw'
+            elif best_metric=='SoftDTW': best_metric='softdtw'
 
             children.extend([
                 html.H4(f"{model_name}"),
@@ -129,6 +135,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
                 cluster_plot(timeseries_data, model),
                 performance_plot(timeseries_data, param_config, all_performances),
                 validation_performance_info(),
+                cluster_distribution_plot(timeseries_container.models[best_model][best_metric].best_clustering),
             ])
 
             # EXTRA
@@ -1309,3 +1316,39 @@ def validation_performance_info()-> html.Div:
         '''
     
     return html.Div(dcc.Markdown(children=markdown_text))
+
+
+def cluster_distribution_plot(cluster_indexes: DataFrame) -> dcc.Graph:
+    """
+    Create and return a plot which contains the cluster distribution.
+    The plot is built using a dataframe: `ingested_data`.
+
+    `ingested_data` includes the raw data ingested by the app, while `cluster_data` contains the cluster indexes, cluster characteristics
+    and cluster centers made by a model.
+
+    Parameters
+    ----------
+    cluster_indexes : DataFrame
+    Clustering indexes, and index for each timeseries corresponding the cluster which each timeseries belongs.
+
+    Returns
+    -------
+    g : dcc.Graph
+
+    """
+
+    fig = go.Figure()
+
+    clusters = np.unique(cluster_indexes)
+    count_arr = np.bincount(cluster_indexes)
+    counts = []
+    for num_cluster in clusters:
+      counts.append(count_arr[num_cluster])
+
+    fig.add_trace(go.Bar(x=clusters, y=counts))
+        
+    fig.update_layout(title=("Cluster Distribution"), xaxis_title='Clusters', yaxis_title='Count')
+
+    g = dcc.Graph(
+        figure=fig )
+    return g
