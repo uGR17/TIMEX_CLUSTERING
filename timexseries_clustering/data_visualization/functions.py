@@ -107,6 +107,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
         
         for model_name in models:
             model = models[model_name]
+            model_characteristic = {}
             for metric_key in model:
                 metric = model[metric_key] #ModelResult object
                 model_performances = metric.results #[SingleResult]
@@ -957,78 +958,195 @@ def performance_plot(df: DataFrame, param_config : dict, all_performances: List)
     
     distance_metrics = [*param_config["model_parameters"]["distance_metric"].split(",")]
     n_cluster_test_values = param_config['model_parameters']['n_clusters']
+    transformations = [*param_config["model_parameters"]["possible_transformations"].split(",")]
     
     fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.02)
 
     import numpy
     n_cls = len(n_cluster_test_values)
-    nparray_performances = numpy.zeros((n_cls,9))
-
-    for metric in all_performances:
-        nc=0
-        for n_cluster in metric:
-            if n_cluster.characteristics['distance_metric']=='Euclidean':
-                nparray_performances[nc][0] = n_cluster.performances.silhouette
-                nparray_performances[nc][1] = n_cluster.performances.davies_bouldin
-                nparray_performances[nc][2] = n_cluster.performances.calinski_harabasz
-            elif n_cluster.characteristics['distance_metric']=='DTW':
-                nparray_performances[nc][3] = n_cluster.performances.silhouette
-                nparray_performances[nc][4] = n_cluster.performances.davies_bouldin
-                nparray_performances[nc][5] = n_cluster.performances.calinski_harabasz        
-            elif n_cluster.characteristics['distance_metric']=='SoftDTW':
-                nparray_performances[nc][6] = n_cluster.performances.silhouette
-                nparray_performances[nc][7] = n_cluster.performances.davies_bouldin
-                nparray_performances[nc][8] = n_cluster.performances.calinski_harabasz
-            nc=nc+1
-
-    df_performances = pandas.DataFrame(nparray_performances, columns=['silhouette_ED', 'davies_bouldin_ED', 'calinski_harabasz_ED',
-                                                                'silhouette_DTW', 'davies_bouldin_DTW', 'calinski_harabasz_DTW',
-                                                                'silhouette_softDTW', 'davies_bouldin_softDTW', 'calinski_harabasz_softDTW'])
-
-    # Euclidian metric plots
-    if 'euclidean' in distance_metrics:
-        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_ED'],
-                                    line=dict(color='magenta'),
-                                    mode="lines+markers",
-                                    name='Silhouette ED'), row=1, col=1)
-        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_ED'],
-                                    line=dict(color='yellow'),
-                                    mode="lines+markers",
-                                    name='Davies Bouldin ED'), row=2, col=1)
-        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_ED'],
-                                    line=dict(color='DeepSkyBlue'),
-                                    mode="lines+markers",
-                                    name='Calinski Harabasz ED'), row=3, col=1)
-
-    # DTW metric plots
-    if 'dtw' in distance_metrics:
-        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_DTW'],
-                                    line=dict(color='goldenrod'),
-                                    mode="lines+markers",
-                                    name='Silhouette DTW'), row=1, col=1)
-        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_DTW'],
-                                    line=dict(color='limegreen'),
-                                    mode="lines+markers",
-                                    name='Davies Bouldin DTW'), row=2, col=1)
-        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_DTW'],
-                                    line=dict(color='purple'),
-                                    mode="lines+markers",
-                                    name='Calinski Harabasz DTW'), row=3, col=1)
-
-    # SoftDTW metric plots
-    if 'softdtw' in distance_metrics:
-        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_softDTW'],
-                                    line=dict(color='red'),
-                                    mode="lines+markers",
-                                    name='Silhouette Soft DTW'), row=1, col=1)
-        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_softDTW'],
-                                    line=dict(color='green'),
-                                    mode="lines+markers",
-                                    name='Davies Bouldin Soft DTW'), row=2, col=1)
-        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_softDTW'],
-                                    line=dict(color='blue'),
-                                    mode="lines+markers",
-                                    name='Calinski Harabasz Soft DTW'), row=3, col=1)
+    
+    if all_performances[0][0].characteristics['transformation']=='none': #Observation based approach
+        nparray_performances = numpy.zeros((n_cls,9))
+        for metric in all_performances:
+            nc=0
+            for n_cluster in metric:
+                if n_cluster.characteristics['distance_metric']=='Euclidean':
+                    nparray_performances[nc][0] = n_cluster.performances.silhouette
+                    nparray_performances[nc][1] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc][2] = n_cluster.performances.calinski_harabasz
+                elif n_cluster.characteristics['distance_metric']=='DTW':
+                    nparray_performances[nc][3] = n_cluster.performances.silhouette
+                    nparray_performances[nc][4] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc][5] = n_cluster.performances.calinski_harabasz        
+                elif n_cluster.characteristics['distance_metric']=='SoftDTW':
+                    nparray_performances[nc][6] = n_cluster.performances.silhouette
+                    nparray_performances[nc][7] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc][8] = n_cluster.performances.calinski_harabasz
+                nc=nc+1
+        df_performances = pandas.DataFrame(nparray_performances, columns=['silhouette_ED', 'davies_bouldin_ED', 'calinski_harabasz_ED',
+                                                                    'silhouette_DTW', 'davies_bouldin_DTW', 'calinski_harabasz_DTW',
+                                                                    'silhouette_softDTW', 'davies_bouldin_softDTW', 'calinski_harabasz_softDTW'])
+        # Euclidian metric plots
+        if 'euclidean' in distance_metrics:
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_ED'],
+                                        line=dict(color='magenta'),
+                                        mode="lines+markers",
+                                        name='Silhouette ED'), row=1, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_ED'],
+                                        line=dict(color='yellow'),
+                                        mode="lines+markers",
+                                        name='Davies Bouldin ED'), row=2, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_ED'],
+                                        line=dict(color='DeepSkyBlue'),
+                                        mode="lines+markers",
+                                        name='Calinski Harabasz ED'), row=3, col=1)
+        # DTW metric plots
+        if 'dtw' in distance_metrics:
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_DTW'],
+                                        line=dict(color='goldenrod'),
+                                        mode="lines+markers",
+                                        name='Silhouette DTW'), row=1, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_DTW'],
+                                        line=dict(color='limegreen'),
+                                        mode="lines+markers",
+                                        name='Davies Bouldin DTW'), row=2, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_DTW'],
+                                        line=dict(color='purple'),
+                                        mode="lines+markers",
+                                        name='Calinski Harabasz DTW'), row=3, col=1)
+        # SoftDTW metric plots
+        if 'softdtw' in distance_metrics:
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_softDTW'],
+                                        line=dict(color='red'),
+                                        mode="lines+markers",
+                                        name='Silhouette Soft DTW'), row=1, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_softDTW'],
+                                        line=dict(color='green'),
+                                        mode="lines+markers",
+                                        name='Davies Bouldin Soft DTW'), row=2, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_softDTW'],
+                                        line=dict(color='blue'),
+                                        mode="lines+markers",
+                                        name='Calinski Harabasz Soft DTW'), row=3, col=1)
+                
+    if all_performances[0][0].characteristics['transformation']!='none': #Feature based approach
+        num_trans = len(transformations)
+        nparray_performances = numpy.zeros((n_cls*num_trans,9))
+        for metric in all_performances:
+            nc=0
+            for n_cluster in metric:
+                if n_cluster.characteristics['distance_metric']=='Euclidean' and n_cluster.characteristics['transformation']=='DWT':
+                    nparray_performances[nc][0] = n_cluster.performances.silhouette
+                    nparray_performances[nc][1] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc][2] = n_cluster.performances.calinski_harabasz
+                elif n_cluster.characteristics['distance_metric']=='DTW' and n_cluster.characteristics['transformation']=='DWT':
+                    nparray_performances[nc][3] = n_cluster.performances.silhouette
+                    nparray_performances[nc][4] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc][5] = n_cluster.performances.calinski_harabasz        
+                elif n_cluster.characteristics['distance_metric']=='SoftDTW' and n_cluster.characteristics['transformation']=='DWT':
+                    nparray_performances[nc][6] = n_cluster.performances.silhouette
+                    nparray_performances[nc][7] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc][8] = n_cluster.performances.calinski_harabasz
+                if n_cluster.characteristics['distance_metric']=='Euclidean' and n_cluster.characteristics['transformation']=='DFT':
+                    nparray_performances[nc][0] = n_cluster.performances.silhouette
+                    nparray_performances[nc][1] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc][2] = n_cluster.performances.calinski_harabasz
+                elif n_cluster.characteristics['distance_metric']=='DTW' and n_cluster.characteristics['transformation']=='DFT':
+                    nparray_performances[nc][3] = n_cluster.performances.silhouette
+                    nparray_performances[nc][4] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc][5] = n_cluster.performances.calinski_harabasz        
+                elif n_cluster.characteristics['distance_metric']=='SoftDTW' and n_cluster.characteristics['transformation']=='DFT':
+                    nparray_performances[nc][6] = n_cluster.performances.silhouette
+                    nparray_performances[nc][7] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc][8] = n_cluster.performances.calinski_harabasz
+                nc=nc+1
+        df_performances = pandas.DataFrame(nparray_performances, columns=['silhouette_ED_DWT', 'davies_bouldin_ED_DWT', 'calinski_harabasz_ED_DWT',
+                                                                    'silhouette_DTW_DWT', 'davies_bouldin_DTW_DWT', 'calinski_harabasz_DTW_DWT',
+                                                                    'silhouette_softDTW_DWT', 'davies_bouldin_softDTW_DWT', 'calinski_harabasz_softDTW_DWT'])
+        # Euclidian metric plots with DWT transformation
+        if 'euclidean' in distance_metrics:
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[0:n_cls,0],
+                                        line=dict(color='magenta'),
+                                        mode="lines+markers",
+                                        name='Silhouette ED-DWT'), row=1, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[0:n_cls,1],
+                                        line=dict(color='yellow'),
+                                        mode="lines+markers",
+                                        name='Davies Bouldin ED-DWT'), row=2, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[0:n_cls,2],
+                                        line=dict(color='DeepSkyBlue'),
+                                        mode="lines+markers",
+                                        name='Calinski Harabasz ED-DWT'), row=3, col=1)
+        # DTW metric plots with DWT transformation
+        if 'dtw' in distance_metrics:
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[0:n_cls,3],
+                                        line=dict(color='goldenrod'),
+                                        mode="lines+markers",
+                                        name='Silhouette DTW-DWT'), row=1, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[0:n_cls,4],
+                                        line=dict(color='limegreen'),
+                                        mode="lines+markers",
+                                        name='Davies Bouldin DTW-DWT'), row=2, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[0:n_cls,5],
+                                        line=dict(color='purple'),
+                                        mode="lines+markers",
+                                        name='Calinski Harabasz DTW-DWT'), row=3, col=1)
+        # SoftDTW metric plots with DWT transformation
+        if 'softdtw' in distance_metrics:
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[0:n_cls,6],
+                                        line=dict(color='red'),
+                                        mode="lines+markers",
+                                        name='Silhouette Soft DTW-DWT'), row=1, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[0:n_cls,7],
+                                        line=dict(color='green'),
+                                        mode="lines+markers",
+                                        name='Davies Bouldin Soft DTW-DWT'), row=2, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[0:n_cls,8],
+                                        line=dict(color='blue'),
+                                        mode="lines+markers",
+                                        name='Calinski Harabasz Soft DTW-DWT'), row=3, col=1)
+        # Euclidian metric plots with DFT transformation
+        if 'euclidean' in distance_metrics:
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[n_cls:,0],
+                                        line=dict(color='magenta'),
+                                        mode="lines+markers",
+                                        name='Silhouette ED-DFT'), row=1, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[n_cls:,1],
+                                        line=dict(color='yellow'),
+                                        mode="lines+markers",
+                                        name='Davies Bouldin ED-DFT'), row=2, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[n_cls:,2],
+                                        line=dict(color='DeepSkyBlue'),
+                                        mode="lines+markers",
+                                        name='Calinski Harabasz ED-DFT'), row=3, col=1)
+        # DTW metric plots with DFT transformation
+        if 'dtw' in distance_metrics:
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[n_cls:,3],
+                                        line=dict(color='goldenrod'),
+                                        mode="lines+markers",
+                                        name='Silhouette DTW-DFT'), row=1, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[n_cls:,4],
+                                        line=dict(color='limegreen'),
+                                        mode="lines+markers",
+                                        name='Davies Bouldin DTW-DFT'), row=2, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[n_cls:,5],
+                                        line=dict(color='purple'),
+                                        mode="lines+markers",
+                                        name='Calinski Harabasz DTW-DFT'), row=3, col=1)
+        # SoftDTW metric plots with DFT transformation
+        if 'softdtw' in distance_metrics:
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[n_cls:,6],
+                                        line=dict(color='red'),
+                                        mode="lines+markers",
+                                        name='Silhouette Soft DTW-DFT'), row=1, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[n_cls:,7],
+                                        line=dict(color='green'),
+                                        mode="lines+markers",
+                                        name='Davies Bouldin Soft DTW-DFT'), row=2, col=1)
+            fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances.iloc[n_cls:,8],
+                                        line=dict(color='blue'),
+                                        mode="lines+markers",
+                                        name='Calinski Harabasz Soft DTW-DFT'), row=3, col=1)
 
     fig.update_yaxes(title_text="Silhouette", row=1, col=1)
     fig.update_yaxes(title_text="Davies Bouldin", row=2, col=1)

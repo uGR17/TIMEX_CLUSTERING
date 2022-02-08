@@ -11,168 +11,101 @@ from tslearn.clustering import TimeSeriesKMeans
 from tslearn.datasets import CachedDatasets
 from tslearn.preprocessing import TimeSeriesScalerMeanVariance, TimeSeriesResampler
 from pandas import DataFrame
-
-# from timexseries_clustering.data_clustering.data_prediction import TestingPerformance**
+from tslearn.clustering import TimeSeriesKMeans, silhouette_score
+from timexseries_clustering.data_clustering.models.predictor import ModelResult, SingleResult
+from timexseries_clustering.data_clustering.validation_performances import ValidationPerformance
 from timexseries_clustering.data_clustering import ClustersModel
 
 logging.getLogger('kMeansModel').setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
 
 
-class KMeansModel(ClustersModel):
-    """K Means clustering model."""
-
-    def __init__(self, params: dict, approach: str, distance_metric: str = None, transformation: str = None):
-        super().__init__(params, approach=approach, name="KMeansModel", distance_metric=distance_metric, transformation=transformation)
-
-        try:
-            self.kMeans_parameters = params["model_parameters"]["KMeans_parameters"]
-        except KeyError:
-            self.kMeans_parameters = None
-
-    def train(self, input_data: DataFrame):
-        """Overrides ClustersModel.train()"""
-
-        if self.kMeans_parameters is not None:
-            try:
-                timeseries_name = input_data.columns[0]
-                date_format = self.kMeans_parameters["holidays_dataframes"]["date_format"]
-                holidays = pd.read_csv(self.kMeans_parameters["holidays_dataframes"][timeseries_name])
-                holidays.loc[:, "ds"].apply(lambda x: pd.to_datetime(x, format=date_format))
-                #self.fbmodel = Prophet(holidays=holidays)
-                log.debug(f"Using a dataframe for holidays...")
-            except KeyError:
-                pass
-                #self.fbmodel = Prophet()
-
-            try:
-                holiday_country = self.fbprophet_parameters["holiday_country"]
-                self.fbmodel.add_country_holidays(country_name=holiday_country)
-                log.debug(f"Set {holiday_country} as country for holiday calendar...")
-            except KeyError:
-                pass
-
-        else:
-            seed = 0
-            if self.distance_metric == "ED": #fbprophet
-                km = TimeSeriesKMeans(n_clusters=3, metric="euclidean", verbose=True, random_state=seed)
-            if self.distance_metric == "DTW":
-                km = TimeSeriesKMeans(n_clusters=3, metric="dtw", verbose=True, max_iter_barycenter=10, random_state=seed)
-            if self.distance_metric == "soft_DTW":
-                km = TimeSeriesKMeans(n_clusters=3, metric="softdtw", verbose=True, metric_params={"gamma": .01}, random_state=seed)
-
-            #self.fbmodel = Prophet()
-        """
-        if extra_regressors is not None:
-            # We could apply self.transformation also on the extra regressors.
-            # From tests, it looks like it doesn't change much/it worsens the forecasts.
-            input_data = input_data.join(extra_regressors)
-            input_data.reset_index(inplace=True)
-            column_indices = [0, 1]
-            new_names = ['ds', 'y']
-            old_names = input_data.columns[column_indices]
-            input_data.rename(columns=dict(zip(old_names, new_names)), inplace=True)
-            [self.fbmodel.add_regressor(col) for col in extra_regressors.columns]
-
-        else:
-            input_data.reset_index(inplace=True)
-            input_data.columns = ['ds', 'y']
-        """
-        #with self.suppress_stdout_stderr():
-        #    self.fbmodel.fit(input_data)
-
-        #######################
-        # param_grid = {
-        #     'changepoint_prior_scale': [0.001, 0.01, 0.1, 0.5],
-        #     'seasonality_prior_scale': [0.01, 0.1, 1.0, 10.0],
-        # }
-        # param_grid = {
-        #     'changepoint_prior_scale': [0.001, 0.01],
-        #     'seasonality_prior_scale': [0.01, 0.1],
-        # }
-        #
-        # if extra_regressors is not None:
-        #     input_data = input_data.join(extra_regressors)
-        #     input_data.reset_index(inplace=True)
-        #     column_indices = [0, 1]
-        #     new_names = ['ds', 'y']
-        #     old_names = input_data.columns[column_indices]
-        #     input_data.rename(columns=dict(zip(old_names, new_names)), inplace=True)
-        #
-        # else:
-        #     input_data.reset_index(inplace=True)
-        #     input_data.columns = ['ds', 'y']
-        #
-        # # Generate all combinations of parameters
-        # all_params = [dict(zip(param_grid.keys(), v)) for v in itertools.product(*param_grid.values())]
-        # rmses = []  # Store the RMSEs for each params here
-        #
-        # # Use cross validation to evaluate all parameters
-        # for params in all_params:
-        #     m = Prophet(**params)
-        #     [m.add_regressor(col) for col in extra_regressors.columns] if extra_regressors is not None else None
-        #     with self.suppress_stdout_stderr():
-        #         m.fit(input_data)  # Fit model with given params
-        #         df_cv = cross_validation(m, horizon=self.prediction_lags, parallel="processes")
-        #         df_p = performance_metrics(df_cv, rolling_window=1)
-        #         rmses.append(df_p['rmse'].values[0])
-        #
-        # # Find the best parameters
-        # tuning_results = pd.DataFrame(all_params)
-        # tuning_results['rmse'] = rmses
-        #
-        # best_params = all_params[np.argmin(rmses)]
-        # print(best_params)
-        #
-        # self.fbmodel = Prophet(**best_params)
-        # [self.fbmodel.add_regressor(col) for col in extra_regressors.columns] if extra_regressors is not None else None
-        # with self.suppress_stdout_stderr():
-        #     self.fbmodel.fit(input_data)
-
-    def predict(self, future_dataframe: DataFrame, extra_regressors: DataFrame = None) -> DataFrame:
-        """Overrides ClustersModel.predict()"""
-        future = future_dataframe.reset_index()
-        future.rename(columns={'index': 'ds'}, inplace=True)
-
-        if extra_regressors is not None:
-            future.set_index('ds', inplace=True)
-            future = future.join(extra_regressors.copy())
-            future.reset_index(inplace=True)
-
-        forecast = self.fbmodel.predict(future)
-
-
-        forecast.set_index('ds', inplace=True)
-
-        return forecast
-
-
-class suppress_stdout_stderr(object):
+def KMeansModel(ingested_data: DataFrame, clustering_approach: str, distance_metric: str, 
+                param_config: dict, transformation: str = None, n_clusters: int = 3)->ModelResult:
     """
-    A context manager for doing a "deep suppression" of stdout and stderr in
-    Python, i.e. will suppress all print, even if the print originates in a
-    compiled C/Fortran sub-function.
-       This will not suppress raised exceptions, since exceptions are printed
-    to stderr just before a script exits, and after the context manager has
-    exited (at least, I think that is why it lets exceptions through).
-
+    K Means clustering model
+    
+    Parameters
+    ----------
+    clustering_approach : str
+        Clustering approach, e.g. "observation_based"
+    param_config : dict
+        TIMEX configuration dictionary, to pass to the just created model.
+    distance_metric : str, e.g. **
+        Distance/similarity measure type, e.g. "euclidean, dtw, softdtw" **
+    transformation : str, optional, default None
+        Optional `transformation` parameter to pass to the just created model.
+    n_clusters : int, optional, default 3
+        Optional `number of clusters` parameter to pass to the just created model.
+    
+    Returns
+    -------
+    ModelResult
+        Model Result of the class specified in `model_class`, it contains the 
+        results of the best clustering with the index of the cluster that each 
+        time series belongs to. Contains also the model characteristics and the 
+        centers of each cluster.
+    
     """
-
-    def __init__(self):
-        # Open a pair of null files
-        self.null_fds = [os.open(os.devnull, os.O_RDWR) for x in range(2)]
-        # Save the actual stdout (1) and stderr (2) file descriptors.
-        self.save_fds = [os.dup(1), os.dup(2)]
-
-    def __enter__(self):
-        # Assign the null pointers to stdout and stderr.
-        os.dup2(self.null_fds[0], 1)
-        os.dup2(self.null_fds[1], 2)
-
-    def __exit__(self, *_):
-        # Re-assign the real stdout/stderr back to (1) and (2)
-        os.dup2(self.save_fds[0], 1)
-        os.dup2(self.save_fds[1], 2)
-        # Close the null files
-        for fd in self.null_fds + self.save_fds:
-            os.close(fd)
+    
+    seed=0
+    model_centers = []
+    model_characteristics = {}
+    
+    try:
+        gamma = param_config["model_parameters"]["gamma"]
+    except KeyError:
+        gamma = 0.01
+    
+    if distance_metric == "euclidean":
+        km = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance_metric, verbose=False, random_state=seed)
+        best_clusters = km.fit_predict(ingested_data.transpose())
+        for yi in range(n_clusters):
+            centrd = km.cluster_centers_[yi].ravel()
+            model_centers.append(centrd)
+        model_characteristics["clustering_approach"] = clustering_approach
+        model_characteristics["model"] = "K Means"
+        model_characteristics["distance_metric"] = "Euclidean"
+        model_characteristics["n_clusters"] = n_clusters
+        model_characteristics["transformation"] = transformation
+        performance = ValidationPerformance()
+        performance.set_performance_stats(ingested_data.transpose(), best_clusters, distance_metric)
+        single_result = SingleResult(model_characteristics,performance)
+        return ModelResult(best_clustering=best_clusters, results=[single_result],characteristics=model_characteristics,
+                    cluster_centers=model_centers)
+    
+    if distance_metric == "dtw":
+        km = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance_metric, verbose=False, max_iter_barycenter=10, random_state=seed)
+        best_clusters = km.fit_predict(ingested_data.transpose())
+        performance = float(silhouette_score(ingested_data.transpose(), best_clusters, metric=distance_metric))
+        for yi in range(n_clusters):
+            centrd = km.cluster_centers_[yi].ravel()
+            model_centers.append(centrd)
+        model_characteristics["clustering_approach"] = clustering_approach
+        model_characteristics["model"] = "K Means"
+        model_characteristics["distance_metric"] = "DTW"
+        model_characteristics["n_clusters"] = n_clusters
+        model_characteristics["transformation"] = transformation
+        performance = ValidationPerformance()
+        performance.set_performance_stats(ingested_data.transpose(), best_clusters, distance_metric)
+        single_result = SingleResult(model_characteristics,performance)
+        return ModelResult(best_clustering=best_clusters, results=[single_result],characteristics=model_characteristics,
+                    cluster_centers=model_centers)
+        
+    if distance_metric == "softdtw":
+        km = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance_metric, verbose=False, metric_params={"gamma": gamma}, random_state=seed)
+        best_clusters = km.fit_predict(ingested_data.transpose())
+        performance = float(silhouette_score(ingested_data.transpose(), best_clusters, metric=distance_metric))
+        for yi in range(n_clusters):
+            centrd = km.cluster_centers_[yi].ravel()
+            model_centers.append(centrd)
+        model_characteristics["clustering_approach"] = clustering_approach
+        model_characteristics["model"] = "K Means"
+        model_characteristics["distance_metric"] = "SoftDTW"
+        model_characteristics["n_clusters"] = n_clusters
+        model_characteristics["transformation"] = transformation
+        performance = ValidationPerformance()
+        performance.set_performance_stats(ingested_data.transpose(), best_clusters, distance_metric)
+        single_result = SingleResult(model_characteristics,performance)
+        return ModelResult(best_clustering=best_clusters, results=[single_result],characteristics=model_characteristics,
+                    cluster_centers=model_centers)
