@@ -132,7 +132,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
             children.extend([
                 html.H4(f"{model_name}"),
                 characteristics_list(model_characteristic, best_performances[0]),
-                cluster_plot(timeseries_data, model),
+                cluster_plot(timeseries_data, model, timeseries_container.best_model),
                 performance_plot(timeseries_data, param_config, all_performances),
                 validation_performance_info(),
                 cluster_distribution_plot(timeseries_container.models[best_model][best_metric].best_clustering),
@@ -811,7 +811,7 @@ def timeseries_plot(df: DataFrame) -> dcc.Graph:
     return g
 
 
-def cluster_plot(df: DataFrame, cluster_data: dict) -> dcc.Graph:
+def cluster_plot(df: DataFrame, cluster_data: dict, best_model: dict) -> dcc.Graph:
     """
     Create and return a plot which contains the clustering for a dataframe.
     The plot is built using a dataframe: `ingested_data` and dictionary: `cluster_data`.
@@ -827,9 +827,10 @@ def cluster_plot(df: DataFrame, cluster_data: dict) -> dcc.Graph:
     ----------
     df : DataFrame
         Raw values ingested by the app.
-
-    cluster_data : DataFrame
-        Clustering created by a model.
+    cluster_data : dict
+        Dictionary with distance metric as keys and ModelResult objects as values.
+    best_model : dict
+        Dictionary with the information of the best clustering for all the metrics and corresponding model.
 
     Returns
     -------
@@ -845,15 +846,22 @@ def cluster_plot(df: DataFrame, cluster_data: dict) -> dcc.Graph:
     df_array = df_array.transpose()
     column_names = df.columns.values
 
-    num_model = len(cluster_data)
     num_dist_metrics = len(cluster_data)
     subplotmult = 0
-    first_key = list(cluster_data)[0]
-    num_clusters = cluster_data[first_key].characteristics['n_clusters']
-    model = cluster_data[first_key].characteristics['model']
+    
+    list_best_cluster_results = []
+    for key, value in cluster_data.items():
+        list_best_cluster_results.append(value.characteristics['n_clusters'])
+    boolean_clusters = all(x == list_best_cluster_results[0] for x in list_best_cluster_results)
+    if boolean_clusters:
+        num_clusters = list_best_cluster_results[0]
+    else:
+        num_clusters = best_model['n_clusters']
+        distance_metric = best_model['distance_metric']
+        cluster_data = {k: v for k, v in cluster_data.items() if k.startswith(distance_metric)}
 
     titles = []
-    for key, value in cluster_data.items() :
+    for key, value in cluster_data.items():
         for i in range(1,len(cluster_data)+1):
             titles.append('Metric: '+str(key)+', Cluster '+str(i))
     
@@ -885,7 +893,7 @@ def cluster_plot(df: DataFrame, cluster_data: dict) -> dcc.Graph:
     return g
 
 
-def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict):
+def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict, best_model: dict):
     """
     Create and return a plot using cluster_plot_matplotlib which contains the clustering for a dataframe.
     The plot is built using a dataframe: `ingested_data` and dictionary: `cluster_data`.
@@ -901,23 +909,33 @@ def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict):
     ----------
     df : DataFrame
         Raw values ingested by the app.
-
     cluster_data : DataFrame
         Clustering created by a model.
+    best_model : dict
+        Dictionary with the information of the best clustering for all the metrics and corresponding model.
 
     """
+    
     plt.figure()
     plt.figure(figsize=(13, 8))
 
     X_train = df.to_numpy()
     X_train = X_train.transpose()
-    cluster_data
+    sz = len(df)
+
     num_dist_metrics = len(cluster_data)
     subplotmult = 0
-    first_key = list(cluster_data)[0]
-    num_clusters = cluster_data[first_key].characteristics['n_clusters']
-    subplotmult = 0
-    sz = len(df)
+    
+    list_best_cluster_results = []
+    for key, value in cluster_data.items():
+        list_best_cluster_results.append(value.characteristics['n_clusters'])
+    boolean_clusters = all(x == list_best_cluster_results[0] for x in list_best_cluster_results)
+    if boolean_clusters:
+        num_clusters = list_best_cluster_results[0]
+    else:
+        num_clusters = best_model['n_clusters']
+        distance_metric = best_model['distance_metric']
+        cluster_data = {k: v for k, v in cluster_data.items() if k.startswith(distance_metric)}
 
     for key, value in cluster_data.items() :
         for yi in range(num_clusters):

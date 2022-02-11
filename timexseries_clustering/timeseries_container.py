@@ -14,14 +14,14 @@ class TimeSeriesContainer:
         Approach used to cluster time-series data.
     models : dict
         Dictionary of ModelResult objects, all trained on these time-series.
+    best_model : dict
+        Dictionary with the information of the best clustering for all the metrics and corresponding model.
     xcorr : dict
         Cross-correlation between the data of this time-series and all the other ones.
-    cluster_centers : dict **
-        The cluster centers of the best clusters obtained. This is useful to verify the performances of each model. 
-        This dictionary contains one entry for each modeltested.
     """
-    def __init__(self, timeseries_data: DataFrame, approach: str, models: dict, xcorr: dict):
+    def __init__(self, timeseries_data: DataFrame, approach: str, models: dict, best_model: dict, xcorr: dict):
         self.timeseries_data = timeseries_data
         self.approach = approach
         self.models = models
         self.xcorr = xcorr
+        self.best_model = best_model

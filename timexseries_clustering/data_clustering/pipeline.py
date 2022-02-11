@@ -126,7 +126,9 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         xcorr = total_xcorr[col] if total_xcorr is not None else None
 
     for clustering_approach in approaches_to_test:
+        best_model = {}
         model_results = {}
+        model_counter = 0
         if clustering_approach == 'observation_based':
             transformations_to_test = ['none']
         elif clustering_approach == 'feature_based':
@@ -177,10 +179,26 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
             best_metric = this_model_performances[0][3]
             best_n_trans = this_model_performances[0][4]
             log.info(f"For the model: {model} the best clustering is obtained using metric {best_metric}, with {best_n_clusters} number of clusters, and transfomation {best_n_trans}.")
-
+                   
+            if model_counter == 0:
+                best_model["clustering_approach"] = clustering_approach
+                best_model["model"] = model
+                best_model["distance_metric"] = best_metric
+                best_model["n_clusters"] = best_n_clusters
+                best_model["transformation"] = best_n_trans
+                best_model["accuracy_estimator"] = main_accuracy_estimator
+                best_model["performance"] = this_model_performances[0][1]
+                model_counter = model_counter+1
+            elif this_model_performances[0][1] > best_model["performance"]:
+                best_model["model"] = model
+                best_model["distance_metric"] = best_metric
+                best_model["n_clusters"] = best_n_clusters
+                best_model["transformation"] = best_n_trans
+                best_model["performance"] = this_model_performances[0][1]
+                
         log.info(f"Process of {clustering_approach} clustering finished")
         timeseries_containers.append(
-            TimeSeriesContainer(ingested_data, str(characteristics['clustering_approach']), model_results, xcorr))
+            TimeSeriesContainer(ingested_data, str(characteristics['clustering_approach']), model_results, best_model, xcorr))
     
     return timeseries_containers
 

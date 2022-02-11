@@ -70,7 +70,7 @@ def KMeansModel(ingested_data: DataFrame, clustering_approach: str, distance_met
         model_characteristics["transformation"] = transformation
         performance = ValidationPerformance()
         performance.set_performance_stats(ingested_data.transpose(), best_clusters, distance_metric)
-        single_result = SingleResult(model_characteristics,performance)
+        single_result = SingleResult(model_characteristics, performance)
         return ModelResult(best_clustering=best_clusters, results=[single_result],characteristics=model_characteristics,
                     cluster_centers=model_centers)
     
