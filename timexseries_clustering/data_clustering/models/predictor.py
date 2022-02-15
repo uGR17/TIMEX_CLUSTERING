@@ -54,7 +54,7 @@ class ModelResult:
         Model parameters. This dictionary collects human-readable characteristics of the model, e.g. the number
         of clusters used, the distance metric applied, etc.
         
-    cluster_centers : DataFrame #**[SingleResult]
+    cluster_centers : DataFrame
         Cluster centers computed to obtained the best clustering of all the time-series.
       
      """

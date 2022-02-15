@@ -1,53 +1,104 @@
-from pandas import Series
+from pandas import Series, DataFrame
 import numpy as np
+import pandas
 from scipy.stats import yeojohnson
-
+import pywt
 
 class Transformation:
     """
     Super-class used to represent various types of data transformation.
     """
 
-    def apply(self, data: Series) -> Series:
+    def apply(self, data: DataFrame) -> DataFrame:
         """
-        Apply the transformation on each value in a Pandas Series. Returns the transformed Series, i.e. a Series with
+        Apply the transformation on each value in a Pandas DataFrame. Returns the transformed DataFrame, i.e. a DataFrame with
         transformed values.
 
-        Note that it is not guaranteed that the dtype of the returned Series is the same of `data`.
+        Note that it is not guaranteed that the dtype of the returned DataFrame is the same of `data`.
 
         Parameters
         ----------
-        data : Series
+        data : DataFrame
             Data to transform.
 
         Returns
         -------
-        Series
+        DataFrame
             Transformed data.
         """
         pass
 
-    def inverse(self, data: Series) -> Series:
+    def inverse(self, data: DataFrame) -> DataFrame:
         """
-        Apply the inverse of the transformation on the values of a Pandas Series of transformed values.
+        Apply the inverse of the transformation on the values of a Pandas DataFrame of transformed values.
         Returns the data re-transformed back to the real world.
 
-        Any class implementing Transformation should make the `inverse` method always return a Series with the same
+        Any class implementing Transformation should make the `inverse` method always return a DataFrame with the same
         shape as the one of `data`. If the function is not invertible (e.g. Log), the returning values should be
         approximated. It is assumed in the rest of TIMEX that `inverse` does not fail.
 
         Parameters
         ----------
-        data : Series
+        data : DataFrame
             Data to transform.
 
         Returns
         -------
-        Series
+        DataFrame
             Transformed data.
         """
         pass
 
+
+class DWT(Transformation):
+    """Class corresponding to the a custom variant of DWT Discrete Wavelet Transformation by using specificly Haar Wavelet representation.
+    In particular, this transformation tries to to representate a time series with a linear combination of basis functions.
+    This produce a high quality reduced-dimensionality approximation of time series.
+
+    Notes
+    -----
+    The Haar Wavelet decomposition works by averaging two adjacent values on the time series
+    function at a given resolution to form a smoothed, lower-dimensional signal, and the resulting
+    coefficients are simply the differences between the values and their averages
+    """
+    
+    def apply(self, data: DataFrame) -> DataFrame:
+        #Approximation and detail coefficients
+        (cA, cD) = pywt.dwt(data.copy().transpose(),'haar')
+        rows, columns = cA.shape
+        new_index = pandas.date_range(data.index.date[0], end=data.index.date[-1], periods=columns, normalize=True)
+        return pandas.DataFrame(cA.transpose(), columns = data.columns, index=new_index)
+
+    def inverse(self, data: DataFrame) -> DataFrame:
+        ts_rec = pywt.idwt(data.copy().transpose(), None, 'haar')
+        return pandas.DataFrame(ts_rec, columns = data.columns)
+
+    def __str__(self):
+        return "DWT"
+
+class DFT(Transformation):
+    """Class corresponding to the a custom variant of DFT Discrete Fourier Transformation by using specificly Haar Wavelet representation.
+    In particular, this transformation tries to to representate a time series with a linear combination of basis functions.
+    This produce a high quality reduced-dimensionality approximation of time series.
+
+    Notes
+    -----
+    The Haar Wavelet decomposition works by averaging two adjacent values on the time series
+    function at a given resolution to form a smoothed, lower-dimensional signal, and the resulting
+    coefficients are simply the differences between the values and their averages
+    """
+    
+    def apply(self, data: DataFrame) -> DataFrame:
+        #Approximation and detail coefficients
+        (cA, cD) = pywt.dwt(data.copy().transpose(),'haar')
+        return pandas.DataFrame(cA.transpose(), columns = data.columns)
+
+    def inverse(self, data: DataFrame) -> DataFrame:
+        ts_rec = pywt.idwt(data.copy().transpose(), None, 'haar')
+        return pandas.DataFrame(ts_rec, columns = data.columns)
+
+    def __str__(self):
+        return "DWT"
 
 class Log(Transformation):
     """Class corresponding to a somewhat classic logarithmic feature transformation.
@@ -71,10 +122,10 @@ class Log(Transformation):
 
     LogModified should be preferred.
     """
-    def apply(self, data: Series) -> Series:
+    def apply(self, data: DataFrame) -> DataFrame:
         return data.apply(lambda x: np.sign(x) * np.log(abs(x)) if abs(x) > 1 else 0)
 
-    def inverse(self, data: Series) -> Series:
+    def inverse(self, data: DataFrame) -> DataFrame:
         return data.apply(lambda x: np.sign(x) * np.exp(abs(x)))
 
     def __str__(self):
@@ -98,10 +149,10 @@ class LogModified(Transformation):
     .. math::
         f^{-1}(x) = sign(x) * e^{(abs(x) - sign(x))}
     """
-    def apply(self, data: Series) -> Series:
+    def apply(self, data: DataFrame) -> DataFrame:
         return data.apply(lambda x: np.sign(x) * np.log(abs(x) + 1))
 
-    def inverse(self, data: Series) -> Series:
+    def inverse(self, data: DataFrame) -> DataFrame:
         return data.apply(lambda x: np.sign(x) * np.exp(abs(x)) - np.sign(x))
 
     def __str__(self):
@@ -125,10 +176,10 @@ class Identity(Transformation):
     .. math::
         f^{-1}(x) = x
     """
-    def apply(self, data: Series) -> Series:
+    def apply(self, data: DataFrame) -> DataFrame:
         return data
 
-    def inverse(self, data: Series) -> Series:
+    def inverse(self, data: DataFrame) -> DataFrame:
         return data
 
     def __str__(self):
@@ -157,12 +208,12 @@ class YeoJohnson(Transformation):
     def __init__(self):
         self.lmbda = 0
 
-    def apply(self, data: Series) -> Series:
+    def apply(self, data: DataFrame) -> DataFrame:
         res, lmbda = yeojohnson(data)
         self.lmbda = lmbda
         return res
 
-    def inverse(self, data: Series) -> Series:
+    def inverse(self, data: DataFrame) -> DataFrame:
         lmbda = self.lmbda
         x_inv = np.zeros_like(data)
         pos = data >= 0
@@ -180,7 +231,7 @@ class YeoJohnson(Transformation):
         else:  # lmbda == 2
             x_inv[~pos] = 1 - np.exp(-data[~pos])
 
-        return Series(x_inv)
+        return DataFrame(x_inv)
 
     def __str__(self):
         return f"Yeo-Johnson (lambda: {round(self.lmbda, 3)})"
@@ -262,3 +313,7 @@ def transformation_factory(tr_class: str) -> Transformation:
         return Diff()
     elif tr_class == "yeo_johnson":
         return YeoJohnson()
+    elif tr_class == "DWT":
+        return DWT()
+    elif tr_class == "DFT":
+        return DFT()

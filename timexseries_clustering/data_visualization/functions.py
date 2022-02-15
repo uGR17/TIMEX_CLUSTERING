@@ -878,7 +878,7 @@ def cluster_plot(df: DataFrame, cluster_data: dict, best_model: dict) -> dcc.Gra
                                     mode='lines',name=cluster_names[i]),
                                     row=subplotmult, col=yi+1)
                 i = i+1
-            fig.add_trace(go.Scatter(x=df.index, y=value.cluster_centers[yi],
+            fig.add_trace(go.Scatter(x=value.cluster_centers.index, y=value.cluster_centers.iloc[:, yi],
                                 line=dict(color='red'),
                                 mode='lines',
                                 name= (str(key)+', cluster center '+ str(yi+1))),
@@ -942,7 +942,7 @@ def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict, best_model: dict)
             plt.subplot(num_dist_metrics, num_clusters, yi + 1 + num_clusters*subplotmult)
             for xx in X_train[value.best_clustering == yi]:
                 plt.plot(xx.ravel(), "k-", alpha=.2)
-            plt.plot(value.cluster_centers[yi], "r-")
+            plt.plot(value.cluster_centers.iloc[:,yi].values, "r-")
             plt.xlim(0, sz)
             plt.text(0.55, 0.85,'Cluster %d' % (yi + 1),
                     transform=plt.gca().transAxes)
@@ -957,8 +957,7 @@ def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict, best_model: dict)
 def performance_plot(df: DataFrame, param_config : dict, all_performances: List) -> dcc.Graph:
     """
     Create and return the performance plot of the model; for every error kind (i.e. Silhouette, Davies Bouldin, etc) plot the values it
-    assumes using differentclustering model parameters.
-    Plot the best clustering data in the end. **
+    assumes using different clustering model parameters.
 
     Parameters
     ----------

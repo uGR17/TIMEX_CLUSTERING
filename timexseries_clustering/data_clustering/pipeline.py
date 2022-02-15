@@ -19,6 +19,7 @@ from timexseries_clustering.data_clustering.xcorr import calc_all_xcorr
 from timexseries_clustering.timeseries_container import TimeSeriesContainer
 from timexseries_clustering.data_clustering.validation_performances import ValidationPerformance
 from tslearn.clustering import TimeSeriesKMeans, silhouette_score
+from timexseries_clustering.data_clustering.transformation import transformation_factory
 
 
 log = logging.getLogger(__name__)
@@ -143,10 +144,14 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                 for transf in transformations_to_test:
                     for n_clus in num_clusters_to_test:
                         log.info(f"Computing univariate clustering using approach: {clustering_approach}, number of clusters: {n_clus}, distance metric: {metric} and transformation: {transf}...")
-                        _result = model_factory(ingested_data, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transf, n_clusters=n_clus)
+                        tr = transformation_factory(transf)
+                        ingested_data_transform = tr.apply(ingested_data)
+                        
+                        _result = model_factory(ingested_data_transform, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transf, n_clusters=n_clus)
                         #_result = predictor.fit_predict(ingested_data.copy())
                         #_result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
                         
+                        #_result.cluster_centers = tr.inverse(_result.cluster_centers)
                         model_single_results = _result.results[0] #SingleResult
                         characteristics = _result.characteristics
                         
