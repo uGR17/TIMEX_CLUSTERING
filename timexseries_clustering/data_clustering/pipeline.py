@@ -391,6 +391,6 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                                param_config=param_config, transformation=transformation, n_clusters=n_clusters)
     
     if clustering_approach == "model_based":
-        if model_class == "k_means": #fbprophet
+        if model_class == "k_means": 
             print("model_based in progress")
 

@@ -1364,7 +1364,7 @@ def cluster_distribution_plot(cluster_indexes: DataFrame) -> dcc.Graph:
 
     fig.add_trace(go.Bar(x=clusters, y=counts))
         
-    fig.update_layout(title=("Cluster Distribution"), xaxis_title='Clusters', yaxis_title='Count')
+    fig.update_layout(title=("Cluster Distribution"), xaxis_title='Cluster', yaxis_title='Count')
 
     g = dcc.Graph(
         figure=fig )
