@@ -998,7 +998,7 @@ def performance_plot(df: DataFrame, param_config : dict, all_performances: List)
     import numpy
     n_cls = len(n_cluster_test_values)
     
-    if all_performances[0][0].characteristics['transformation']=='none': #Observation based approach
+    if all_performances[0][0].characteristics['feature_transformation']=='none': #Observation based approach
         nparray_performances = numpy.zeros((n_cls,9))
         for metric in all_performances:
             nc=0
@@ -1062,33 +1062,33 @@ def performance_plot(df: DataFrame, param_config : dict, all_performances: List)
                                         mode="lines+markers",
                                         name='Calinski Harabasz Soft DTW'), row=3, col=1)
                 
-    if all_performances[0][0].characteristics['transformation']!='none': #Feature based approach
+    if all_performances[0][0].characteristics['feature_transformation']!='none': #Feature based approach
         num_trans = len(transformations)
         nparray_performances = numpy.zeros((n_cls*num_trans,9))
         for metric in all_performances:
             nc=0
             for n_cluster in metric:
-                if n_cluster.characteristics['distance_metric']=='Euclidean' and n_cluster.characteristics['transformation']=='DWT':
+                if n_cluster.characteristics['distance_metric']=='Euclidean' and n_cluster.characteristics['feature_transformation']=='DWT':
                     nparray_performances[nc][0] = n_cluster.performances.silhouette
                     nparray_performances[nc][1] = n_cluster.performances.davies_bouldin
                     nparray_performances[nc][2] = n_cluster.performances.calinski_harabasz
-                elif n_cluster.characteristics['distance_metric']=='DTW' and n_cluster.characteristics['transformation']=='DWT':
+                elif n_cluster.characteristics['distance_metric']=='DTW' and n_cluster.characteristics['feature_transformation']=='DWT':
                     nparray_performances[nc][3] = n_cluster.performances.silhouette
                     nparray_performances[nc][4] = n_cluster.performances.davies_bouldin
                     nparray_performances[nc][5] = n_cluster.performances.calinski_harabasz        
-                elif n_cluster.characteristics['distance_metric']=='SoftDTW' and n_cluster.characteristics['transformation']=='DWT':
+                elif n_cluster.characteristics['distance_metric']=='SoftDTW' and n_cluster.characteristics['feature_transformation']=='DWT':
                     nparray_performances[nc][6] = n_cluster.performances.silhouette
                     nparray_performances[nc][7] = n_cluster.performances.davies_bouldin
                     nparray_performances[nc][8] = n_cluster.performances.calinski_harabasz
-                if n_cluster.characteristics['distance_metric']=='Euclidean' and n_cluster.characteristics['transformation']=='DFT':
+                if n_cluster.characteristics['distance_metric']=='Euclidean' and n_cluster.characteristics['feature_transformation']=='DFT':
                     nparray_performances[nc][0] = n_cluster.performances.silhouette
                     nparray_performances[nc][1] = n_cluster.performances.davies_bouldin
                     nparray_performances[nc][2] = n_cluster.performances.calinski_harabasz
-                elif n_cluster.characteristics['distance_metric']=='DTW' and n_cluster.characteristics['transformation']=='DFT':
+                elif n_cluster.characteristics['distance_metric']=='DTW' and n_cluster.characteristics['feature_transformation']=='DFT':
                     nparray_performances[nc][3] = n_cluster.performances.silhouette
                     nparray_performances[nc][4] = n_cluster.performances.davies_bouldin
                     nparray_performances[nc][5] = n_cluster.performances.calinski_harabasz        
-                elif n_cluster.characteristics['distance_metric']=='SoftDTW' and n_cluster.characteristics['transformation']=='DFT':
+                elif n_cluster.characteristics['distance_metric']=='SoftDTW' and n_cluster.characteristics['feature_transformation']=='DFT':
                     nparray_performances[nc][6] = n_cluster.performances.silhouette
                     nparray_performances[nc][7] = n_cluster.performances.davies_bouldin
                     nparray_performances[nc][8] = n_cluster.performances.calinski_harabasz
@@ -1238,7 +1238,8 @@ def characteristics_list(model_characteristics: dict, best_performances: SingleR
             "model": "Model type: " + value,
             "distance_metric": 'Distance metrics used: ' + value,
             "n_clusters":'Number of clusters tested: ' + value,
-            "transformation": ('The model has used a ') + value + (
+            "pre_transformation":'Preprocessing transformation: ' + value,
+            "feature_transformation": ('The model has used a ') + value + (
                 ' feature transformation on the input data.') if value != "none"
             else ('The model has not used any feature transformation on input data.')
         }
@@ -1284,7 +1285,8 @@ def show_errors_html(best_performances: SingleResult) -> html.Ul:
             "calinski_harabasz": "Calinski Harabasz score: " + value,
             "distance_metric": "Best distance metric: " + value,
             "n_clusters": "Best number of clusters: " + value,
-            "transformation": ('The best model has used a ') + value + (
+            "pre_transformation":'Preprocessing transformation: ' + value,
+            "feature_transformation": ('The model has used a ') + value + (
                 ' feature transformation on the input data.') if value != "none"
             else ('The model has not used any feature transformation on input data.')
         }
@@ -1295,7 +1297,8 @@ def show_errors_html(best_performances: SingleResult) -> html.Ul:
         best_performances_dict[key] = round_n(best_performances_dict[key])
     best_performances_dict['distance_metric'] = best_performances.characteristics['distance_metric']
     best_performances_dict['n_clusters'] = str(best_performances.characteristics['n_clusters'])
-    best_performances_dict['transformation'] = best_performances.characteristics['transformation']
+    best_performances_dict['feature_transformation'] = best_performances.characteristics['feature_transformation']
+    best_performances_dict['pre_transformation'] = best_performances.characteristics['pre_transformation']
 
     return html.Ul([html.Li(get_text_char(key, best_performances_dict[key])) for key in best_performances_dict])
 

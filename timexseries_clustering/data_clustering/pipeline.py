@@ -200,7 +200,8 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                 best_model["model"] = model
                 best_model["distance_metric"] = best_metric
                 best_model["n_clusters"] = best_n_clusters
-                best_model["transformation"] = best_n_trans
+                best_model["feature_transformation"] = best_n_trans
+                best_model["pre_transformation"] = data_procesing_transformation
                 best_model["accuracy_estimator"] = main_accuracy_estimator
                 best_model["performance"] = this_model_performances[0][1]
                 model_counter = model_counter+1
@@ -208,12 +209,13 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                 best_model["model"] = model
                 best_model["distance_metric"] = best_metric
                 best_model["n_clusters"] = best_n_clusters
-                best_model["transformation"] = best_n_trans
+                best_model["feature_transformation"] = best_n_trans
+                best_model["pre_transformation"] = data_procesing_transformation
                 best_model["performance"] = this_model_performances[0][1]
                 
         log.info(f"Process of {clustering_approach} clustering finished")
         timeseries_containers.append(
-            TimeSeriesContainer(ingested_data, str(characteristics['clustering_approach']), model_results, best_model, xcorr))
+            TimeSeriesContainer(ingested_data_pre_transform, str(characteristics['clustering_approach']), model_results, best_model, xcorr))
     
     return timeseries_containers
 

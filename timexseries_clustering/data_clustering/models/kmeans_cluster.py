@@ -56,6 +56,10 @@ def KMeansModel(ingested_data: DataFrame, clustering_approach: str, distance_met
         gamma = param_config["model_parameters"]["gamma"]
     except KeyError:
         gamma = 0.01
+    try:
+        pre_transformation = param_config["model_parameters"]["pre_transformation"]
+    except KeyError:
+        pre_transformation = "none"
     
     if distance_metric == "euclidean":
         km = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance_metric, verbose=False, random_state=seed)
@@ -69,7 +73,8 @@ def KMeansModel(ingested_data: DataFrame, clustering_approach: str, distance_met
         model_characteristics["model"] = "K Means"
         model_characteristics["distance_metric"] = "Euclidean"
         model_characteristics["n_clusters"] = n_clusters
-        model_characteristics["transformation"] = transformation
+        model_characteristics["feature_transformation"] = transformation
+        model_characteristics["pre_transformation"] = pre_transformation
         performance = ValidationPerformance()
         performance.set_performance_stats(ingested_data.transpose(), best_clusters, distance_metric)
         single_result = SingleResult(model_characteristics, performance)
@@ -89,7 +94,8 @@ def KMeansModel(ingested_data: DataFrame, clustering_approach: str, distance_met
         model_characteristics["model"] = "K Means"
         model_characteristics["distance_metric"] = "DTW"
         model_characteristics["n_clusters"] = n_clusters
-        model_characteristics["transformation"] = transformation
+        model_characteristics["feature_transformation"] = transformation
+        model_characteristics["pre_transformation"] = pre_transformation
         performance = ValidationPerformance()
         performance.set_performance_stats(ingested_data.transpose(), best_clusters, distance_metric)
         single_result = SingleResult(model_characteristics,performance)
@@ -109,7 +115,8 @@ def KMeansModel(ingested_data: DataFrame, clustering_approach: str, distance_met
         model_characteristics["model"] = "K Means"
         model_characteristics["distance_metric"] = "SoftDTW"
         model_characteristics["n_clusters"] = n_clusters
-        model_characteristics["transformation"] = transformation
+        model_characteristics["feature_transformation"] = transformation
+        model_characteristics["pre_transformation"] = pre_transformation
         performance = ValidationPerformance()
         performance.set_performance_stats(ingested_data.transpose(), best_clusters, distance_metric)
         single_result = SingleResult(model_characteristics,performance)
