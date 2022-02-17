@@ -42,7 +42,8 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         `model_parameters` the following options has to be specified:
 
         - `clustering_approach`: clustering approach which will be use (options: "observation_based", "feature_based" or "model_based").
-        - `possible_transformations`: comma-separated list of transformations keywords (e.g. "none,DWT,DFT,SVD").
+        - `pre_transformation`: only one data preprocesing transformation to test, for Feature Based clustering approach, i.e.: none,log or log_modified
+        - `feature_transformations`: comma-separated list of transformations keywords (e.g. "none,DWT,DFT,SVD").
         - `distance_metric`: distance/similarity measure which will be use (e.g. "ED,DTW,arma").
         - `models`: comma-separated list of the models to use (e.g. "agglomerative, k_means").
         - `main_accuracy_estimator`: error metric which will be minimized as target by the procedure. E.g. "rand_index", "silhouette_index","sse".
@@ -70,7 +71,8 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
     >>> param_config = {
     ...   "model_parameters": {
     ...     "clustering_approach": "observation_based",  # Clustering approach which will be tested.
-    ...     "possible_transformations": "none,log_modified,DWT",  # Possible feature transformation to test.**
+    ...     "pre_transformation": "none", # only one data preprocesing transformation to test, for Feature Based clustering approach, i.e.: none,log or log_modified
+    ...     "feature_transformations": "DWT",  # Feature transformation to test.
     ...     "distance_metric": "DTW,ED",  # Distance/similarity measure which will be tested.
     ...     "models": "k_means",  # Model(s) which will be tested.
     ...     "main_accuracy_estimator": "mae",
@@ -107,8 +109,16 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
     dist_measures_to_test = [*param_config["model_parameters"]["distance_metric"].split(",")]
     models = [*param_config["model_parameters"]["models"].split(",")]
     main_accuracy_estimator = param_config["model_parameters"]["main_accuracy_estimator"]
+    
+    # Apply the preprocesing transformation: none,log,logmodified or none.
+    try:
+        data_procesing_transformation = param_config["model_parameters"]["pre_transformation"]
+    except KeyError:
+        data_procesing_transformation = "none"
+    
+    pre_transf = transformation_factory(data_procesing_transformation)
+    ingested_data_pre_transform = pre_transf.apply(ingested_data.copy())
 
-    best_transformations = dict.fromkeys(models, {})
     timeseries_containers = []
 
     # Get the set of CPUs on which the calling process is eligible to run.
@@ -120,10 +130,10 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         except:
             max_threads = 1
 
-    columns = ingested_data.columns
+    columns = ingested_data_pre_transform.columns
 
     for col in columns:
-        timeseries_data = ingested_data[[col]]
+        timeseries_data = ingested_data_pre_transform[[col]]
         xcorr = total_xcorr[col] if total_xcorr is not None else None
 
     for clustering_approach in approaches_to_test:
@@ -133,7 +143,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         if clustering_approach == 'observation_based':
             transformations_to_test = ['none']
         elif clustering_approach == 'feature_based':
-            transformations_to_test = [*param_config["model_parameters"]["possible_transformations"].split(",")]
+            transformations_to_test = [*param_config["model_parameters"]["feature_transformations"].split(",")]
         for model in models:
             this_model_performances = []
             model_results[model] = {}
@@ -145,7 +155,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                     for n_clus in num_clusters_to_test:
                         log.info(f"Computing univariate clustering using approach: {clustering_approach}, number of clusters: {n_clus}, distance metric: {metric} and transformation: {transf}...")
                         tr = transformation_factory(transf)
-                        ingested_data_transform = tr.apply(ingested_data)
+                        ingested_data_transform = tr.apply(ingested_data_pre_transform)
                         
                         _result = model_factory(ingested_data_transform, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transf, n_clusters=n_clus)
                         #_result = predictor.fit_predict(ingested_data.copy())
@@ -365,7 +375,8 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
     --------
     >>> param_config = {
     ...    "model_parameters": {
-    ...        "possible_transformations": "none,log_modified",
+    ...        "pre_transformation": "none", 
+    ...        "feature_transformations": "DWT",
     ...        "main_accuracy_estimator": "mae",
     ...        "delta_training_percentage": 20,
     ...        "test_values": 5,

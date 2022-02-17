@@ -60,7 +60,8 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
     ...  "input_parameters": {},
     ...  "model_parameters": {
     ...      "models": "fbprophet",
-    ...      "possible_transformations": "none,log_modified",
+    ...      "pre_transformation": "none",
+    ...      "feature_transformations": "DWT",
     ...      "main_accuracy_estimator": "mae",
     ...      "delta_training_percentage": 20,
     ...      "test_values": 5,
@@ -98,12 +99,14 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
         param_configuration = param_config["model_parameters"]
         main_accuracy_estimator = param_configuration["main_accuracy_estimator"]
         models = timeseries_container.models
+        best_model_dict = timeseries_container.best_model
 
         children.append(
             html.H3("Clustering results"),
         )
 
         all_performances = []
+        best_performances = []
         
         for model_name in models:
             model = models[model_name]
@@ -113,7 +116,13 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
                 model_performances = metric.results #[SingleResult]
                 model_characteristic = metric.characteristics.copy()
                 all_performances.append(model_performances) #[[SingleResult]]
-            best_performances = [x[0] for x in all_performances] #[SingleResult]
+            all_performances_order = all_performances.copy()
+            for list_singleR in all_performances_order:
+                if main_accuracy_estimator=="silhouette":
+                    list_singleR.sort(key=lambda x: getattr(x.performances, main_accuracy_estimator), reverse=True)
+                else:
+                    list_singleR.sort(key=lambda x: getattr(x.performances, main_accuracy_estimator))
+            best_performances = [x[0] for x in all_performances_order] #[SingleResult]
             model_characteristic['distance_metric'] = param_configuration['distance_metric']
             model_characteristic['n_clusters'] = param_configuration['n_clusters']
             
@@ -982,7 +991,7 @@ def performance_plot(df: DataFrame, param_config : dict, all_performances: List)
     
     distance_metrics = [*param_config["model_parameters"]["distance_metric"].split(",")]
     n_cluster_test_values = param_config['model_parameters']['n_clusters']
-    transformations = [*param_config["model_parameters"]["possible_transformations"].split(",")]
+    transformations = [*param_config["model_parameters"]["feature_transformations"].split(",")]
     
     fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.02)
 
@@ -1230,8 +1239,8 @@ def characteristics_list(model_characteristics: dict, best_performances: SingleR
             "distance_metric": 'Distance metrics used: ' + value,
             "n_clusters":'Number of clusters tested: ' + value,
             "transformation": ('The model has used a ') + value + (
-                ' transformation on the input data.') if value != "none"
-            else ('The model has not used any pre/post transformation on input data.')
+                ' feature transformation on the input data.') if value != "none"
+            else ('The model has not used any feature transformation on input data.')
         }
         return switcher.get(key, "Invalid choice!")
 
@@ -1276,8 +1285,8 @@ def show_errors_html(best_performances: SingleResult) -> html.Ul:
             "distance_metric": "Best distance metric: " + value,
             "n_clusters": "Best number of clusters: " + value,
             "transformation": ('The best model has used a ') + value + (
-                ' transformation on the input data.') if value != "none"
-            else ('The model has not used any pre/post transformation on input data.')
+                ' feature transformation on the input data.') if value != "none"
+            else ('The model has not used any feature transformation on input data.')
         }
         return switcher.get(key, "Invalid choice!")
 
