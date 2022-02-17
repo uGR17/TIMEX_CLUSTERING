@@ -160,19 +160,14 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                         _result = model_factory(ingested_data_transform, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transf, n_clusters=n_clus)
                         #_result = predictor.fit_predict(ingested_data.copy())
                         #_result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
-                        
-                        #_result.cluster_centers = tr.inverse(_result.cluster_centers)
+                                                
                         model_single_results = _result.results[0] #SingleResult
                         characteristics = _result.characteristics
                         
                         performances = getattr(model_single_results.performances, main_accuracy_estimator)
                         single_results.append(model_single_results)
-                        
                         this_metric_performances.append((_result, performances, n_clus, transf))
                         this_model_performances.append((_result, performances, n_clus, metric, transf))
-                        
-                        #model_results[model][metric] = _result #object ModelResult
-                        #model_centers[model][metric] = cluster_centers
                 
                 if main_accuracy_estimator=="silhouette":
                     this_metric_performances.sort(key=lambda x: x[1],reverse=True)
