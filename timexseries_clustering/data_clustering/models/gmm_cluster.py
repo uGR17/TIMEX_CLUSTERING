@@ -15,16 +15,15 @@ from tslearn.clustering import TimeSeriesKMeans, silhouette_score
 from timexseries_clustering.data_clustering.models.predictor import ModelResult, SingleResult
 from timexseries_clustering.data_clustering.validation_performances import ValidationPerformance
 from timexseries_clustering.data_clustering import ClustersModel
-from timexseries_clustering.data_clustering.transformation import transformation_factory
 
-logging.getLogger('kMeansModel').setLevel(logging.WARNING)
+logging.getLogger('GaussianMixtureModel').setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
 
 
-def KMeansModel(ingested_data: DataFrame, clustering_approach: str, distance_metric: str, 
+def GaussianMixtureModel(ingested_data: DataFrame, clustering_approach: str, distance_metric: str, 
                 param_config: dict, transformation: str = None, n_clusters: int = 3)->ModelResult:
     """
-    K Means clustering model
+    Gaussian Mixture Clustering Model
     
     Parameters
     ----------
@@ -70,10 +69,8 @@ def KMeansModel(ingested_data: DataFrame, clustering_approach: str, distance_met
             model_centers.append(centrd)
         model_centers_dataframe = pd.DataFrame(model_centers).T
         model_centers_dataframe = model_centers_dataframe.set_index(ingested_data.index.date)
-        inverse_pre_transf = transformation_factory(pre_transformation)
-        model_centers_dataframe = inverse_pre_transf.inverse(model_centers_dataframe.copy())
         model_characteristics["clustering_approach"] = clustering_approach
-        model_characteristics["model"] = "K Means"
+        model_characteristics["model"] = "Gaussian Mixture Model"
         model_characteristics["distance_metric"] = "Euclidean"
         model_characteristics["n_clusters"] = n_clusters
         model_characteristics["feature_transformation"] = transformation
@@ -93,10 +90,8 @@ def KMeansModel(ingested_data: DataFrame, clustering_approach: str, distance_met
             model_centers.append(centrd)
         model_centers_dataframe = pd.DataFrame(model_centers).T
         model_centers_dataframe = model_centers_dataframe.set_index(ingested_data.index.date)
-        inverse_pre_transf = transformation_factory(pre_transformation)
-        model_centers_dataframe = inverse_pre_transf.inverse(model_centers_dataframe.copy())
         model_characteristics["clustering_approach"] = clustering_approach
-        model_characteristics["model"] = "K Means"
+        model_characteristics["model"] = "Gaussian Mixture Model"
         model_characteristics["distance_metric"] = "DTW"
         model_characteristics["n_clusters"] = n_clusters
         model_characteristics["feature_transformation"] = transformation
@@ -116,10 +111,8 @@ def KMeansModel(ingested_data: DataFrame, clustering_approach: str, distance_met
             model_centers.append(centrd)
         model_centers_dataframe = pd.DataFrame(model_centers).T
         model_centers_dataframe = model_centers_dataframe.set_index(ingested_data.index.date)
-        inverse_pre_transf = transformation_factory(pre_transformation)
-        model_centers_dataframe = inverse_pre_transf.inverse(model_centers_dataframe.copy())
         model_characteristics["clustering_approach"] = clustering_approach
-        model_characteristics["model"] = "K Means"
+        model_characteristics["model"] = "Gaussian Mixture Model"
         model_characteristics["distance_metric"] = "SoftDTW"
         model_characteristics["n_clusters"] = n_clusters
         model_characteristics["feature_transformation"] = transformation

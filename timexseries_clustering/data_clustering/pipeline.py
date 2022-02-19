@@ -15,6 +15,7 @@ from timexseries_clustering.data_clustering.models.arima_predictor import ARIMAM
 from timexseries_clustering.data_clustering.models.lstm_predictor import LSTMModel
 from timexseries_clustering.data_clustering.models.mockup_predictor import MockUpModel
 from timexseries_clustering.data_clustering.models.kmeans_cluster import KMeansModel
+from timexseries_clustering.data_clustering.models.gmm_cluster import GaussianMixtureModel
 from timexseries_clustering.data_clustering.xcorr import calc_all_xcorr
 from timexseries_clustering.timeseries_container import TimeSeriesContainer
 from timexseries_clustering.data_clustering.validation_performances import ValidationPerformance
@@ -140,10 +141,12 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         best_model = {}
         model_results = {}
         model_counter = 0
-        if clustering_approach == 'observation_based':
+        if clustering_approach =='observation_based' or clustering_approach =='model_based':
             transformations_to_test = ['none']
         elif clustering_approach == 'feature_based':
             transformations_to_test = [*param_config["model_parameters"]["feature_transformations"].split(",")]
+        else:
+            log.info(f"Wrong name approach: {clustering_approach}, introduce the approach's name correctly and without spaces, i.e.: 'observation_based,feature_based,model_based'")
         for model in models:
             this_model_performances = []
             model_results[model] = {}
@@ -210,7 +213,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                 
         log.info(f"Process of {clustering_approach} clustering finished")
         timeseries_containers.append(
-            TimeSeriesContainer(ingested_data_pre_transform, str(characteristics['clustering_approach']), model_results, best_model, xcorr))
+            TimeSeriesContainer(ingested_data, str(characteristics['clustering_approach']), model_results, best_model, xcorr))
     
     return timeseries_containers
 
@@ -399,6 +402,9 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
                                param_config=param_config, transformation=transformation, n_clusters=n_clusters)
     
     if clustering_approach == "model_based":
-        if model_class == "k_means": 
+        if model_class == "gaussian_mixture": 
             print("model_based in progress")
+            return GaussianMixtureModel(ingested_data=ingested_data, clustering_approach="Feature based", distance_metric=distance_metric, 
+                               param_config=param_config, transformation=transformation, n_clusters=n_clusters)
+
 
