@@ -13,6 +13,7 @@ requirements = ["dateparser<2.0.0,>=1.0.0",\
     "networkx>=2.5.0",\
     "dash<2.0.0,>=1.19.0",\
     "dash-bootstrap-components>=0.11.3",\
+    "jupyter-dash>=0.4.0",\
     "pmdarima<2.0.0,>=1.8.2",\
     "gunicorn<21.0.0,>=20.0.4",\
     "sklearn>=0.0,<0.1",\
@@ -23,7 +24,7 @@ requirements = ["dateparser<2.0.0,>=1.0.0",\
 
 setup(
     name="timexseries_clustering",
-    version="0.0.148",
+    version="0.0.163",
     author="Uriel Guadarrama Ramirez",
     author_email="u.guadarrama@hotmail.com",
     description="TIMEX-CLUSTERING is a framework for time-series-clustering-as-a-service",

@@ -107,7 +107,6 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
 
         all_performances = []
         best_performances = []
-        
         for model_name in models:
             model = models[model_name]
             model_characteristic = {}
@@ -123,17 +122,19 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
                 else:
                     list_singleR.sort(key=lambda x: getattr(x.performances, main_accuracy_estimator))
             best_performances = [x[0] for x in all_performances_order] #[SingleResult]
-            model_characteristic['distance_metric'] = param_configuration['distance_metric']
-            model_characteristic['n_clusters'] = param_configuration['n_clusters']
-            
             if main_accuracy_estimator=="silhouette":
                 best_performances.sort(key=lambda x: getattr(x.performances, main_accuracy_estimator), reverse=True)
             else:
                 best_performances.sort(key=lambda x: getattr(x.performances, main_accuracy_estimator))
-
             best_model = best_performances[0].characteristics['model']
             best_metric = best_performances[0].characteristics['distance_metric']
-            if best_model=='K Means': best_model='k_means'
+            
+            if best_model=='K Means': 
+                best_model='k_means'
+                model_characteristic['n_clusters'] = param_configuration['n_clusters'] #List of all the distance metrics
+            elif best_model=='Gaussian Mixture Model':
+                best_model='gaussian_mixture'
+                model_characteristic['distance_metric'] = best_performances[0].characteristics['distance_metric'] #'Log-Likelihood'
             if best_metric=='Euclidean': best_metric='euclidean'
             elif best_metric=='DTW': best_metric='dtw'
             elif best_metric=='SoftDTW': best_metric='softdtw'
@@ -141,7 +142,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
             children.extend([
                 html.H4(f"{model_name}"),
                 characteristics_list(model_characteristic, best_performances[0]),
-                cluster_plot(timeseries_data, model, timeseries_container.best_model),
+                cluster_plot(timeseries_container, model),
                 performance_plot(timeseries_data, param_config, all_performances),
                 validation_performance_info(),
                 cluster_distribution_plot(timeseries_container.models[best_model][best_metric].best_clustering),
@@ -820,7 +821,7 @@ def timeseries_plot(df: DataFrame) -> dcc.Graph:
     return g
 
 
-def cluster_plot(df: DataFrame, cluster_data: dict, best_model: dict) -> dcc.Graph:
+def cluster_plot(time_series_container: TimeSeriesContainer, cluster_data: dict) -> dcc.Graph:
     """
     Create and return a plot which contains the clustering for a dataframe.
     The plot is built using a dataframe: `ingested_data` and dictionary: `cluster_data`.
@@ -834,12 +835,11 @@ def cluster_plot(df: DataFrame, cluster_data: dict, best_model: dict) -> dcc.Gra
 
     Parameters
     ----------
-    df : DataFrame
-        Raw values ingested by the app.
+    time_series_container: TimeSeriesContainer
+        TimeSeriesContainer object containing all the relevant clustering's information useful to plot the time-series 
+        coming from the ingested dataset.
     cluster_data : dict
-        Dictionary with distance metric as keys and ModelResult objects as values.
-    best_model : dict
-        Dictionary with the information of the best clustering for all the metrics and corresponding model.
+        Dictionary of the clustering Model to plot, with distance metric as keys and ModelResult objects as values.
 
     Returns
     -------
@@ -849,6 +849,9 @@ def cluster_plot(df: DataFrame, cluster_data: dict, best_model: dict) -> dcc.Gra
     --------
     Check `create_timeseries_dash_children` to check the use.
     """
+    
+    df = time_series_container.timeseries_data
+    best_model = time_series_container.best_model
 
     dframe = df.copy()
     df_array = dframe.to_numpy()
@@ -902,7 +905,7 @@ def cluster_plot(df: DataFrame, cluster_data: dict, best_model: dict) -> dcc.Gra
     return g
 
 
-def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict, best_model: dict):
+def cluster_plot_matplotlib(time_series_container: TimeSeriesContainer, cluster_data: dict):
     """
     Create and return a plot using cluster_plot_matplotlib which contains the clustering for a dataframe.
     The plot is built using a dataframe: `ingested_data` and dictionary: `cluster_data`.
@@ -916,14 +919,17 @@ def cluster_plot_matplotlib(df: DataFrame, cluster_data: dict, best_model: dict)
 
     Parameters
     ----------
-    df : DataFrame
-        Raw values ingested by the app.
-    cluster_data : DataFrame
-        Clustering created by a model.
-    best_model : dict
-        Dictionary with the information of the best clustering for all the metrics and corresponding model.
+    time_series_container: TimeSeriesContainer
+        TimeSeriesContainer object containing all the relevant clustering's information useful to plot the time-series 
+        coming from the ingested dataset.
+    cluster_data : dict
+        Dictionary of the clustering Model to plot, with distance metric as keys and ModelResult objects as values.
 
     """
+    
+    df = time_series_container.timeseries_data
+    best_model = time_series_container.best_model
+
     
     plt.figure()
     plt.figure(figsize=(13, 8))
@@ -988,14 +994,12 @@ def performance_plot(df: DataFrame, param_config : dict, all_performances: List)
     --------
     Check `create_timeseries_dash_children` to check the use.
     """
-    
+    import numpy
     distance_metrics = [*param_config["model_parameters"]["distance_metric"].split(",")]
     n_cluster_test_values = param_config['model_parameters']['n_clusters']
     transformations = [*param_config["model_parameters"]["feature_transformations"].split(",")]
     
     fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.02)
-
-    import numpy
     n_cls = len(n_cluster_test_values)
     
     if all_performances[0][0].characteristics['feature_transformation']=='none': #Observation based approach

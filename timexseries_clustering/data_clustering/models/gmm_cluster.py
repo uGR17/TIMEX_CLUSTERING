@@ -7,14 +7,14 @@ import numpy as np
 import pandas as pd
 import tslearn
 
-from tslearn.clustering import TimeSeriesKMeans
-from tslearn.datasets import CachedDatasets
-from tslearn.preprocessing import TimeSeriesScalerMeanVariance, TimeSeriesResampler
 from pandas import DataFrame
 from tslearn.clustering import TimeSeriesKMeans, silhouette_score
 from timexseries_clustering.data_clustering.models.predictor import ModelResult, SingleResult
 from timexseries_clustering.data_clustering.validation_performances import ValidationPerformance
 from timexseries_clustering.data_clustering import ClustersModel
+from sklearn import mixture
+from timexseries_clustering.data_clustering.transformation import transformation_factory
+
 
 logging.getLogger('GaussianMixtureModel').setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
@@ -60,65 +60,26 @@ def GaussianMixtureModel(ingested_data: DataFrame, clustering_approach: str, dis
         pre_transformation = param_config["model_parameters"]["pre_transformation"]
     except KeyError:
         pre_transformation = "none"
-    
-    if distance_metric == "euclidean":
-        km = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance_metric, verbose=False, random_state=seed)
-        best_clusters = km.fit_predict(ingested_data.copy().transpose())
-        for yi in range(n_clusters):
-            centrd = km.cluster_centers_[yi].ravel()
-            model_centers.append(centrd)
-        model_centers_dataframe = pd.DataFrame(model_centers).T
-        model_centers_dataframe = model_centers_dataframe.set_index(ingested_data.index.date)
-        model_characteristics["clustering_approach"] = clustering_approach
-        model_characteristics["model"] = "Gaussian Mixture Model"
-        model_characteristics["distance_metric"] = "Euclidean"
-        model_characteristics["n_clusters"] = n_clusters
-        model_characteristics["feature_transformation"] = transformation
-        model_characteristics["pre_transformation"] = pre_transformation
-        performance = ValidationPerformance()
-        performance.set_performance_stats(ingested_data.transpose(), best_clusters, distance_metric)
-        single_result = SingleResult(model_characteristics, performance)
-        return ModelResult(best_clustering=best_clusters, results=[single_result],characteristics=model_characteristics,
-                    cluster_centers=model_centers_dataframe)
-    
-    if distance_metric == "dtw":
-        km = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance_metric, verbose=False, max_iter_barycenter=10, random_state=seed)
-        best_clusters = km.fit_predict(ingested_data.copy().transpose())
-        performance = float(silhouette_score(ingested_data.transpose(), best_clusters, metric=distance_metric))
-        for yi in range(n_clusters):
-            centrd = km.cluster_centers_[yi].ravel()
-            model_centers.append(centrd)
-        model_centers_dataframe = pd.DataFrame(model_centers).T
-        model_centers_dataframe = model_centers_dataframe.set_index(ingested_data.index.date)
-        model_characteristics["clustering_approach"] = clustering_approach
-        model_characteristics["model"] = "Gaussian Mixture Model"
-        model_characteristics["distance_metric"] = "DTW"
-        model_characteristics["n_clusters"] = n_clusters
-        model_characteristics["feature_transformation"] = transformation
-        model_characteristics["pre_transformation"] = pre_transformation
-        performance = ValidationPerformance()
-        performance.set_performance_stats(ingested_data.transpose(), best_clusters, distance_metric)
-        single_result = SingleResult(model_characteristics,performance)
-        return ModelResult(best_clustering=best_clusters, results=[single_result],characteristics=model_characteristics,
-                    cluster_centers=model_centers_dataframe)
-        
-    if distance_metric == "softdtw":
-        km = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance_metric, verbose=False, metric_params={"gamma": gamma}, random_state=seed)
-        best_clusters = km.fit_predict(ingested_data.copy().transpose())
-        performance = float(silhouette_score(ingested_data.transpose(), best_clusters, metric=distance_metric))
-        for yi in range(n_clusters):
-            centrd = km.cluster_centers_[yi].ravel()
-            model_centers.append(centrd)
-        model_centers_dataframe = pd.DataFrame(model_centers).T
-        model_centers_dataframe = model_centers_dataframe.set_index(ingested_data.index.date)
-        model_characteristics["clustering_approach"] = clustering_approach
-        model_characteristics["model"] = "Gaussian Mixture Model"
-        model_characteristics["distance_metric"] = "SoftDTW"
-        model_characteristics["n_clusters"] = n_clusters
-        model_characteristics["feature_transformation"] = transformation
-        model_characteristics["pre_transformation"] = pre_transformation
-        performance = ValidationPerformance()
-        performance.set_performance_stats(ingested_data.transpose(), best_clusters, distance_metric)
-        single_result = SingleResult(model_characteristics,performance)
-        return ModelResult(best_clustering=best_clusters, results=[single_result],characteristics=model_characteristics,
-                    cluster_centers=model_centers_dataframe)
+
+    X = ingested_data.copy().transpose()
+    gmm = mixture.GaussianMixture(n_components=n_clusters, covariance_type='full', verbose=False, random_state=seed)
+    best_clusters = gmm.fit_predict(X.values)
+
+    model_centers = gmm.means_
+    model_centers_dataframe = pd.DataFrame(model_centers).T
+    model_centers_dataframe = model_centers_dataframe.set_index(ingested_data.index.date)
+    inverse_pre_transf = transformation_factory(pre_transformation)
+    model_centers_dataframe = inverse_pre_transf.inverse(model_centers_dataframe.copy())
+
+    model_characteristics["clustering_approach"] = clustering_approach
+    model_characteristics["model"] = "Gaussian Mixture Model"
+    model_characteristics["distance_metric"] = "Log-likelihood"
+    model_characteristics["n_clusters"] = n_clusters
+    model_characteristics["feature_transformation"] = transformation
+    model_characteristics["pre_transformation"] = pre_transformation
+    performance = ValidationPerformance()
+    #performance.set_performance_stats(ingested_data.transpose(), best_clusters, None)
+    performance.set_performance_stats(X.values, best_clusters)
+    single_result = SingleResult(model_characteristics, performance)
+    return ModelResult(best_clustering=best_clusters, results=[single_result],characteristics=model_characteristics,
+                cluster_centers=model_centers_dataframe)

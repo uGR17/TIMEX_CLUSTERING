@@ -108,7 +108,6 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
     approaches_to_test = [*param_config["model_parameters"]["clustering_approach"].split(",")]
     num_clusters_to_test = param_config["model_parameters"]["n_clusters"]
     dist_measures_to_test = [*param_config["model_parameters"]["distance_metric"].split(",")]
-    models = [*param_config["model_parameters"]["models"].split(",")]
     main_accuracy_estimator = param_config["model_parameters"]["main_accuracy_estimator"]
     
     # Apply the preprocesing transformation: none,log,logmodified or none.
@@ -141,10 +140,20 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
         best_model = {}
         model_results = {}
         model_counter = 0
-        if clustering_approach =='observation_based' or clustering_approach =='model_based':
+        models = [*param_config["model_parameters"]["models"].split(",")]
+        if clustering_approach =='observation_based':
             transformations_to_test = ['none']
+            try: models.remove('gaussian_mixture')
+            except: pass
         elif clustering_approach == 'feature_based':
             transformations_to_test = [*param_config["model_parameters"]["feature_transformations"].split(",")]
+            try: models.remove('gaussian_mixture')
+            except: pass
+        elif clustering_approach =='model_based':
+            transformations_to_test = ['none']
+            dist_measures_to_test = ['Log-likelihood']
+            try: models.remove('k_means')
+            except: pass
         else:
             log.info(f"Wrong name approach: {clustering_approach}, introduce the approach's name correctly and without spaces, i.e.: 'observation_based,feature_based,model_based'")
         for model in models:
@@ -403,8 +412,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
     
     if clustering_approach == "model_based":
         if model_class == "gaussian_mixture": 
-            print("model_based in progress")
-            return GaussianMixtureModel(ingested_data=ingested_data, clustering_approach="Feature based", distance_metric=distance_metric, 
+            return GaussianMixtureModel(ingested_data=ingested_data, clustering_approach="Model based", distance_metric=distance_metric, 
                                param_config=param_config, transformation=transformation, n_clusters=n_clusters)
 
 
