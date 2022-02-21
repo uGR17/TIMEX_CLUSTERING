@@ -128,10 +128,11 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
                 best_performances.sort(key=lambda x: getattr(x.performances, main_accuracy_estimator))
             best_model = best_performances[0].characteristics['model']
             best_metric = best_performances[0].characteristics['distance_metric']
-            
+
+            model_characteristic['n_clusters'] = param_configuration['n_clusters'] #List of all the distance metrics            
             if best_model=='K Means': 
                 best_model='k_means'
-                model_characteristic['n_clusters'] = param_configuration['n_clusters'] #List of all the distance metrics
+                model_characteristic['distance_metric'] = param_configuration['distance_metric'] #'Log-Likelihood'
             elif best_model=='Gaussian Mixture Model':
                 best_model='gaussian_mixture'
                 model_characteristic['distance_metric'] = best_performances[0].characteristics['distance_metric'] #'Log-Likelihood'
