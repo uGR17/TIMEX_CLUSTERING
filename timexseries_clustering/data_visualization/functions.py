@@ -144,7 +144,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
                 html.H4(f"{model_name}"),
                 characteristics_list(model_characteristic, best_performances[0]),
                 cluster_plot(timeseries_container, model),
-                performance_plot(timeseries_data, param_config, all_performances),
+                performance_plot(param_config, all_performances),
                 validation_performance_info(),
                 cluster_distribution_plot(timeseries_container.models[best_model][best_metric].best_clustering),
             ])
@@ -898,7 +898,10 @@ def cluster_plot(time_series_container: TimeSeriesContainer, cluster_data: dict)
                                 row=subplotmult, col=yi+1)
         subplotmult = subplotmult + 1
 
-    fig.update_layout(title="Best clustering for the dataset", height=750)
+    height_plot = 750
+    if time_series_container.approach=="Model based": height_plot = 400
+    
+    fig.update_layout(title="Best clustering for the dataset", height=height_plot)
     fig.update_yaxes(matches='y')
     
     g = dcc.Graph(
@@ -933,7 +936,9 @@ def cluster_plot_matplotlib(time_series_container: TimeSeriesContainer, cluster_
 
     
     plt.figure()
-    plt.figure(figsize=(13, 8))
+    height_plot = 8
+    if time_series_container.approach=="Model based": height_plot = 4
+    plt.figure(figsize=(13, height_plot))
 
     X_train = df.to_numpy()
     X_train = X_train.transpose()
@@ -970,19 +975,15 @@ def cluster_plot_matplotlib(time_series_container: TimeSeriesContainer, cluster_
     plt.show()
 
 
-def performance_plot(df: DataFrame, param_config : dict, all_performances: List) -> dcc.Graph:
+def performance_plot(param_config : dict, all_performances: List) -> dcc.Graph:
     """
     Create and return the performance plot of the model; for every error kind (i.e. Silhouette, Davies Bouldin, etc) plot the values it
     assumes using different clustering model parameters.
 
     Parameters
     ----------
-    df : DataFrame
-        Raw values ingested by the app.
-
     param_config : dict
         TIMEX configuration parameters dictionary.
-
     all_performances : List
         List of [SingleResults] objects. Every object is related to a different model parameter configuration,
         hence it shows the performance using that configuration.
@@ -1003,7 +1004,9 @@ def performance_plot(df: DataFrame, param_config : dict, all_performances: List)
     fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.02)
     n_cls = len(n_cluster_test_values)
     
-    if all_performances[0][0].characteristics['feature_transformation']=='none': #Observation based approach
+    #---------------------------------
+    #Plot of Observation based results
+    if all_performances[0][0].characteristics['clustering_approach']=='Observation based':
         nparray_performances = numpy.zeros((n_cls,9))
         for metric in all_performances:
             nc=0
@@ -1066,8 +1069,10 @@ def performance_plot(df: DataFrame, param_config : dict, all_performances: List)
                                         line=dict(color='blue'),
                                         mode="lines+markers",
                                         name='Calinski Harabasz Soft DTW'), row=3, col=1)
-                
-    if all_performances[0][0].characteristics['feature_transformation']!='none': #Feature based approach
+
+    #---------------------------------
+    #Plot of Feature based results
+    elif all_performances[0][0].characteristics['clustering_approach']=='Feature based':
         num_trans = len(transformations)
         nparray_performances = numpy.zeros((n_cls*num_trans,9))
         for metric in all_performances:
@@ -1185,6 +1190,33 @@ def performance_plot(df: DataFrame, param_config : dict, all_performances: List)
                                         line=dict(color='blue'),
                                         mode="lines+markers",
                                         name='Calinski Harabasz Soft DTW-DFT'), row=3, col=1)
+
+    #---------------------------------
+    #Plot of Model based results
+    elif all_performances[0][0].characteristics['clustering_approach']=='Model based':
+        nparray_performances = numpy.zeros((n_cls,3))
+        for metric in all_performances:
+            nc=0
+            for n_cluster in metric:
+                if n_cluster.characteristics['distance_metric']=='Log-likelihood':
+                    nparray_performances[nc][0] = n_cluster.performances.silhouette
+                    nparray_performances[nc][1] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc][2] = n_cluster.performances.calinski_harabasz
+                nc=nc+1
+        df_performances = pandas.DataFrame(nparray_performances, columns=['silhouette_score', 'davies_bouldin_score', 'calinski_harabasz_score'])
+        
+        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['silhouette_score'],
+                                    line=dict(color='magenta'),
+                                    mode="lines+markers",
+                                    name='Silhouette score'), row=1, col=1)
+        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['davies_bouldin_score'],
+                                    line=dict(color='yellow'),
+                                    mode="lines+markers",
+                                    name='Davies Bouldin score'), row=2, col=1)
+        fig.append_trace(go.Scatter(x=n_cluster_test_values, y=df_performances['calinski_harabasz_score'],
+                                    line=dict(color='DeepSkyBlue'),
+                                    mode="lines+markers",
+                                    name='Calinski Harabasz score'), row=3, col=1)
 
     fig.update_yaxes(title_text="Silhouette", row=1, col=1)
     fig.update_yaxes(title_text="Davies Bouldin", row=2, col=1)
