@@ -62,7 +62,7 @@ def GaussianMixtureModel(ingested_data: DataFrame, clustering_approach: str, dis
         pre_transformation = "none"
 
     X = ingested_data.copy().transpose()
-    gmm = mixture.GaussianMixture(n_components=n_clusters, covariance_type='full', verbose=False, random_state=seed)
+    gmm = mixture.GaussianMixture(n_components=n_clusters, covariance_type='full', reg_covar=1e-05, verbose=False, random_state=seed)
     best_clusters = gmm.fit_predict(X.values)
 
     model_centers = gmm.means_
@@ -78,7 +78,6 @@ def GaussianMixtureModel(ingested_data: DataFrame, clustering_approach: str, dis
     model_characteristics["feature_transformation"] = transformation
     model_characteristics["pre_transformation"] = pre_transformation
     performance = ValidationPerformance()
-    #performance.set_performance_stats(ingested_data.transpose(), best_clusters, None)
     performance.set_performance_stats(X.values, best_clusters)
     single_result = SingleResult(model_characteristics, performance)
     return ModelResult(best_clustering=best_clusters, results=[single_result],characteristics=model_characteristics,
