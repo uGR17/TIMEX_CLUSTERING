@@ -17,7 +17,9 @@ from colorhash import ColorHash
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 from timexseries_clustering.data_clustering import ValidationPerformance
-from timexseries_clustering.data_clustering.models.predictor import SingleResult
+from timexseries_clustering.timeseries_container import TimeSeriesContainer
+from timexseries_clustering.data_clustering.models.predictor import SingleResult, ModelResult
+from timexseries_clustering.data_clustering.transformation import transformation_factory
 import calendar
 
 from timexseries_clustering.timeseries_container import TimeSeriesContainer
@@ -97,8 +99,9 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
     # Plot the prediction results, if requested.
     if timeseries_container.models is not None:
         param_configuration = param_config["model_parameters"]
+        pre_transformation = param_configuration["pre_transformation"]
         main_accuracy_estimator = param_configuration["main_accuracy_estimator"]
-        models = timeseries_container.models
+        models = timeseries_container.models.copy()
         best_model_dict = timeseries_container.best_model
 
         children.append(
@@ -140,15 +143,37 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
             elif best_metric=='DTW': best_metric='dtw'
             elif best_metric=='SoftDTW': best_metric='softdtw'
 
-            children.extend([
-                html.H4(f"{model_name}"),
-                characteristics_list(model_characteristic, best_performances[0]),
-                cluster_plot(timeseries_container, model),
-                performance_plot(param_config, all_performances),
-                validation_performance_info(),
-                cluster_distribution_plot(timeseries_container.models[best_model][best_metric].best_clustering),
-            ])
-
+            if pre_transformation == 'none': #Plot the cluster plots only with the original data and cluster centers
+                children.extend([
+                    html.H4(f"{model_name}"),
+                    characteristics_list(model_characteristic, best_performances[0]),
+                    cluster_plot(timeseries_container, model),
+                    performance_plot(param_config, all_performances),
+                    validation_performance_info(),
+                    cluster_distribution_plot(timeseries_container.models[best_model][best_metric].best_clustering),
+                ])
+            else: #Plot the cluster plots only with the original and the transformed data and cluster centers
+                dcc_original_data = cluster_plot(timeseries_container, model)
+                pre_transf = transformation_factory(pre_transformation)
+                timeseries_container_transf = TimeSeriesContainer(timeseries_container.timeseries_data.copy(),timeseries_container.approach, 
+                                                                  timeseries_container.models.copy(),timeseries_container.best_model.copy(), timeseries_container.xcorr)       
+                timeseries_container_transf.timeseries_data = pre_transf.apply(timeseries_container_transf.timeseries_data) 
+                model_transf = model.copy()
+                for key in model:
+                        modelResult_original = model[key]
+                        modelResult_transf = ModelResult(modelResult_original.best_clustering.copy(), modelResult_original.results.copy(), modelResult_original.characteristics.copy(),
+                            modelResult_original.cluster_centers.copy())
+                        modelResult_transf.cluster_centers = pre_transf.apply(modelResult_transf.cluster_centers.copy())
+                        model_transf[key] = modelResult_transf
+                children.extend([
+                    html.H4(f"{model_name}"),
+                    characteristics_list(model_characteristic, best_performances[0]),
+                    dcc_original_data,
+                    cluster_plot(timeseries_container_transf, model_transf, True),
+                    performance_plot(param_config, all_performances),
+                    validation_performance_info(),
+                    cluster_distribution_plot(timeseries_container.models[best_model][best_metric].best_clustering),
+                ])
             # EXTRA
             # Warning: this will plot every model result, with every distance metric used!
             # children.extend(plot_every_prediction(ingested_data, model_results, main_accuracy_estimator, test_values))
@@ -822,7 +847,7 @@ def timeseries_plot(df: DataFrame) -> dcc.Graph:
     return g
 
 
-def cluster_plot(time_series_container: TimeSeriesContainer, cluster_data: dict) -> dcc.Graph:
+def cluster_plot(time_series_container: TimeSeriesContainer, cluster_data: dict, data_transformed: bool = False) -> dcc.Graph:
     """
     Create and return a plot which contains the clustering for a dataframe.
     The plot is built using a dataframe: `ingested_data` and dictionary: `cluster_data`.
@@ -841,7 +866,8 @@ def cluster_plot(time_series_container: TimeSeriesContainer, cluster_data: dict)
         coming from the ingested dataset.
     cluster_data : dict
         Dictionary of the clustering Model to plot, with distance metric as keys and ModelResult objects as values.
-
+    data_transformed : bool, optional, default False
+        Boolean to specified if the data introduced in the parameters time_series_container and cluster_data come from a transformation
     Returns
     -------
     g : dcc.Graph
@@ -853,6 +879,7 @@ def cluster_plot(time_series_container: TimeSeriesContainer, cluster_data: dict)
     
     df = time_series_container.timeseries_data
     best_model = time_series_container.best_model
+    pre_transformation = best_model['pre_transformation']
 
     dframe = df.copy()
     df_array = dframe.to_numpy()
@@ -900,8 +927,10 @@ def cluster_plot(time_series_container: TimeSeriesContainer, cluster_data: dict)
 
     height_plot = 750
     if time_series_container.approach=="Model based": height_plot = 400
-    
-    fig.update_layout(title="Best clustering for the dataset", height=height_plot)
+    if data_transformed:
+        fig.update_layout(title=("Best clustering for the dataset transformed with: "+pre_transformation), height=height_plot)
+    else:
+        fig.update_layout(title="Best clustering for the dataset", height=height_plot)
     fig.update_yaxes(matches='y')
     
     g = dcc.Graph(

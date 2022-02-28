@@ -11,9 +11,7 @@ from pandas import DataFrame
 
 from timexseries_clustering.data_clustering import ClustersModel
 from timexseries_clustering.data_clustering.models.predictor import ModelResult, SingleResult
-from timexseries_clustering.data_clustering.models.arima_predictor import ARIMAModel
-from timexseries_clustering.data_clustering.models.lstm_predictor import LSTMModel
-from timexseries_clustering.data_clustering.models.mockup_predictor import MockUpModel
+from timexseries_clustering.data_clustering.models.arima_cluster import ARIMAModel
 from timexseries_clustering.data_clustering.models.kmeans_cluster import KMeansModel
 from timexseries_clustering.data_clustering.models.gmm_cluster import GaussianMixtureModel
 from timexseries_clustering.data_clustering.xcorr import calc_all_xcorr

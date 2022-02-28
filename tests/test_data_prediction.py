@@ -1,27 +1,20 @@
 import logging
 import math
 import os
-
 import dateparser
 import pandas
 import pytest
-#from prophet import Prophet
 
 from pandas import Series, DataFrame
 import pandas as pd
 import numpy as np
 from scipy.stats import yeojohnson
 
-from timexseries_clustering.data_clustering.models.arima_predictor import ARIMAModel
-from timexseries_clustering.data_clustering.models.exponentialsmoothing_predictor import ExponentialSmoothingModel
-from timexseries_clustering.data_clustering.models.lstm_predictor import LSTMModel
-from timexseries_clustering.data_clustering.models.mockup_predictor import MockUpModel
-# from timexseries_clustering.data_clustering.models.neuralprophet_predictor import NeuralProphetModel
+from timexseries_clustering.data_clustering.models.arima_cluster import ARIMAModel
 from timexseries_clustering.data_clustering.models.predictor import ModelResult
 from timexseries_clustering.data_clustering.xcorr import calc_xcorr, calc_all_xcorr
-
-from tests.utilities import get_fake_df
 from timexseries_clustering.data_ingestion import add_freq
+from tests.utilities import get_fake_df
 
 from timexseries_clustering.data_clustering.pipeline import get_best_univariate_clusters, \
     get_best_multivariate_predictions, compute_historical_predictions, get_best_clusters, \
@@ -179,7 +172,7 @@ class Test_Xcorr:
             for mode in xcorr:
                 assert xcorr[mode].loc[expected_max_lag][0] == 1.0
 
-
+'''
 class Test_Models_General:
     def test_launch_model_test_percentage(self):
         # Percentages' sum is not 100%; adapt the windows. Use "test_percentage".
@@ -484,9 +477,9 @@ class Test_Models_General:
                         pd.testing.assert_series_equal(p, e.loc[p.index[0]:].
                                                        apply(
                             lambda x: 67.0 if x >= 67 else (63.0 if x <= 63 else round_or_not_x(x))))
+'''
 
-
-
+'''
 class Test_Models_Specific:
     @pytest.mark.parametrize(
         "model_class,check_multivariate",
@@ -527,6 +520,7 @@ class Test_Models_Specific:
             result_with_extra_regressors = model.predict(future_df.copy(), extra_regressors.copy())
 
             assert not result.equals(result_with_extra_regressors)
+'''
 
 
 class TestGetPredictions:
@@ -683,6 +677,7 @@ class TestGetPredictions:
         assert c_old_hist['mockup'].iloc[0, 0] == timeseries_containers[1].historical_prediction['mockup'].iloc[0, 0]
         assert c_old_hist['mockup'].iloc[1, 0] == timeseries_containers[1].historical_prediction['mockup'].iloc[1, 0]
 
+    '''
     def test_compute_predictions_2(self, tmp_path):
 
         ing_data = pd.read_csv("test_datasets/test_covid.csv")
@@ -770,7 +765,9 @@ class TestGetPredictions:
         assert historical_prediction.equals(timeseries_container.models['fbprophet'].best_prediction[['yhat']])
 
         # Make this test with a log_modified
+    '''
 
+    '''
     def test_compute_predictions_3(self, tmp_path):
         # Test with an historical predictions delta > 1
         # This means that historical predictions are not computed starting from initial index 1-step ahead at time,
@@ -845,7 +842,9 @@ class TestGetPredictions:
                                      endpoint + pandas.Timedelta(days=1):endpoint + pandas.Timedelta(days=3), scen_name]
 
                 assert expected_hist_pred.equals(computed_hist_pred)
-
+    '''
+    
+    '''
     def test_get_best_predictions(self):
         # Test that log_modified transformation is applied and that the results are the expected ones.
         # Ideally this should work the same using other models or transformations; it's just to test that pre/post
@@ -936,6 +935,7 @@ class TestGetPredictions:
         for i in pd.date_range(start="2000-01-31", end="2000-02-09", freq="D"):
             assert timeseries_containers[0].models['mockup'].best_prediction.loc[i, "yhat"] == 0.0
             assert timeseries_containers[1].models['mockup'].best_prediction.loc[i, "yhat"] == 0.0
+        '''
 
 
 class TestCreateScenarios:
