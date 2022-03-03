@@ -151,6 +151,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
                     performance_plot(param_config, all_performances),
                     validation_performance_info(),
                     cluster_distribution_plot(timeseries_container.models[best_model][best_metric].best_clustering),
+                    cluster_distribution_table(timeseries_container.best_model['clusters_table']),
                 ])
             else: #Plot the cluster plots only with the original and the transformed data and cluster centers
                 dcc_original_data = cluster_plot(timeseries_container, model)
@@ -173,6 +174,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
                     performance_plot(param_config, all_performances),
                     validation_performance_info(),
                     cluster_distribution_plot(timeseries_container.models[best_model][best_metric].best_clustering),
+                    cluster_distribution_table(timeseries_container.best_model['clusters_table']),
                 ])
             # EXTRA
             # Warning: this will plot every model result, with every distance metric used!
@@ -1444,6 +1446,37 @@ def cluster_distribution_plot(cluster_indexes: DataFrame) -> dcc.Graph:
         
     fig.update_layout(title=("Cluster Distribution"), xaxis_title='Cluster', yaxis_title='Count')
 
+    g = dcc.Graph(
+        figure=fig )
+    return g
+
+
+def cluster_distribution_table(cluster_table_df: DataFrame) -> dcc.Graph:
+    """
+    Create and return a table which contains the cluster distribution.
+    The table is built using a dataframe: `cluster_table_df`.
+
+    Parameters
+    ----------
+    cluster_table_df : DataFrame
+    Cluster table corresponding the cluster which each timeseries belongs.
+
+    Returns
+    -------
+    g : dcc.Graph
+
+    """
+
+    fig = go.Figure(data=[go.Table(
+        header=dict(values=list(cluster_table_df.columns),
+                fill_color='royalblue',
+                align='left',
+                font=dict(color='white')),
+        cells=dict(values=cluster_table_df.transpose().values,
+                fill_color='lavender',
+                align='left'))
+    ])
+    
     g = dcc.Graph(
         figure=fig )
     return g

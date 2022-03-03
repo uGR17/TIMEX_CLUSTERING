@@ -5,7 +5,7 @@ from functools import reduce
 from typing import Tuple, List
 
 import dateparser
-import numpy
+import numpy, pandas
 import tslearn
 from pandas import DataFrame
 
@@ -166,18 +166,17 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                         log.info(f"Computing univariate clustering using approach: {clustering_approach}, number of clusters: {n_clus}, distance metric: {metric} and transformation: {transf}...")
                         tr = transformation_factory(transf)
                         ingested_data_transform = tr.apply(ingested_data_pre_transform)
-                        
+                        #ModelResult
                         _result = model_factory(ingested_data_transform, clustering_approach, model, distance_metric=metric, param_config=param_config, transformation=transf, n_clusters=n_clus)
-                        #_result = predictor.fit_predict(ingested_data.copy())
-                        #_result = predictor.launch_model(timeseries_data.copy(), max_threads=max_threads)
-                                                
+                    
                         model_single_results = _result.results[0] #SingleResult
                         characteristics = _result.characteristics
+                        best_clustering = _result.best_clustering
                         
                         performances = getattr(model_single_results.performances, main_accuracy_estimator)
                         single_results.append(model_single_results)
                         this_metric_performances.append((_result, performances, n_clus, transf))
-                        this_model_performances.append((_result, performances, n_clus, metric, transf))
+                        this_model_performances.append((_result, performances, n_clus, metric, transf, best_clustering))
                 
                 if main_accuracy_estimator=="silhouette":
                     this_metric_performances.sort(key=lambda x: x[1],reverse=True)
@@ -198,6 +197,17 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
             best_n_clusters = this_model_performances[0][2]
             best_metric = this_model_performances[0][3]
             best_n_trans = this_model_performances[0][4]
+            best_cluster_vector = this_model_performances[0][5]
+            
+            column_names = ingested_data.columns.values
+            clusters_indexes = numpy.unique(best_cluster_vector)
+            data = []
+            column_values = []
+            for yi in clusters_indexes:
+                data.append(column_names[best_cluster_vector == yi])
+                column_values.append('Cluster '+str(yi))
+            clusters_label = pandas.DataFrame(data = data,index = column_values) 
+            cluster_table_df = clusters_label.transpose()
             log.info(f"For the model: {model} the best clustering is obtained using metric {best_metric}, with {best_n_clusters} number of clusters, and transfomation {best_n_trans}.")
                    
             if model_counter == 0:
@@ -209,6 +219,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                 best_model["pre_transformation"] = data_procesing_transformation
                 best_model["accuracy_estimator"] = main_accuracy_estimator
                 best_model["performance"] = this_model_performances[0][1]
+                best_model["clusters_table"] = cluster_table_df
                 model_counter = model_counter+1
             elif this_model_performances[0][1] > best_model["performance"]:
                 best_model["model"] = model
@@ -217,6 +228,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                 best_model["feature_transformation"] = best_n_trans
                 best_model["pre_transformation"] = data_procesing_transformation
                 best_model["performance"] = this_model_performances[0][1]
+                best_model["clusters_table"] = cluster_table_df
                 
         log.info(f"Process of {clustering_approach} clustering finished")
         timeseries_containers.append(
