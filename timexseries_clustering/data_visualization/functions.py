@@ -858,7 +858,6 @@ def cluster_plot(time_series_container: TimeSeriesContainer, cluster_data: dict,
     and cluster centers made by a model.
 
     Note that `cluster_data` its is a dictionary with distance metric as keys and ModelResult objects as values.
-
     The time-series are plotted in black and the cluster centers are plotted in red.
 
     Parameters
