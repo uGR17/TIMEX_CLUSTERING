@@ -20,11 +20,12 @@ requirements = ["dateparser<2.0.0,>=1.0.0",\
     "scipy<2.0.0,>=1.6.0",\
     "statsmodels<0.13.0,>=0.12.2",\
     "PyWavelets>=1.2.0",\
-    "pytest>=4.3.0"]
+    "pytest>=4.3.0",\
+    "Flask >=1.0.4"]
 
 setup(
     name="timexseries_clustering",
-    version="1.0.5",
+    version="1.0.6",
     author="Uriel Guadarrama Ramirez",
     author_email="u.guadarrama@hotmail.com",
     description="TIMEX-CLUSTERING is a framework for time-series-clustering-as-a-service",
