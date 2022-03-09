@@ -1283,7 +1283,7 @@ def plot_every_prediction(df: DataFrame, model_results: List[SingleResult],
 def characteristics_list(model_characteristics: dict, best_performances: SingleResult)-> html.Div: #, testing_performances: List[ValidationPerformance]) -> html.Div:
     """
     Create and return an HTML Div which contains a list of natural language characteristic
-    relative to a prediction model.
+    relative to a clustering model.
 
     Parameters
     ----------
