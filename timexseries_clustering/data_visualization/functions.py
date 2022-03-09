@@ -1042,17 +1042,33 @@ def performance_plot(param_config : dict, all_performances: List) -> dcc.Graph:
             nc=0
             for n_cluster in metric:
                 if n_cluster.characteristics['distance_metric']=='Euclidean':
-                    nparray_performances[nc][0] = n_cluster.performances.silhouette
-                    nparray_performances[nc][1] = n_cluster.performances.davies_bouldin
-                    nparray_performances[nc][2] = n_cluster.performances.calinski_harabasz
+                    nc_insert = nc
+                    if n_cluster.characteristics['n_clusters']>n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])
+                    elif n_cluster.characteristics['n_clusters']<n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])
+                    nparray_performances[nc_insert][0] = n_cluster.performances.silhouette
+                    nparray_performances[nc_insert][1] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc_insert][2] = n_cluster.performances.calinski_harabasz
+                    n_cluster.characteristics['n_clusters']
                 elif n_cluster.characteristics['distance_metric']=='DTW':
-                    nparray_performances[nc][3] = n_cluster.performances.silhouette
-                    nparray_performances[nc][4] = n_cluster.performances.davies_bouldin
-                    nparray_performances[nc][5] = n_cluster.performances.calinski_harabasz        
+                    nc_insert = nc
+                    if n_cluster.characteristics['n_clusters']>n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])
+                    elif n_cluster.characteristics['n_clusters']<n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])                    
+                    nparray_performances[nc_insert][3] = n_cluster.performances.silhouette
+                    nparray_performances[nc_insert][4] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc_insert][5] = n_cluster.performances.calinski_harabasz        
                 elif n_cluster.characteristics['distance_metric']=='SoftDTW':
-                    nparray_performances[nc][6] = n_cluster.performances.silhouette
-                    nparray_performances[nc][7] = n_cluster.performances.davies_bouldin
-                    nparray_performances[nc][8] = n_cluster.performances.calinski_harabasz
+                    nc_insert = nc
+                    if n_cluster.characteristics['n_clusters']>n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])
+                    elif n_cluster.characteristics['n_clusters']<n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])
+                    nparray_performances[nc_insert][6] = n_cluster.performances.silhouette
+                    nparray_performances[nc_insert][7] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc_insert][8] = n_cluster.performances.calinski_harabasz
                 nc=nc+1
         df_performances = pandas.DataFrame(nparray_performances, columns=['silhouette_ED', 'davies_bouldin_ED', 'calinski_harabasz_ED',
                                                                     'silhouette_DTW', 'davies_bouldin_DTW', 'calinski_harabasz_DTW',
@@ -1109,29 +1125,32 @@ def performance_plot(param_config : dict, all_performances: List) -> dcc.Graph:
             nc=0
             for n_cluster in metric:
                 if n_cluster.characteristics['distance_metric']=='Euclidean' and n_cluster.characteristics['feature_transformation']=='DWT':
-                    nparray_performances[nc][0] = n_cluster.performances.silhouette
-                    nparray_performances[nc][1] = n_cluster.performances.davies_bouldin
-                    nparray_performances[nc][2] = n_cluster.performances.calinski_harabasz
+                    nc_insert = nc
+                    if n_cluster.characteristics['n_clusters']>n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])
+                    elif n_cluster.characteristics['n_clusters']<n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])                    
+                    nparray_performances[nc_insert][0] = n_cluster.performances.silhouette
+                    nparray_performances[nc_insert][1] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc_insert][2] = n_cluster.performances.calinski_harabasz
                 elif n_cluster.characteristics['distance_metric']=='DTW' and n_cluster.characteristics['feature_transformation']=='DWT':
-                    nparray_performances[nc][3] = n_cluster.performances.silhouette
-                    nparray_performances[nc][4] = n_cluster.performances.davies_bouldin
-                    nparray_performances[nc][5] = n_cluster.performances.calinski_harabasz        
+                    nc_insert = nc
+                    if n_cluster.characteristics['n_clusters']>n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])
+                    elif n_cluster.characteristics['n_clusters']<n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])
+                    nparray_performances[nc_insert][3] = n_cluster.performances.silhouette
+                    nparray_performances[nc_insert][4] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc_insert][5] = n_cluster.performances.calinski_harabasz        
                 elif n_cluster.characteristics['distance_metric']=='SoftDTW' and n_cluster.characteristics['feature_transformation']=='DWT':
-                    nparray_performances[nc][6] = n_cluster.performances.silhouette
-                    nparray_performances[nc][7] = n_cluster.performances.davies_bouldin
-                    nparray_performances[nc][8] = n_cluster.performances.calinski_harabasz
-                if n_cluster.characteristics['distance_metric']=='Euclidean' and n_cluster.characteristics['feature_transformation']=='DFT':
-                    nparray_performances[nc][0] = n_cluster.performances.silhouette
-                    nparray_performances[nc][1] = n_cluster.performances.davies_bouldin
-                    nparray_performances[nc][2] = n_cluster.performances.calinski_harabasz
-                elif n_cluster.characteristics['distance_metric']=='DTW' and n_cluster.characteristics['feature_transformation']=='DFT':
-                    nparray_performances[nc][3] = n_cluster.performances.silhouette
-                    nparray_performances[nc][4] = n_cluster.performances.davies_bouldin
-                    nparray_performances[nc][5] = n_cluster.performances.calinski_harabasz        
-                elif n_cluster.characteristics['distance_metric']=='SoftDTW' and n_cluster.characteristics['feature_transformation']=='DFT':
-                    nparray_performances[nc][6] = n_cluster.performances.silhouette
-                    nparray_performances[nc][7] = n_cluster.performances.davies_bouldin
-                    nparray_performances[nc][8] = n_cluster.performances.calinski_harabasz
+                    nc_insert = nc
+                    if n_cluster.characteristics['n_clusters']>n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])
+                    elif n_cluster.characteristics['n_clusters']<n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])
+                    nparray_performances[nc_insert][6] = n_cluster.performances.silhouette
+                    nparray_performances[nc_insert][7] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc_insert][8] = n_cluster.performances.calinski_harabasz
                 nc=nc+1
         df_performances = pandas.DataFrame(nparray_performances, columns=['silhouette_ED_DWT', 'davies_bouldin_ED_DWT', 'calinski_harabasz_ED_DWT',
                                                                     'silhouette_DTW_DWT', 'davies_bouldin_DTW_DWT', 'calinski_harabasz_DTW_DWT',
