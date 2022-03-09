@@ -1248,9 +1248,14 @@ def performance_plot(param_config : dict, all_performances: List) -> dcc.Graph:
             nc=0
             for n_cluster in metric:
                 if n_cluster.characteristics['distance_metric']=='Log-likelihood':
-                    nparray_performances[nc][0] = n_cluster.performances.silhouette
-                    nparray_performances[nc][1] = n_cluster.performances.davies_bouldin
-                    nparray_performances[nc][2] = n_cluster.performances.calinski_harabasz
+                    nc_insert = nc
+                    if n_cluster.characteristics['n_clusters']>n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])
+                    elif n_cluster.characteristics['n_clusters']<n_cluster_test_values[nc]:
+                        nc_insert = nc+(n_cluster.characteristics['n_clusters']-n_cluster_test_values[nc])
+                    nparray_performances[nc_insert][0] = n_cluster.performances.silhouette
+                    nparray_performances[nc_insert][1] = n_cluster.performances.davies_bouldin
+                    nparray_performances[nc_insert][2] = n_cluster.performances.calinski_harabasz
                 nc=nc+1
         df_performances = pandas.DataFrame(nparray_performances, columns=['silhouette_score', 'davies_bouldin_score', 'calinski_harabasz_score'])
         
