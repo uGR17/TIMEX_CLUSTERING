@@ -185,7 +185,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                 best_result = this_metric_performances[0][0] #object ModelResult
                 best_n_clusters = this_metric_performances[0][2]
                 best_n_trans = this_metric_performances[0][3]
-                log.info(f"For the metric: {metric} the best clustering is obtained using {best_n_clusters} number of clusters and transfomation {best_n_trans}.")
+                log.info(f"For the metric: {metric} the best clustering is obtained using {best_n_clusters} number of clusters and transformation {best_n_trans}.")
                 
                 best_result.results = single_results
                 model_results[model][metric] = best_result #object ModelResult
@@ -208,7 +208,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
                 column_values.append('Cluster '+str(yi))
             clusters_label = pandas.DataFrame(data = data,index = column_values) 
             cluster_table_df = clusters_label.transpose()
-            log.info(f"For the model: {model} the best clustering is obtained using metric {best_metric}, with {best_n_clusters} number of clusters, and transfomation {best_n_trans}.")
+            log.info(f"For the model: {model} the best clustering is obtained using metric {best_metric}, with {best_n_clusters} number of clusters, and transformation {best_n_trans}.")
                    
             if model_counter == 0:
                 best_model["clustering_approach"] = clustering_approach
