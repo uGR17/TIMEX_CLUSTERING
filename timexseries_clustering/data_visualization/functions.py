@@ -1,5 +1,4 @@
 import logging
-
 import pandas
 from pandas import Grouper, DataFrame
 import plotly.graph_objects as go
@@ -16,7 +15,6 @@ import dash_bootstrap_components as dbc
 from colorhash import ColorHash
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from timexseries_clustering.data_clustering import ValidationPerformance
 from timexseries_clustering.timeseries_container import TimeSeriesContainer
 from timexseries_clustering.data_clustering.models.predictor import SingleResult, ModelResult
 from timexseries_clustering.data_clustering.transformation import transformation_factory
