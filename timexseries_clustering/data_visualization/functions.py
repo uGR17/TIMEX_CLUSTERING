@@ -896,7 +896,7 @@ def cluster_plot(time_series_container: TimeSeriesContainer, cluster_data: dict,
 
     titles = []
     for key, value in cluster_data.items():
-        for i in range(1,len(cluster_data)+1):
+        for i in range(1,num_clusters+1):
             titles.append('Metric:'+str(key)+', Cluster'+str(i))
     
     fig = make_subplots(rows = num_dist_metrics, cols = num_clusters, subplot_titles=(titles))
