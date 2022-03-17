@@ -25,7 +25,7 @@ requirements = ["dateparser<2.0.0,>=1.0.0",\
 
 setup(
     name="timexseries_clustering",
-    version="1.0.12",
+    version="1.0.15",
     author="Uriel Guadarrama Ramirez",
     author_email="u.guadarrama@hotmail.com",
     description="TIMEX-CLUSTERING is a framework for time-series-clustering-as-a-service",
