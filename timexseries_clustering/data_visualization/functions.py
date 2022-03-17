@@ -33,11 +33,9 @@ _ = lambda x: x
 def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, param_config: dict):
     """
     Creates the Dash children for a specific time-series. They include a line plot, histogram, box plot and
-    autocorrelation plot. For each model on the time-series the prediction plot and performance plot are also added.
+    autocorrelation plot. For each model on the time-series the clustering plot and performance plot are also added.
 
     Cross-correlation plots and graphs are shown, if the the `timeseries_container` have it.
-
-    If the `timeseries_container` also have the `historical_prediction`, it is shown in a plot.
     
     Parameters
     ----------
@@ -59,19 +57,18 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
     `timexseries.data_prediction.pipeline.create_timeseries_containers`, create all the Dash object which could be shown in a
     Dash app:
     >>> param_config = {
-    ...  "input_parameters": {},
+    ...  "input_parameters": {"source_data_url": "https://raw.githubusercontent.com/uGR17/TIMEX_CLUSTERING/main/examples/datasets/k_means_example_5ts.csv",
+    ...             "index_column_name": "date"
+    ...      },
     ...  "model_parameters": {
-    ...      "models": "fbprophet",
-    ...      "pre_transformation": "none",
-    ...      "feature_transformations": "DWT",
-    ...      "main_accuracy_estimator": "mae",
-    ...      "delta_training_percentage": 20,
-    ...      "test_values": 5,
-    ...      "prediction_lags": 7,
-    ...  },
-    ...  "historical_prediction_parameters": {
-    ...      "initial_index": "2000-01-25",
-    ...      "save_path": "example.pkl"
+    ...      "clustering_approach": "observation_based,feature_based,model_based",
+    ...      "models": "k_means,gaussian_mixture", 
+    ...      "pre_transformation": "none", 
+    ...      "distance_metric": "euclidean,dtw,softdtw",
+    ...      "feature_transformations": "DWT", 
+    ...      "n_clusters": [3, 4, 5, 6], 
+    ...      "gamma": 0.01, 
+    ...      "main_accuracy_estimator": "silhouette" 
     ...  },
     ...  "visualization_parameters": {}
     ...}
@@ -96,7 +93,7 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
     ])
 
     
-    # Plot the prediction results, if requested.
+    # Plot the clustering results, if requested.
     if timeseries_container.models is not None:
         param_configuration = param_config["model_parameters"]
         pre_transformation = param_configuration["pre_transformation"]
@@ -177,8 +174,6 @@ def create_timeseries_dash_children(timeseries_container: TimeSeriesContainer, p
                     cluster_distribution_table(timeseries_container.best_model['clusters_table']),
                 ])
             # EXTRA
-            # Warning: this will plot every model result, with every distance metric used!
-            # children.extend(plot_every_prediction(ingested_data, model_results, main_accuracy_estimator, test_values))
     
     # Plot cross-correlation plot and graphs, if requested.
     if timeseries_container.xcorr is not None:
@@ -1283,25 +1278,6 @@ def performance_plot(param_config : dict, all_performances: List) -> dcc.Graph:
     )
     return g
 
-
-def plot_every_prediction(df: DataFrame, model_results: List[SingleResult],
-                          main_accuracy_estimator: str, test_values: int):
-    new_childrens = [html.Div("EXTRA: plot _EVERY_ prediction\n")]
-
-    model_results.sort(key=lambda x: len(x.prediction))
-
-    for r in model_results:
-        predicted_data = r.prediction
-        testing_performance = r.testing_performances
-        plot = cluster_plot(df, predicted_data, test_values)
-        plot.figure.update_layout(title="")
-        new_childrens.extend([
-            html.Div(main_accuracy_estimator.upper()
-                     + ": " + str(getattr(testing_performance, main_accuracy_estimator.upper()))),
-            plot
-        ])
-
-    return new_childrens
 
 
 def characteristics_list(model_characteristics: dict, best_performances: SingleResult)-> html.Div: #, testing_performances: List[ValidationPerformance]) -> html.Div:
