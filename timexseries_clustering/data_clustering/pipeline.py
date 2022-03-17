@@ -9,15 +9,10 @@ import numpy, pandas
 import tslearn
 from pandas import DataFrame
 
-from timexseries_clustering.data_clustering import ClustersModel
-from timexseries_clustering.data_clustering.models.predictor import ModelResult, SingleResult
-from timexseries_clustering.data_clustering.models.arima_cluster import ARIMAModel
 from timexseries_clustering.data_clustering.models.kmeans_cluster import KMeansModel
 from timexseries_clustering.data_clustering.models.gmm_cluster import GaussianMixtureModel
 from timexseries_clustering.data_clustering.xcorr import calc_all_xcorr
 from timexseries_clustering.timeseries_container import TimeSeriesContainer
-from timexseries_clustering.data_clustering.validation_performances import ValidationPerformance
-from tslearn.clustering import TimeSeriesKMeans, silhouette_score
 from timexseries_clustering.data_clustering.transformation import transformation_factory
 
 
@@ -68,38 +63,34 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
 
     And create the model configuration part of the TIMEX configuration dictionary:
     >>> param_config = {
-    ...   "model_parameters": {
-    ...     "clustering_approach": "observation_based",  # Clustering approach which will be tested.
-    ...     "pre_transformation": "none", # only one data preprocesing transformation to test, for Feature Based clustering approach, i.e.: none,log or log_modified
-    ...     "feature_transformations": "DWT",  # Feature transformation to test.
-    ...     "distance_metric": "DTW,ED",  # Distance/similarity measure which will be tested.
-    ...     "models": "k_means",  # Model(s) which will be tested.
-    ...     "main_accuracy_estimator": "mae",
-    ...     "delta_training_percentage": 20,  # Training windows will be incremented by the 20% each step...
-    ...     "test_values": 5,  # Use the last 5 values as validation set.
-    ...     "prediction_lags": 7,  # Predict the next 7 points after 2000-01-30.
-    ...     }
+    ...  "model_parameters": {
+    ...      "clustering_approach": "observation_based,feature_based,model_based",
+    ...      "models": "k_means,gaussian_mixture", 
+    ...      "pre_transformation": "none", 
+    ...      "distance_metric": "euclidean,dtw,softdtw",
+    ...      "feature_transformations": "DWT", 
+    ...      "n_clusters": [3, 4, 5, 6], 
+    ...      "gamma": 0.01, 
+    ...      "main_accuracy_estimator": "silhouette" 
+    ...     },
     ... }
 
-    Now, get the univariate predictions:
-    >>> best_transformations, timeseries_outputs = get_best_univariate_clusters(timeseries_dataframe, param_config)
-
-    Let's inspect the results. `best_transformations` contains the suggested feature transformations to use:
-    >>> best_transformations
-    {'fbprophet': {'a': 'none', 'b': 'none'}}
+    Now, get the univariate clusters:
+    >>> timeseries_outputs = get_best_univariate_clusters(timeseries_dataframe, param_config)
 
     It is reasonable with this simple data that no transformation is the best transformation.**
     We have the `timexseries.timeseries_container.TimeSeriesContainer` list as well:
     >>> timeseries_outputs
     [<timexseries.timeseries_container.TimeSeriesContainer at 0x7f62f45d1fa0>,
+     <timexseries.timeseries_container.TimeSeriesContainer at 0x7f62d4596sf0>,
      <timexseries.timeseries_container.TimeSeriesContainer at 0x7f62d4e97cd0>]
 
-    These are the `timexseries.timeseries_container.TimeSeriesContainer` objects, one for time-series `a` and one for `b`.
-    Each one has various fields, in this case the most interesting one is `models`:**
+    These are the `timexseries.timeseries_container.TimeSeriesContainer` objects, one for each clustering approach
+    Each one has various fields, in this case the most interesting one is `models`:
     >>> timeseries_outputs[0].models
-    {'fbprophet': <timexseries.data_prediction.models.predictor.ModelResult at 0x7f62f45d1d90>}
+    {'k_means': <timexseries.data_prediction.models.predictor.ModelResult at 0x7f62f45d1d90>}
 
-    This is the `timexseries.data_prediction.models.predictor.ModelResult` object for FBProphet that we have just computed.
+    This is the `timexseries.data_prediction.models.predictor.ModelResult` object for k_means that we have just computed.
     """
 
     case_name = [param_config["activity_title"]]
@@ -393,19 +384,19 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
     Examples
     --------
     >>> param_config = {
-    ...    "model_parameters": {
-    ...        "pre_transformation": "none", 
-    ...        "feature_transformations": "DWT",
-    ...        "main_accuracy_estimator": "mae",
-    ...        "delta_training_percentage": 20,
-    ...        "test_values": 5,
-    ...        "prediction_lags": 7,
-    ...    },
+    ...  "model_parameters": {
+    ...      "clustering_approach": "observation_based",
+    ...      "models": "k_means", 
+    ...      "pre_transformation": "none", 
+    ...      "distance_metric": "euclidean,dtw,softdtw",
+    ...      "feature_transformations": "DWT", 
+    ...      "n_clusters": [3, 4, 5, 6], 
+    ...      "gamma": 0.01, 
+    ...      "main_accuracy_estimator": "silhouette" 
+    ...     },
     ...}
 
-    >>> model = model_factory("fbprophet", param_config, "none")
-    >>> print(type(model))
-    <class 'timexseries.data_prediction.models.prophet_predictor.FBProphetModel'>
+    >>> model = model_factory(timeseriescontainer[0].timeseries_data, clustering_approach='observation_based', model_class='k_means', distance_metric='dtw', param_config=param_config, transformation=None, n_clusters=3)
     """
 
     if clustering_approach == "observation_based":
