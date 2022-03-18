@@ -142,57 +142,6 @@ class DWT(Distance_metric):
         return "none"
 
 
-class YeoJohnson(Distance_metric):
-    """Class corresponding to the Yeo-Johnson transformation.
-
-    Notes
-    -----
-    Introduced in [^1], this transformation tries to make the input data more stable.
-
-    Warnings
-    --------
-    .. warning:: Yeo-Johnson is basically broken for some series with high values.
-                 Follow this issue: https://github.com/scikit-learn/scikit-learn/issues/14959
-                 Until this is solved, Yeo-Johnson may not work as expected and create random crashes.
-
-    References
-    ----------
-    [^1]: Yeo, I. K., & Johnson, R. A. (2000). A new family of power transformations to improve normality or symmetry.
-          Biometrika, 87(4), 954-959. https://doi.org/10.1093/biomet/87.4.954
-    """
-
-    def __init__(self):
-        self.lmbda = 0
-
-    def apply(self, data: Series) -> Series:
-        res, lmbda = yeojohnson(data)
-        self.lmbda = lmbda
-        return res
-
-    def inverse(self, data: Series) -> Series:
-        lmbda = self.lmbda
-        x_inv = np.zeros_like(data)
-        pos = data >= 0
-
-        # when x >= 0
-        if abs(lmbda) < np.spacing(1.):
-            x_inv[pos] = np.exp(data[pos]) - 1
-        else:  # lmbda != 0
-            x_inv[pos] = np.power(data[pos] * lmbda + 1, 1 / lmbda) - 1
-
-        # when x < 0
-        if abs(lmbda - 2) > np.spacing(1.):
-            x_inv[~pos] = 1 - np.power(-(2 - lmbda) * data[~pos] + 1,
-                                       1 / (2 - lmbda))
-        else:  # lmbda == 2
-            x_inv[~pos] = 1 - np.exp(-data[~pos])
-
-        return Series(x_inv)
-
-    def __str__(self):
-        return f"Yeo-Johnson (lambda: {round(self.lmbda, 3)})"
-
-
 def distance_metric_factory(dst_class: str) -> Distance_metric:
     """
     Given the type of the transformation, encoded as string, return the Transformation object.
