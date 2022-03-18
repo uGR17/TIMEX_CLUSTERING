@@ -18,7 +18,6 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from timexseries_clustering.timeseries_container import TimeSeriesContainer
 from timexseries_clustering.data_clustering.models.predictor import SingleResult, ModelResult
 from timexseries_clustering.data_clustering.transformation import transformation_factory
-import calendar
 
 from timexseries_clustering.timeseries_container import TimeSeriesContainer
 
