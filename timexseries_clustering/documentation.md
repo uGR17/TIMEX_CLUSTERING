@@ -28,8 +28,6 @@ The proposed TIMEX-CLUSTERING framework, developed in Python, is characterized b
 
 TIMEX-CLUSTERING's goal is to provide an automatic clustering framework, which could be used by any user on their datasets with a minimal amount of knowledge about clustering procedures. It should provide efficient and high quality time-series clustering. TIMEX-CLUSTERING will use the three different clustering approaches (observation-based, feature-based and model-based) in order to cover datasets with different nature. It is emphasized that a clustering-as-a-service is not yet available in the literature: this framework will be also unique because will include all the clustering approaches.
 
-![Pipeline of TIMEX-CLUSTERING](https://github.com/uGR17/TIMEX_CLUSTERING/blob/5573c65f90fb99922524d4f32da0625c8885112d/examples/figures/pipeline.PNG)
-
 ## Use cases
 There are at least two use cases worth mentioning:
 
@@ -42,15 +40,12 @@ some time-series, set some settings or use defaults, and press a button to recei
    time-series. TIMEX-CLUSTERING can be adapted to work this way.
    
 ## Get started
-Refer to the Examples section of the GitHub repository, or check the 
-[source code](https://github.com/uGR17/TIMEX_CLUSTERING) 
-[covid-19 timex-clustering example](https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/COVID_Clustering.ipynb)
-[UAE&UCR dataset timex-clustering example](https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/UEA_UCR_Dataset_Clustering_Example.ipynb)
+Refer to the Examples section of the GitHub repository, or check the [covid-19 timex-clustering example](https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/COVID_Clustering.ipynb) or the [UAE&UCR dataset timex-clustering example](https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/UEA_UCR_Dataset_Clustering_Example.ipynb)
 
 ## Architecture
 The general architecture of TIMEX-CLUSTERING is here presented:
 
-![Pipeline of TIMEX-CLUSTERING](https://github.com/uGR17/TIMEX_CLUSTERING/blob/5573c65f90fb99922524d4f32da0625c8885112d/examples/figures/pipeline.PNG)
+![Pipeline of TIMEX-CLUSTERING](https://https://github.com/uGR17/TIMEX_CLUSTERING/blob/main/examples/figures/pipeline.PNG)
 
 The most important aspect of TIMEX-CLUSTERING architecture is the __configuration options__ dictionary. It is a key-value list of settings which influences all the key aspects of the pipeline. It can be stored in a JSON file, loaded before the 
 pipeline starts.
@@ -142,7 +137,7 @@ Moreover, if `dateparser_options` is specified in `input_parameters', then the o
 dateparser to parse the dates.
 
 ### Model parameters
-These parameters control the classes of models used in the forecasting, the feature transformation tested, etc.
+These parameters control the classes of models used in the clustering, the feature transformation tested, etc.
 
 The following options has to be specified:
 
@@ -181,18 +176,17 @@ Parameters used to tune the visualization part of TIMEX-CLUSTERING.
   cross-correlation graph is drawn. It should be between 0.0 and 1.0.
 
 ## Available clustering models
-The following models are implemented in TIMEX-CLUSTERING and can be used in the forecasting procedure:
+The following models are implemented in TIMEX-CLUSTERING and can be used in the clustering procedure:
 
-- Gaussian Mixture Model: A simple Gaussian Mixture implementation built with [sklearn](https://scikit-learn.org/stable/). Keyword: `gaussian_mixture`.
-- K-Means: A simple K-Means implementation built with [ts-learn](https://tslearn.readthedocs.io/en/stable/index.html). Keyword: `k_means`.  
+- Gaussian Mixture Model: A simple Gaussian Mixture implementation built with [sklearn](https://scikit-learn.org/stable/). Keyword: `gaussian_mixture`. This model is valid for the Model based clustering approach.
+- K-Means: A simple K-Means implementation built with [ts-learn](https://tslearn.readthedocs.io/en/stable/index.html). Keyword: `k_means`. This model is valid for the Observation and Feature based clustering approach.
 
 ## Available pre-transformations
 The following transformations are available on TIMEX_CLUSTERING, which will use them in order to pre-process the time-series and check if this increases the clustering performance on the evaluation criteria.
 
 - Identity: don't modify the values. Keyword: `none`.
 - Logarithmic: Simple logarithmic function, with support for negative values. It uses the formula: 
-  $$f(x) = sign(x) * log(|x|)$$ 
-  if `x` > 1, 0 otherwise. However, the modified logarithmic one should be preferred. Keyword: `log`.
+  f(x) = sign(x) * log(|x|) if `x` > 1, 0 otherwise. However, the modified logarithmic one should be preferred. Keyword: `log`.
 - Modified logarithmic: Simple logarithmic function, adapted to work on all the real numbers. It uses the formula:
-  $$f(x) = sign(x) * log(|x| + 1)$$
+  f(x) = sign(x) * log(|x| + 1).
   Keyword: `log_modified`.
