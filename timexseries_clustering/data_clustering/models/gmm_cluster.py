@@ -5,7 +5,6 @@ import logging
 import os
 import numpy as np
 import pandas as pd
-import tslearn
 
 from pandas import DataFrame
 from tslearn.clustering import TimeSeriesKMeans, silhouette_score
