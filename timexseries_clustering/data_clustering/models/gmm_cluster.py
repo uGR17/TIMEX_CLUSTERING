@@ -11,7 +11,6 @@ from timexseries_clustering.data_clustering.validation_performances import Valid
 from timexseries_clustering.data_clustering import ClustersModel
 from timexseries_clustering.data_clustering.transformation import transformation_factory
 from pandas import DataFrame
-from tslearn.clustering import TimeSeriesKMeans, silhouette_score
 from sklearn import mixture
 
 
