@@ -23,9 +23,9 @@ the main characteristics of TIMEX-CLUSTERING. A Notebook explaining the clusteri
 
 Clustering is as simple as running, once installed:
 
-`from timexseries_clustering.data_ingestion import ingest_timeseries
+`from timexseries_clustering.data_ingestion import ingest_timeseries`
 
-from timexseries_clustering.data_clustering.pipeline import create_timeseries_containers`
+`from timexseries_clustering.data_clustering.pipeline import create_timeseries_containers`
 
 `ingested_dataset = ingest_timeseries(param_config)`
 
