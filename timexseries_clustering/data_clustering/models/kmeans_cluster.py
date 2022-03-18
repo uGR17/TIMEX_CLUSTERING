@@ -5,7 +5,6 @@ import logging
 import os
 import numpy as np
 import pandas as pd
-import tslearn
 
 from tslearn.clustering import TimeSeriesKMeans
 from tslearn.datasets import CachedDatasets
