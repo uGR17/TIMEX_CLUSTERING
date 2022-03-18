@@ -45,7 +45,7 @@ Refer to the Examples section of the GitHub repository, or check the [covid-19 t
 ## Architecture
 The general architecture of TIMEX-CLUSTERING is here presented:
 
-![Pipeline of TIMEX-CLUSTERING](https://https://github.com/uGR17/TIMEX_CLUSTERING/blob/main/examples/figures/pipeline.PNG)
+![Pipeline of TIMEX-CLUSTERING](https://https://github.com/uGR17/TIMEX_CLUSTERING/blob/main/examples/figures/pipeline.PNG?raw=1)
 
 The most important aspect of TIMEX-CLUSTERING architecture is the __configuration options__ dictionary. It is a key-value list of settings which influences all the key aspects of the pipeline. It can be stored in a JSON file, loaded before the 
 pipeline starts.
