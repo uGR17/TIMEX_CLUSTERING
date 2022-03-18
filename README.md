@@ -4,7 +4,7 @@ Library for time-series-clustering-as-a-service.
 [![Tests with PyTest](https://github.com/AlexMV12/TIMEX/actions/workflows/run_tests.yml/badge.svg)](https://github.com/AlexMV12/TIMEX/actions/workflows/run_tests.yml)
 ![Coverage](badges/coverage.svg)
 ![PyPI](https://img.shields.io/pypi/v/timexseries_clustering)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/timexseries_clustering)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/timexseries)
 
 TIMEX-CLUSTERING (referred in code as `timexseries_clustering`) is a framework for time-series-clustering-as-a-service.
 
