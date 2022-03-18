@@ -23,6 +23,12 @@ Installation is as simple as running:
 Please, refer to the Examples folder. You will find some Jupyter Notebook which illustrate
 the main characteristics of TIMEX-CLUSTERING. A Notebook explaining the clustering of the new positive cases for the COVID-19 spread around the world, along with the source code of the site, [here](https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/COVID_Clustering.ipynb).
 
+Clustering is as simple as running, once installed:
+`from timexseries_clustering.data_ingestion import ingest_timeseries`
+`from timexseries_clustering.data_clustering.pipeline import create_timeseries_containers`
+`ingested_dataset = ingest_timeseries(param_config)`
+`timeseries_containers = create_timeseries_containers(ingested_dataset, param_config)`
+
 ## Documentation
 The full documentation is available at [here](https://ugr17.github.io/TIMEX_CLUSTERING/timexseries_clustering/index.html).
 It is also available the Master thesis written [here](https://github.com/uGR17/TIMEX_CLUSTERING/blob/main/docs/Thesis-TIMEX-CLUSTERING.pdf).
