@@ -6,7 +6,6 @@ from typing import Tuple, List
 
 import dateparser
 import numpy, pandas
-import tslearn
 from pandas import DataFrame
 
 from timexseries_clustering.data_clustering.models.kmeans_cluster import KMeansModel
