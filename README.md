@@ -9,9 +9,7 @@ Library for time-series-clustering-as-a-service.
 TIMEX-CLUSTERING (referred in code as `timexseries_clustering`) is a framework for time-series-clustering-as-a-service.
 
 Its main goal is to provide a simple and generic tool to build websites and, more in general,
-platforms, able to provide the clustering of time-series in an "as-a-service" manner.
-
-This means that users should interact with the service as less as possible.
+platforms, able to provide the clustering of time-series in an "as-a-service" manner. This means that users should interact with the service as less as possible.
 
 
 ## Installation
@@ -26,8 +24,11 @@ the main characteristics of TIMEX-CLUSTERING. A Notebook explaining the clusteri
 Clustering is as simple as running, once installed:
 
 `from timexseries_clustering.data_ingestion import ingest_timeseries
+
 from timexseries_clustering.data_clustering.pipeline import create_timeseries_containers`
+
 `ingested_dataset = ingest_timeseries(param_config)`
+
 `timeseries_containers = create_timeseries_containers(ingested_dataset, param_config)`
 
 ## Documentation
