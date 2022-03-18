@@ -1,4 +1,4 @@
-`TIMEX CLUSTERING` (referred as `timexseries_c` in code) is a Python package which implements a pipeline for time-series clustering.
+`TIMEX-CLUSTERING` (referred as `timexseries_clustering` in code) is a Python package which implements a pipeline for time-series clustering.
 
 The pipeline consists in:
 
@@ -7,117 +7,89 @@ The pipeline consists in:
 - time-series analysis and clustering;
 - results visualization.
 
-While `TIMEX CLUSTERING` is intended to be use in a fully automatic way (which means that each
+While `TIMEX-CLUSTERING` is intended to be use in a fully automatic way (which means that each
 step is automatically computed, without user intervention), users can also take
 advantage of single parts of the framework.
 
 ## Reason
 Time-series are one of the most important data shapes. An important part of data that we produce and consume everyday
-can be encoded in the time-series form.
+can be encoded in the time-series form. For our purposes, time-series are an ordered list of values, each one associated with a timestamp. The values can be the number of units sold that day of a specific product, the heartbeat of a person, the amount of new Covid-19 cases in a specific country or city. 
 
-For our purposes, time-series are an ordered list of values, each one associated with a timestamp. The values can be
-the number of units sold that day of a specific product, the heartbeat of a person, the amount of new Covid-19 cases in
-a specific country or city. 
+Clustering time-series data has become a popular research topic over the past decades and there is a rich literature on this topic. Clustering is a category of unsupervised learning techniques that allows us to discover hidden patterns in data; these patterns can commonly take place in the dataset. Finding the clusters of time-series can help to real world problems such as anomaly detection (i.e. discover anomalies in sensor databases), recognizing dynamic changes in time-series (i.e. in financial data bases to find companies with similar stock price move), forecasting (i.e. infer likely future behavior based on cluster membership) and for pattern discovery (i.e. in marketing databases different daily patterns of sales can be discovered).
 
-The possibility to forecast the values of a time-series using past available data can be incredibly useful in allocating
-resources, adopt countermeasures for a problem, plan the buying of a specific stock, etc.
+The clustering of time-series is organized into three approaches:
+The observation-based approach is a direct approach for clustering time-series based on a comparison of the observed time-series or a suitable transformation of the observed time-series. The observation-based approach is recommended when the aim is to identify similar geometric profiles and when the time-series are not very long.
 
-A lot of _prediction models_ exists, which can work on time-series data. Probably the most known one is 
-[ARIMA](https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average), but in recent years also Machine and
-Deep Learning (ML / DL) models have been proposed.
+The feature-based metrics are more suitable when the aim is to discriminate between generating processes, that is, between underlying dependence structures. In this approach the clustering target is achieved by using the features extracted, these features highlight higher level dynamic aspects of the time-series; through this approach a dimensional reduction is attained and consequently computational time saving can be achieved. 
 
-However, the pipeline of a forecasting process is not easy and requires specific skills. Time-series have to be parsed
-from a data source, then pre-processed in order to fix eventual non-stationarities of missing values; at this point, the
-predictions models have to be created, trained, and used for the forecasting. The results, which are usually in a
-machine readable format (e.g. a Pandas DataFrame in Python) have to be processed in order to be suitable for persons who
-may not have data science experience.
+Finally, in the model-based methods, the time-series under consideration are assumed to have been generated from specific underlying models or by a combination of probability distributions, and the similarity between fitted models is evaluated .
 
-TIMEX's goal is to provide an easy to use, as-automated-as-possible platform to create forecasting pipelines and, if 
-wanted, also a website already filled with the forecasts and all the associated measures.
+The proposed TIMEX-CLUSTERING framework, developed in Python, is characterized by the pipeline depicted in. Such pipeline comprises the following six steps: data ingestion, data pre-processing, data description, data clustering and service delivery.
+
+TIMEX-CLUSTERING's goal is to provide an automatic clustering framework, which could be used by any user on their datasets with a minimal amount of knowledge about clustering procedures. It should provide efficient and high quality time-series clustering. TIMEX-CLUSTERING will use the three different clustering approaches (observation-based, feature-based and model-based) in order to cover datasets with different nature. It is emphasized that a clustering-as-a-service is not yet available in the literature: this framework will be also unique because will include all the clustering approaches.
+
+![Pipeline of TIMEX-CLUSTERING](https://github.com/uGR17/TIMEX_CLUSTERING/blob/5573c65f90fb99922524d4f32da0625c8885112d/examples/figures/pipeline.PNG)
 
 ## Use cases
 There are at least two use cases worth mentioning:
 
-1. A certain time-series (or a group of time-series) is relevant for a group of users. The time-series are updated every
+1. A certain group of time-series is relevant for a group of users. The time-series are updated every
 day and can be downloaded in a suitable format (e.g. CSV or XLSX) every day.   
-Those users would like to have a way to have daily forecasts of such time-series. This exactly what happens with 
-   weather forecasts.
-   _Bob_ is assigned the task to give the users what they want; for them a website where forecasts can be consulted is
-   ok. Alternatively, they would like to receive an e-mail every morning with the latest forecasts.
-   _Bob_ can install TIMEX on a server, configure the bare minimum requested by TIMEX, and start it. A website will be
-   made available, and _Bob_ can give the link to the users.
-2. A company is interested in creating a forecast-as-a-service platform where users can upload a CSV file containing 
-some time-series, set some settings or use defaults, and press a button to receive forecasts for the uploaded 
-   time-series. TIMEX can be adapted to work this way.
+Those users would like to have a way to obtain the clusters of such time-series.
+   by installing TIMEX-CLUSTERING on a server, configure the bare minimum requested by TIMEX-CLUSTERING, and start it. A website will be made available, and it will provide a link to the users.
+2. A company is interested in creating a clustering-as-a-service platform where users can upload a CSV file containing 
+some time-series, set some settings or use defaults, and press a button to receive clusters for the uploaded 
+   time-series. TIMEX-CLUSTERING can be adapted to work this way.
    
 ## Get started
 Refer to the Examples section of the GitHub repository, or check the 
-[source code](https://github.com/AlexMV12/covid-timex.it) of 
-[covid-timex.it](https://covid-timex.it).
+[source code](https://github.com/uGR17/TIMEX_CLUSTERING) 
+[covid-19 timex-clustering example](https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/COVID_Clustering.ipynb)
+[UAE&UCR dataset timex-clustering example](https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/UEA_UCR_Dataset_Clustering_Example.ipynb)
 
 ## Architecture
-The general architecture of TIMEX is here presented:
+The general architecture of TIMEX-CLUSTERING is here presented:
 
-![Architecture](images/Architecture.svg)
+![Pipeline of TIMEX-CLUSTERING](https://github.com/uGR17/TIMEX_CLUSTERING/blob/5573c65f90fb99922524d4f32da0625c8885112d/examples/figures/pipeline.PNG)
 
-The most important aspect of TIMEX architecture is the __configuration options__ dictionary. It is a key-value list of
-settings which influences all the key aspects of the pipeline. It can be stored in a JSON file, loaded before the 
+The most important aspect of TIMEX-CLUSTERING architecture is the __configuration options__ dictionary. It is a key-value list of settings which influences all the key aspects of the pipeline. It can be stored in a JSON file, loaded before the 
 pipeline starts.
 
 ## Configuration parameters dictionary
-An example of working dictionary, used for the [covid-timex.it](https://covid-timex.it) website is:
+An example of working dictionary, used for the [UAE&UCR dataset timex-clustering example](https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/UEA_UCR_Dataset_Clustering_Example.ipynb) website is:
 
 ```json
 {
-  "activity_title": "Covid-19 Italy Analysis",
+  "activity_title": "UEA&UCR Dataset - Clustering Example",
   "verbose": "INFO",
   "input_parameters": {
-    "source_data_url": "https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-andamento-nazionale/dpc-covid19-ita-andamento-nazionale.csv",
-    "columns_to_load_from_url": "data,nuovi_positivi,totale_positivi,variazione_totale_positivi,terapia_intensiva,totale_ospedalizzati,deceduti,tamponi",
-    "datetime_column_name": "data",
-    "index_column_name": "data",
-    "add_diff_column": "terapia_intensiva,totale_ospedalizzati,deceduti,tamponi",
-    "timeseries_names":
-    {
-      "data": "Date",
-      "nuovi_positivi": "Daily cases",
-      "totale_positivi": "Total positives",
-      "variazione_totale_positivi": "Total positives variation",
-      "terapia_intensiva": "Total intensive care",
-      "totale_ospedalizzati": "Total hospitalized",
-      "deceduti": "Total deaths",
-      "tamponi": "Tests",
-      "terapia_intensiva_diff": "Daily intensive care",
-      "totale_ospedalizzati_diff": "Daily hospitalized",
-      "deceduti_diff": "Daily deaths",
-      "tamponi_diff": "Daily tests"
+    "source_data_url": "https://raw.githubusercontent.com/uGR17/TIMEX_CLUSTERING/main/examples/datasets/k_means_example_5ts.csv",
+    "index_column_name": "date",
+    "frequency": "D",
+    "timeseries_names":{
+      "date": "Date",
+      "ts1": "timeseries1",
+      "ts2": "timeseries2",
+      "ts3": "timeseries3",
     }
   },
-  "selection_parameters": {
-    "init_datetime": "2020-01-01T17:00:00",
-    "end_datetime": "2023-01-22T17:00:00"
-  },
   "model_parameters": {
-    "test_values": 5,
-    "delta_training_percentage": 10,
-    "prediction_lags": 10,
-    "possible_transformations" : "none,log_modified",
-    "models": "fbprophet,exponentialsmoothing",
-    "main_accuracy_estimator": "mae"
+     "clustering_approach": "observation_based,feature_based,model_based",
+     "models": "k_means,gaussian_mixture",
+     "pre_transformation": "none",
+     "distance_metric": "euclidean,dtw,softdtw",
+     "feature_transformations": "DWT",
+     "n_clusters": [3, 4, 5, 6],
+     "gamma": 0.01,
+     "main_accuracy_estimator": "silhouette"
   },
   "xcorr_parameters": {
     "xcorr_max_lags": 120,
-    "xcorr_extra_regressor_threshold": 0.8,
     "xcorr_mode": "pearson",
     "xcorr_mode_target": "pearson"
   },
-  "historical_prediction_parameters": {
-    "initial_index": "2020-08-18",
-    "save_path": "historical_predictions_italy_covid.pkl"
-  },
   "visualization_parameters": {
-    "language": "en",
-    "xcorr_graph_threshold": 0.8
+    "xcorr_graph_threshold": 0.8,
   }
 }
 ```
