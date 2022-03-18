@@ -3,7 +3,6 @@ import numpy as np
 from pandas import DataFrame
 from scipy.stats import yeojohnson
 
-import tslearn
 from tslearn.clustering import TimeSeriesKMeans
 from tslearn.preprocessing import TimeSeriesScalerMeanVariance, TimeSeriesResampler
 
