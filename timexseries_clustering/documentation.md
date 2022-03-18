@@ -99,14 +99,11 @@ All the options are here described.
 ### General
 
 - `activity_title`: used in the website creation as title for the page. Optional.
-- `verbose`: it is not strictly used by TIMEX, but it can be included here in order to set the verbosity level in the
-  main Python script. In fact, TIMEX has important logging capabilities. Optional, can be one of "DEBUG", "INFO", 
+- `verbose`: it is not strictly used by TIMEX-CLUSTERING, but it can be included here in order to set the verbosity level in the main Python script. In fact, TIMEX-CLUSTERING has important logging capabilities. Optional, can be one of "DEBUG", "INFO", 
   "WARNING", "ERROR", "CRITICAL".
-- `max_threads`: set the max number of threads (processes) used by TIMEX during the forecasting models computation. 
-  Optional, if not set TIMEX will try to understand the number of available cores on the system.
-  
+
 ### Input parameters
-Remember that TIMEX expects the input data to be in the following form. Some changes can be forced through settings.
+Remember that TIMEX-CLUSTERING expects the input data to be in the following form. Some changes can be forced through settings.
 
 | time_index | time-series A | time-series B | ... |
 |------------|---------------|---------------|-----|
@@ -129,9 +126,6 @@ Additionally, some other parameters can be specified:
   values. If not specified the frequency will be infered.
 - `columns_to_load_from_url`: comma-separated string of columns's names which will be read from the CSV file. If not
   specified, all columns will be read;
-- `add_diff_column`: comma-separated string of columns's names for which a corresponding column containing the diff
-  values should be created. They will be created with the name `col_name_diff`. Note that the first row of the
-  dataset will be discarded;
 - `timeseries_names`: dictionary of key-values (old_name: new_name) used to rename some columns in the CSV;
 - `dateparser_options`: dictionary of key-values which will be given to `dateparser.parse()`. This is useful to set the
   date format if it is not common. Refer to `dateparser` documentation for the available options.
@@ -152,31 +146,17 @@ These parameters control the classes of models used in the forecasting, the feat
 
 The following options has to be specified:
 
-- `possible_transformations`: comma-separated list of transformations keywords. Check the 
-  [available transformations](#available-transformations). Example: `"none,log_modified"`.
-- `main_accuracy_estimator`: error metric which will be minimized as target by the procedure. It can be one of `"mae"`,
-  `"mse"`.
-- `models`: comma-separated list of the models to use. Check the [available models](#available-forecasting-models). 
-  Example: `"fbprophet,exponential_smoothing`".
-  
-Moreover, some other options can be set. Otherwise default values will be used:
-
-- `test_values`: number of points used as validation in order to choose the transformation and training window. These
-  points will be used, however, to compute the actual forecast. Has precedence over `test_percentage`.
-- `test_percentage`: Percentage of the time-series length to used for the validation set. 
-- `prediction_lags`: Number of future lags for for the forecast.
-- `delta_training_percentage`: Length, in percentage of the time-series length, of the training windows.
-- `min_values`: Key-values dictioanry where key is the name of a column and value is the minimum expected value in that 
-  column. If "_all" is in the dict the corresponding value will be used for all values in each column.
-- `max_values`: Key-values where key is the name of a column and value is the maximum expected value in that column.
-  If "_all" is in the dict the corresponding value will be used for all values in each column.
-- `round_to_integer`: List of columns name which should be rounded to integer. If "_all" is in the list, all values in 
-  every column will be rounded to integer.
+- `clustering_approach`: comma-separated list of clustering approaches keywords. Available approaches:`"observation_based,feature_based,model_based"`.
+- `models`: comma-separated list of lustering models keywords. Available approaches:`"k_means,gaussian_mixture"`. K-Means for the Observation and Feature based approaches, and Gaussian Mixture models for Model based approach.
+- `pre_transformation`: comma-separated list of pre_transformation keywords. Availables: `"none"`,`"log"` or `"log_modified"`.
+- `distance_metric`: comma-separated list of distance_metrics keywords. Availables: `"euclidean,dtw,softdtw"`.
+- `feature_transformations`: comma-separated list of feature_transformations keywords for the Feature based approach. Available: `"DWT"`, using Haar wavelet.
+- `n_clusters`: list of number of clusters settings to search, for the non-hierarchical clustering models. Example: `[3, 4, 5]`.
+- `main_accuracy_estimator`: error metric which will be minimized as target by the procedure. It can be one of `"silhouette"`,`"davies_bouldin"` or `"calinski_harabasz"`.
+- `gamma`: regularization parameter for the soft DWT metric, lower is less smoothed (closer to true DTW). Example: `0.01`.
 
 ### Cross-correlation parameters
-These parameters controls the cross-correlation computation, which is used to determine if there are time-series useful
-as extra-regressors for multivariate multiple-input-single-output forecasting models.
-This part is optional.
+These parameters controls the cross-correlation computation. This part is optional.
 
 - `xcorr_modes`: indicate the different algorithms which should be used to compute the cross-correlation.
   The computed cross-correlation will be shown in the data visualization part.
@@ -193,56 +173,21 @@ This part is optional.
   additional regressors. E.g. `"pearson"`.
 - `xcorr_extra_regressor_threshold`: the minimum absolute value of cross-correlation which indicates a useful
   extra-regressor. E.g. 0.8.
-  
-### Additional regressors parameters
-These are additional regressors, which can be used in multivariate multiple-input-single-output forecasting models for
-which the future values are already known at the forecasting time. For example, if we have weather forecast for the next
-two weeks and we think that the temperature influences the target time-series, we can feed it in TIMEX. This is 
-optional.
-
-The additional regressors should be put in a CSV file, in the form:
-
-| time_index | additional regressor A | additional regressor B | ... |
-|------------|------------------------|------------------------|-----|
-| 2000-01-01 | x                      | x                      | ... |
-| 2000-01-02 | x                      | x                      | ... |
-| ...        | ...                    | ...                    | ... |
-
-And the following options has to be specified:
-
-- `additional_regressors`: Key-value dict where key is a column name, and value is the path of the CSV containing the
-  additional regressors useful for that series.
-  If some additional regressors may be useful for all the time-series in the dataset, we can specify them using the 
-  "`_all`" key.
-  Example:
-  
-```json
-"additional_regressors": {
-  "_all": "../datasets/AdditionalRegressors/Temperature.csv",
-  "time-series A": "../datasets/AdditionalRegressors/RegressorUsefulForTimeSeriesA.csv"
-}
-```
 
 ### Visualization parameters
-Parameters used to tune the visualization part of TIMEX.
+Parameters used to tune the visualization part of TIMEX-CLUSTERING.
 
-- `language`: Can be one between `"en"` and `"it"`. TIMEX for now supports English and Italian.
 - `xcorr_graph_threshold`: This controls the minumum value of cross-correlation for which an arc in the 
   cross-correlation graph is drawn. It should be between 0.0 and 1.0.
 
-## Available forecasting models
-The following models are implemented in TIMEX and can be used in the forecasting procedure:
+## Available clustering models
+The following models are implemented in TIMEX-CLUSTERING and can be used in the forecasting procedure:
 
-- Facebook Prophet: This is the [Facebook Prophet](https://github.com/facebook/prophet) forecasting model. Keyword: 
-  `fbprophet`.
-- LSTM: A simple LSTM implementation built with [PyTorch](https://pytorch.org/). Keyword: `lstm`.
-- Exponential Smoothing: An exponential smoothing model, with automatic choice of trend and seasonality period, built on
-  top of [sklearn](https://scikit-learn.org/stable/). Keyword: `exponentialsmoothing`.
-- ARIMA: Simple ARIMA model, with automatic tuning. Keyword: `arima`.  
+- Gaussian Mixture Model: A simple Gaussian Mixture implementation built with [sklearn](https://scikit-learn.org/stable/). Keyword: `gaussian_mixture`.
+- K-Means: A simple K-Means implementation built with [ts-learn](https://tslearn.readthedocs.io/en/stable/index.html). Keyword: `k_means`.  
 
-## Available transformations
-The following transformations are available on TIMEX_CLUSTERING, which will use them in order to pre-process the time-series and
-check if this increases the forecasting performance on the validation set.
+## Available pre-transformations
+The following transformations are available on TIMEX_CLUSTERING, which will use them in order to pre-process the time-series and check if this increases the clustering performance on the evaluation criteria.
 
 - Identity: don't modify the values. Keyword: `none`.
 - Logarithmic: Simple logarithmic function, with support for negative values. It uses the formula: 
@@ -251,5 +196,3 @@ check if this increases the forecasting performance on the validation set.
 - Modified logarithmic: Simple logarithmic function, adapted to work on all the real numbers. It uses the formula:
   $$f(x) = sign(x) * log(|x| + 1)$$
   Keyword: `log_modified`.
-- Yeo-Johnson: transformation presented in this [paper](https://doi.org/10.1093/biomet/87.4.954). 
-  Keyword: `yeo-johnson`
