@@ -31,7 +31,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
     ingested_data : DataFrame
         Initial data of the time-series.
     param_config : dict
-        TIMEX configuration dictionary. In particular, the `model_parameters` sub-dictionary will be used. In
+        TIMEX-CLUSTERING configuration dictionary. In particular, the `model_parameters` sub-dictionary will be used. In
         `model_parameters` the following options has to be specified:
 
         - `clustering_approach`: clustering approach which will be use (options: "observation_based", "feature_based" or "model_based").
@@ -60,7 +60,7 @@ def get_best_univariate_clusters(ingested_data: DataFrame, param_config: dict, t
     >>> b = np.arange(60, 90)
     >>> timeseries_dataframe = DataFrame(data={"a": a, "b": b}, index=ds)
 
-    And create the model configuration part of the TIMEX configuration dictionary:
+    And create the model configuration part of the TIMEX-CLUSTERING configuration dictionary:
     >>> param_config = {
     ...  "model_parameters": {
     ...      "clustering_approach": "observation_based,feature_based,model_based",
@@ -236,7 +236,7 @@ def get_best_clusters(ingested_data: DataFrame, param_config: dict):
     ingested_data : DataFrame
         Initial data of the time-series.
     param_config : dict
-        TIMEX CLUSTERING configuration dictionary. `get_best_univariate_clusters` and `get_best_multivariate_clusters` (multivariate_clustering will be realased in timexseries_clustering 2.0.0) will
+        TIMEX configuration dictionary. `get_best_univariate_clusters` and `get_best_multivariate_clusters` (multivariate_clustering will be realased in timexseries_clustering 2.0.0) will
         use the various settings in `param_config`.
     Returns
     -------
@@ -290,7 +290,7 @@ def create_timeseries_containers(ingested_data: DataFrame, param_config: dict):
         Initial data of the time-series.
 
     param_config : dict
-        TIMEX configuration dictionary.
+        TIMEX-CLUSTERING configuration dictionary.
 
     Returns
     -------
@@ -364,7 +364,7 @@ def model_factory(ingested_data: DataFrame, clustering_approach: str, model_clas
     model_class : str
         Model type, e.g. "k_means"
     param_config : dict
-        TIMEX configuration dictionary, to pass to the just created model.
+        TIMEX-CLUSTERING configuration dictionary, to pass to the just created model.
     distance_metric : str, e.g. **
         Distance/similarity measure type, e.g. "euclidean, dtw, softdtw" **
     transformation : str, optional, default None
