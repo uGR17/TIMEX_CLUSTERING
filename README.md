@@ -33,4 +33,3 @@ You can contact us at:
 - uriel.guadarrama@polimi.it
 - alessandro.falcetta@polimi.it
 - manuel.roveri@polimi.it
-
