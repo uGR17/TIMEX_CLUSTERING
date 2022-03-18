@@ -6,13 +6,13 @@ import os
 import numpy as np
 import pandas as pd
 
-from pandas import DataFrame
-from tslearn.clustering import TimeSeriesKMeans, silhouette_score
 from timexseries_clustering.data_clustering.models.predictor import ModelResult, SingleResult
 from timexseries_clustering.data_clustering.validation_performances import ValidationPerformance
 from timexseries_clustering.data_clustering import ClustersModel
-from sklearn import mixture
 from timexseries_clustering.data_clustering.transformation import transformation_factory
+from pandas import DataFrame
+from tslearn.clustering import TimeSeriesKMeans, silhouette_score
+from sklearn import mixture
 
 
 logging.getLogger('GaussianMixtureModel').setLevel(logging.WARNING)
