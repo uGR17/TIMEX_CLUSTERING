@@ -170,57 +170,6 @@ class DWT(Distance_metric):
         return &#34;none&#34;
 
 
-class YeoJohnson(Distance_metric):
-    &#34;&#34;&#34;Class corresponding to the Yeo-Johnson transformation.
-
-    Notes
-    -----
-    Introduced in [^1], this transformation tries to make the input data more stable.
-
-    Warnings
-    --------
-    .. warning:: Yeo-Johnson is basically broken for some series with high values.
-                 Follow this issue: https://github.com/scikit-learn/scikit-learn/issues/14959
-                 Until this is solved, Yeo-Johnson may not work as expected and create random crashes.
-
-    References
-    ----------
-    [^1]: Yeo, I. K., &amp; Johnson, R. A. (2000). A new family of power transformations to improve normality or symmetry.
-          Biometrika, 87(4), 954-959. https://doi.org/10.1093/biomet/87.4.954
-    &#34;&#34;&#34;
-
-    def __init__(self):
-        self.lmbda = 0
-
-    def apply(self, data: Series) -&gt; Series:
-        res, lmbda = yeojohnson(data)
-        self.lmbda = lmbda
-        return res
-
-    def inverse(self, data: Series) -&gt; Series:
-        lmbda = self.lmbda
-        x_inv = np.zeros_like(data)
-        pos = data &gt;= 0
-
-        # when x &gt;= 0
-        if abs(lmbda) &lt; np.spacing(1.):
-            x_inv[pos] = np.exp(data[pos]) - 1
-        else:  # lmbda != 0
-            x_inv[pos] = np.power(data[pos] * lmbda + 1, 1 / lmbda) - 1
-
-        # when x &lt; 0
-        if abs(lmbda - 2) &gt; np.spacing(1.):
-            x_inv[~pos] = 1 - np.power(-(2 - lmbda) * data[~pos] + 1,
-                                       1 / (2 - lmbda))
-        else:  # lmbda == 2
-            x_inv[~pos] = 1 - np.exp(-data[~pos])
-
-        return Series(x_inv)
-
-    def __str__(self):
-        return f&#34;Yeo-Johnson (lambda: {round(self.lmbda, 3)})&#34;
-
-
 def distance_metric_factory(dst_class: str) -&gt; Distance_metric:
     &#34;&#34;&#34;
     Given the type of the transformation, encoded as string, return the Transformation object.
@@ -479,7 +428,6 @@ The inverse, instead, is:</p>
 <ul class="hlist">
 <li><a title="timexseries_clustering.data_clustering.distance_metric.DWT" href="#timexseries_clustering.data_clustering.distance_metric.DWT">DWT</a></li>
 <li><a title="timexseries_clustering.data_clustering.distance_metric.ED" href="#timexseries_clustering.data_clustering.distance_metric.ED">ED</a></li>
-<li><a title="timexseries_clustering.data_clustering.distance_metric.YeoJohnson" href="#timexseries_clustering.data_clustering.distance_metric.YeoJohnson">YeoJohnson</a></li>
 <li><a title="timexseries_clustering.data_clustering.distance_metric.sof_DWT" href="#timexseries_clustering.data_clustering.distance_metric.sof_DWT">sof_DWT</a></li>
 </ul>
 <h3>Methods</h3>
@@ -638,97 +586,6 @@ LogModified should be preferred.</p></div>
 </li>
 </ul>
 </dd>
-<dt id="timexseries_clustering.data_clustering.distance_metric.YeoJohnson"><code class="flex name class">
-<span>class <span class="ident">YeoJohnson</span></span>
-</code></dt>
-<dd>
-<div class="desc"><p>Class corresponding to the Yeo-Johnson transformation.</p>
-<h2 id="notes">Notes</h2>
-<p>Introduced in <sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>, this transformation tries to make the input data more stable.</p>
-<h2 id="warnings">Warnings</h2>
-<div class="admonition warning">
-<p class="admonition-title">Warning:&ensp;Yeo-Johnson is basically broken for some series with high values.</p>
-<p>Follow this issue: <a href="https://github.com/scikit-learn/scikit-learn/issues/14959">https://github.com/scikit-learn/scikit-learn/issues/14959</a>
-Until this is solved, Yeo-Johnson may not work as expected and create random crashes.</p>
-</div>
-<h2 id="references">References</h2>
-<div class="footnote">
-<hr>
-<ol>
-<li id="fn:1">
-<p>Yeo, I. K., &amp; Johnson, R. A. (2000). A new family of power transformations to improve normality or symmetry.
-Biometrika, 87(4), 954-959. <a href="https://doi.org/10.1093/biomet/87.4.954">https://doi.org/10.1093/biomet/87.4.954</a>&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
-</li>
-</ol>
-</div></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class YeoJohnson(Distance_metric):
-    &#34;&#34;&#34;Class corresponding to the Yeo-Johnson transformation.
-
-    Notes
-    -----
-    Introduced in [^1], this transformation tries to make the input data more stable.
-
-    Warnings
-    --------
-    .. warning:: Yeo-Johnson is basically broken for some series with high values.
-                 Follow this issue: https://github.com/scikit-learn/scikit-learn/issues/14959
-                 Until this is solved, Yeo-Johnson may not work as expected and create random crashes.
-
-    References
-    ----------
-    [^1]: Yeo, I. K., &amp; Johnson, R. A. (2000). A new family of power transformations to improve normality or symmetry.
-          Biometrika, 87(4), 954-959. https://doi.org/10.1093/biomet/87.4.954
-    &#34;&#34;&#34;
-
-    def __init__(self):
-        self.lmbda = 0
-
-    def apply(self, data: Series) -&gt; Series:
-        res, lmbda = yeojohnson(data)
-        self.lmbda = lmbda
-        return res
-
-    def inverse(self, data: Series) -&gt; Series:
-        lmbda = self.lmbda
-        x_inv = np.zeros_like(data)
-        pos = data &gt;= 0
-
-        # when x &gt;= 0
-        if abs(lmbda) &lt; np.spacing(1.):
-            x_inv[pos] = np.exp(data[pos]) - 1
-        else:  # lmbda != 0
-            x_inv[pos] = np.power(data[pos] * lmbda + 1, 1 / lmbda) - 1
-
-        # when x &lt; 0
-        if abs(lmbda - 2) &gt; np.spacing(1.):
-            x_inv[~pos] = 1 - np.power(-(2 - lmbda) * data[~pos] + 1,
-                                       1 / (2 - lmbda))
-        else:  # lmbda == 2
-            x_inv[~pos] = 1 - np.exp(-data[~pos])
-
-        return Series(x_inv)
-
-    def __str__(self):
-        return f&#34;Yeo-Johnson (lambda: {round(self.lmbda, 3)})&#34;</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="timexseries_clustering.data_clustering.distance_metric.Distance_metric" href="#timexseries_clustering.data_clustering.distance_metric.Distance_metric">Distance_metric</a></li>
-</ul>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="timexseries_clustering.data_clustering.distance_metric.Distance_metric" href="#timexseries_clustering.data_clustering.distance_metric.Distance_metric">Distance_metric</a></b></code>:
-<ul class="hlist">
-<li><code><a title="timexseries_clustering.data_clustering.distance_metric.Distance_metric.apply" href="#timexseries_clustering.data_clustering.distance_metric.Distance_metric.apply">apply</a></code></li>
-<li><code><a title="timexseries_clustering.data_clustering.distance_metric.Distance_metric.inverse" href="#timexseries_clustering.data_clustering.distance_metric.Distance_metric.inverse">inverse</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
 <dt id="timexseries_clustering.data_clustering.distance_metric.sof_DWT"><code class="flex name class">
 <span>class <span class="ident">sof_DWT</span></span>
 </code></dt>
@@ -818,9 +675,6 @@ The inverse, instead, is:</p>
 </li>
 <li>
 <h4><code><a title="timexseries_clustering.data_clustering.distance_metric.ED" href="#timexseries_clustering.data_clustering.distance_metric.ED">ED</a></code></h4>
-</li>
-<li>
-<h4><code><a title="timexseries_clustering.data_clustering.distance_metric.YeoJohnson" href="#timexseries_clustering.data_clustering.distance_metric.YeoJohnson">YeoJohnson</a></code></h4>
 </li>
 <li>
 <h4><code><a title="timexseries_clustering.data_clustering.distance_metric.sof_DWT" href="#timexseries_clustering.data_clustering.distance_metric.sof_DWT">sof_DWT</a></code></h4>

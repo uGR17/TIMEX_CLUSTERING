@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>timexseries_clustering API documentation</title>
-<meta name="description" content="`TIMEX CLUSTERING` (referred as `timexseries_c` in code) is a Python package which implements a pipeline for time-series clustering …" />
+<meta name="description" content="`TIMEX-CLUSTERING` (referred as `timexseries_clustering` in code) is a Python package which implements a pipeline for time-series clustering …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,7 +22,7 @@
 <h1 class="title">Package <code>timexseries_clustering</code></h1>
 </header>
 <section id="section-intro">
-<p><code>TIMEX CLUSTERING</code> (referred as <code>timexseries_c</code> in code) is a Python package which implements a pipeline for time-series clustering.</p>
+<p><code>TIMEX-CLUSTERING</code> (referred as <code><a title="timexseries_clustering" href="#timexseries_clustering">timexseries_clustering</a></code> in code) is a Python package which implements a pipeline for time-series clustering.</p>
 <p>The pipeline consists in:</p>
 <ul>
 <li>time-series data ingestion;</li>
@@ -30,104 +30,74 @@
 <li>time-series analysis and clustering;</li>
 <li>results visualization.</li>
 </ul>
-<p>While <code>TIMEX CLUSTERING</code> is intended to be use in a fully automatic way (which means that each
+<p>While <code>TIMEX-CLUSTERING</code> is intended to be use in a fully automatic way (which means that each
 step is automatically computed, without user intervention), users can also take
 advantage of single parts of the framework.</p>
 <h2 id="reason">Reason</h2>
 <p>Time-series are one of the most important data shapes. An important part of data that we produce and consume everyday
-can be encoded in the time-series form.</p>
-<p>For our purposes, time-series are an ordered list of values, each one associated with a timestamp. The values can be
-the number of units sold that day of a specific product, the heartbeat of a person, the amount of new Covid-19 cases in
-a specific country or city. </p>
-<p>The possibility to forecast the values of a time-series using past available data can be incredibly useful in allocating
-resources, adopt countermeasures for a problem, plan the buying of a specific stock, etc.</p>
-<p>A lot of <em>prediction models</em> exists, which can work on time-series data. Probably the most known one is
-<a href="https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average">ARIMA</a>, but in recent years also Machine and
-Deep Learning (ML / DL) models have been proposed.</p>
-<p>However, the pipeline of a forecasting process is not easy and requires specific skills. Time-series have to be parsed
-from a data source, then pre-processed in order to fix eventual non-stationarities of missing values; at this point, the
-predictions models have to be created, trained, and used for the forecasting. The results, which are usually in a
-machine readable format (e.g. a Pandas DataFrame in Python) have to be processed in order to be suitable for persons who
-may not have data science experience.</p>
-<p>TIMEX's goal is to provide an easy to use, as-automated-as-possible platform to create forecasting pipelines and, if
-wanted, also a website already filled with the forecasts and all the associated measures.</p>
+can be encoded in the time-series form. For our purposes, time-series are an ordered list of values, each one associated with a timestamp. The values can be the number of units sold that day of a specific product, the heartbeat of a person, the amount of new Covid-19 cases in a specific country or city. </p>
+<p>Clustering time-series data has become a popular research topic over the past decades and there is a rich literature on this topic. Clustering is a category of unsupervised learning techniques that allows us to discover hidden patterns in data; these patterns can commonly take place in the dataset. Finding the clusters of time-series can help to real world problems such as anomaly detection (i.e. discover anomalies in sensor databases), recognizing dynamic changes in time-series (i.e. in financial data bases to find companies with similar stock price move), forecasting (i.e. infer likely future behavior based on cluster membership) and for pattern discovery (i.e. in marketing databases different daily patterns of sales can be discovered).</p>
+<p>The clustering of time-series is organized into three approaches:
+The observation-based approach is a direct approach for clustering time-series based on a comparison of the observed time-series or a suitable transformation of the observed time-series. The observation-based approach is recommended when the aim is to identify similar geometric profiles and when the time-series are not very long.</p>
+<p>The feature-based metrics are more suitable when the aim is to discriminate between generating processes, that is, between underlying dependence structures. In this approach the clustering target is achieved by using the features extracted, these features highlight higher level dynamic aspects of the time-series; through this approach a dimensional reduction is attained and consequently computational time saving can be achieved. </p>
+<p>Finally, in the model-based methods, the time-series under consideration are assumed to have been generated from specific underlying models or by a combination of probability distributions, and the similarity between fitted models is evaluated .</p>
+<p>The proposed TIMEX-CLUSTERING framework, developed in Python, is characterized by the pipeline depicted in. Such pipeline comprises the following six steps: data ingestion, data pre-processing, data description, data clustering and service delivery.</p>
+<p>TIMEX-CLUSTERING's goal is to provide an automatic clustering framework, which could be used by any user on their datasets with a minimal amount of knowledge about clustering procedures. It should provide efficient and high quality time-series clustering. TIMEX-CLUSTERING will use the three different clustering approaches (observation-based, feature-based and model-based) in order to cover datasets with different nature. It is emphasized that a clustering-as-a-service is not yet available in the literature: this framework will be also unique because will include all the clustering approaches.</p>
+<p><img alt="Pipeline of TIMEX-CLUSTERING" src="https://github.com/uGR17/TIMEX_CLUSTERING/blob/5573c65f90fb99922524d4f32da0625c8885112d/examples/figures/pipeline.PNG"></p>
 <h2 id="use-cases">Use cases</h2>
 <p>There are at least two use cases worth mentioning:</p>
 <ol>
-<li>A certain time-series (or a group of time-series) is relevant for a group of users. The time-series are updated every
+<li>A certain group of time-series is relevant for a group of users. The time-series are updated every
 day and can be downloaded in a suitable format (e.g. CSV or XLSX) every day. <br>
-Those users would like to have a way to have daily forecasts of such time-series. This exactly what happens with
-weather forecasts.
-<em>Bob</em> is assigned the task to give the users what they want; for them a website where forecasts can be consulted is
-ok. Alternatively, they would like to receive an e-mail every morning with the latest forecasts.
-<em>Bob</em> can install TIMEX on a server, configure the bare minimum requested by TIMEX, and start it. A website will be
-made available, and <em>Bob</em> can give the link to the users.</li>
-<li>A company is interested in creating a forecast-as-a-service platform where users can upload a CSV file containing
-some time-series, set some settings or use defaults, and press a button to receive forecasts for the uploaded
-time-series. TIMEX can be adapted to work this way.</li>
+Those users would like to have a way to obtain the clusters of such time-series.
+by installing TIMEX-CLUSTERING on a server, configure the bare minimum requested by TIMEX-CLUSTERING, and start it. A website will be made available, and it will provide a link to the users.</li>
+<li>A company is interested in creating a clustering-as-a-service platform where users can upload a CSV file containing
+some time-series, set some settings or use defaults, and press a button to receive clusters for the uploaded
+time-series. TIMEX-CLUSTERING can be adapted to work this way.</li>
 </ol>
 <h2 id="get-started">Get started</h2>
 <p>Refer to the Examples section of the GitHub repository, or check the
-<a href="https://github.com/AlexMV12/covid-timex.it">source code</a> of
-<a href="https://covid-timex.it">covid-timex.it</a>.</p>
+<a href="https://github.com/uGR17/TIMEX_CLUSTERING">source code</a>
+<a href="https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/COVID_Clustering.ipynb">covid-19 timex-clustering example</a>
+<a href="https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/UEA_UCR_Dataset_Clustering_Example.ipynb">UAE&amp;UCR dataset timex-clustering example</a></p>
 <h2 id="architecture">Architecture</h2>
-<p>The general architecture of TIMEX is here presented:</p>
-<p><img alt="Architecture" src="images/Architecture.svg"></p>
-<p>The most important aspect of TIMEX architecture is the <strong>configuration options</strong> dictionary. It is a key-value list of
-settings which influences all the key aspects of the pipeline. It can be stored in a JSON file, loaded before the
+<p>The general architecture of TIMEX-CLUSTERING is here presented:</p>
+<p><img alt="Pipeline of TIMEX-CLUSTERING" src="https://github.com/uGR17/TIMEX_CLUSTERING/blob/5573c65f90fb99922524d4f32da0625c8885112d/examples/figures/pipeline.PNG"></p>
+<p>The most important aspect of TIMEX-CLUSTERING architecture is the <strong>configuration options</strong> dictionary. It is a key-value list of settings which influences all the key aspects of the pipeline. It can be stored in a JSON file, loaded before the
 pipeline starts.</p>
 <h2 id="configuration-parameters-dictionary">Configuration parameters dictionary</h2>
-<p>An example of working dictionary, used for the <a href="https://covid-timex.it">covid-timex.it</a> website is:</p>
+<p>An example of working dictionary, used for the <a href="https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/UEA_UCR_Dataset_Clustering_Example.ipynb">UAE&amp;UCR dataset timex-clustering example</a> website is:</p>
 <pre><code class="language-json">{
-  &quot;activity_title&quot;: &quot;Covid-19 Italy Analysis&quot;,
+  &quot;activity_title&quot;: &quot;UEA&amp;UCR Dataset - Clustering Example&quot;,
   &quot;verbose&quot;: &quot;INFO&quot;,
   &quot;input_parameters&quot;: {
-    &quot;source_data_url&quot;: &quot;https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-andamento-nazionale/dpc-covid19-ita-andamento-nazionale.csv&quot;,
-    &quot;columns_to_load_from_url&quot;: &quot;data,nuovi_positivi,totale_positivi,variazione_totale_positivi,terapia_intensiva,totale_ospedalizzati,deceduti,tamponi&quot;,
-    &quot;datetime_column_name&quot;: &quot;data&quot;,
-    &quot;index_column_name&quot;: &quot;data&quot;,
-    &quot;add_diff_column&quot;: &quot;terapia_intensiva,totale_ospedalizzati,deceduti,tamponi&quot;,
-    &quot;timeseries_names&quot;:
-    {
-      &quot;data&quot;: &quot;Date&quot;,
-      &quot;nuovi_positivi&quot;: &quot;Daily cases&quot;,
-      &quot;totale_positivi&quot;: &quot;Total positives&quot;,
-      &quot;variazione_totale_positivi&quot;: &quot;Total positives variation&quot;,
-      &quot;terapia_intensiva&quot;: &quot;Total intensive care&quot;,
-      &quot;totale_ospedalizzati&quot;: &quot;Total hospitalized&quot;,
-      &quot;deceduti&quot;: &quot;Total deaths&quot;,
-      &quot;tamponi&quot;: &quot;Tests&quot;,
-      &quot;terapia_intensiva_diff&quot;: &quot;Daily intensive care&quot;,
-      &quot;totale_ospedalizzati_diff&quot;: &quot;Daily hospitalized&quot;,
-      &quot;deceduti_diff&quot;: &quot;Daily deaths&quot;,
-      &quot;tamponi_diff&quot;: &quot;Daily tests&quot;
+    &quot;source_data_url&quot;: &quot;https://raw.githubusercontent.com/uGR17/TIMEX_CLUSTERING/main/examples/datasets/k_means_example_5ts.csv&quot;,
+    &quot;index_column_name&quot;: &quot;date&quot;,
+    &quot;frequency&quot;: &quot;D&quot;,
+    &quot;timeseries_names&quot;:{
+      &quot;date&quot;: &quot;Date&quot;,
+      &quot;ts1&quot;: &quot;timeseries1&quot;,
+      &quot;ts2&quot;: &quot;timeseries2&quot;,
+      &quot;ts3&quot;: &quot;timeseries3&quot;,
     }
   },
-  &quot;selection_parameters&quot;: {
-    &quot;init_datetime&quot;: &quot;2020-01-01T17:00:00&quot;,
-    &quot;end_datetime&quot;: &quot;2023-01-22T17:00:00&quot;
-  },
   &quot;model_parameters&quot;: {
-    &quot;test_values&quot;: 5,
-    &quot;delta_training_percentage&quot;: 10,
-    &quot;prediction_lags&quot;: 10,
-    &quot;possible_transformations&quot; : &quot;none,log_modified&quot;,
-    &quot;models&quot;: &quot;fbprophet,exponentialsmoothing&quot;,
-    &quot;main_accuracy_estimator&quot;: &quot;mae&quot;
+     &quot;clustering_approach&quot;: &quot;observation_based,feature_based,model_based&quot;,
+     &quot;models&quot;: &quot;k_means,gaussian_mixture&quot;,
+     &quot;pre_transformation&quot;: &quot;none&quot;,
+     &quot;distance_metric&quot;: &quot;euclidean,dtw,softdtw&quot;,
+     &quot;feature_transformations&quot;: &quot;DWT&quot;,
+     &quot;n_clusters&quot;: [3, 4, 5, 6],
+     &quot;gamma&quot;: 0.01,
+     &quot;main_accuracy_estimator&quot;: &quot;silhouette&quot;
   },
   &quot;xcorr_parameters&quot;: {
     &quot;xcorr_max_lags&quot;: 120,
-    &quot;xcorr_extra_regressor_threshold&quot;: 0.8,
     &quot;xcorr_mode&quot;: &quot;pearson&quot;,
     &quot;xcorr_mode_target&quot;: &quot;pearson&quot;
   },
-  &quot;historical_prediction_parameters&quot;: {
-    &quot;initial_index&quot;: &quot;2020-08-18&quot;,
-    &quot;save_path&quot;: &quot;historical_predictions_italy_covid.pkl&quot;
-  },
   &quot;visualization_parameters&quot;: {
-    &quot;language&quot;: &quot;en&quot;,
-    &quot;xcorr_graph_threshold&quot;: 0.8
+    &quot;xcorr_graph_threshold&quot;: 0.8,
   }
 }
 </code></pre>
@@ -135,14 +105,11 @@ pipeline starts.</p>
 <h3 id="general">General</h3>
 <ul>
 <li><code>activity_title</code>: used in the website creation as title for the page. Optional.</li>
-<li><code>verbose</code>: it is not strictly used by TIMEX, but it can be included here in order to set the verbosity level in the
-main Python script. In fact, TIMEX has important logging capabilities. Optional, can be one of "DEBUG", "INFO",
+<li><code>verbose</code>: it is not strictly used by TIMEX-CLUSTERING, but it can be included here in order to set the verbosity level in the main Python script. In fact, TIMEX-CLUSTERING has important logging capabilities. Optional, can be one of "DEBUG", "INFO",
 "WARNING", "ERROR", "CRITICAL".</li>
-<li><code>max_threads</code>: set the max number of threads (processes) used by TIMEX during the forecasting models computation.
-Optional, if not set TIMEX will try to understand the number of available cores on the system.</li>
 </ul>
 <h3 id="input-parameters">Input parameters</h3>
-<p>Remember that TIMEX expects the input data to be in the following form. Some changes can be forced through settings.</p>
+<p>Remember that TIMEX-CLUSTERING expects the input data to be in the following form. Some changes can be forced through settings.</p>
 <table>
 <thead>
 <tr>
@@ -187,9 +154,6 @@ DateTimeIndex;</li>
 values. If not specified the frequency will be infered.</li>
 <li><code>columns_to_load_from_url</code>: comma-separated string of columns's names which will be read from the CSV file. If not
 specified, all columns will be read;</li>
-<li><code>add_diff_column</code>: comma-separated string of columns's names for which a corresponding column containing the diff
-values should be created. They will be created with the name <code>col_name_diff</code>. Note that the first row of the
-dataset will be discarded;</li>
 <li><code>timeseries_names</code>: dictionary of key-values (old_name: new_name) used to rename some columns in the CSV;</li>
 <li><code>dateparser_options</code>: dictionary of key-values which will be given to <code>dateparser.parse()</code>. This is useful to set the
 date format if it is not common. Refer to <code>dateparser</code> documentation for the available options.</li>
@@ -208,31 +172,17 @@ dateparser to parse the dates.</p>
 <p>These parameters control the classes of models used in the forecasting, the feature transformation tested, etc.</p>
 <p>The following options has to be specified:</p>
 <ul>
-<li><code>possible_transformations</code>: comma-separated list of transformations keywords. Check the
-<a href="#available-transformations">available transformations</a>. Example: <code>"none,log_modified"</code>.</li>
-<li><code>main_accuracy_estimator</code>: error metric which will be minimized as target by the procedure. It can be one of <code>"mae"</code>,
-<code>"mse"</code>.</li>
-<li><code>models</code>: comma-separated list of the models to use. Check the <a href="#available-forecasting-models">available models</a>.
-Example: <code>"fbprophet,exponential_smoothing</code>".</li>
-</ul>
-<p>Moreover, some other options can be set. Otherwise default values will be used:</p>
-<ul>
-<li><code>test_values</code>: number of points used as validation in order to choose the transformation and training window. These
-points will be used, however, to compute the actual forecast. Has precedence over <code>test_percentage</code>.</li>
-<li><code>test_percentage</code>: Percentage of the time-series length to used for the validation set. </li>
-<li><code>prediction_lags</code>: Number of future lags for for the forecast.</li>
-<li><code>delta_training_percentage</code>: Length, in percentage of the time-series length, of the training windows.</li>
-<li><code>min_values</code>: Key-values dictioanry where key is the name of a column and value is the minimum expected value in that
-column. If "_all" is in the dict the corresponding value will be used for all values in each column.</li>
-<li><code>max_values</code>: Key-values where key is the name of a column and value is the maximum expected value in that column.
-If "_all" is in the dict the corresponding value will be used for all values in each column.</li>
-<li><code>round_to_integer</code>: List of columns name which should be rounded to integer. If "_all" is in the list, all values in
-every column will be rounded to integer.</li>
+<li><code>clustering_approach</code>: comma-separated list of clustering approaches keywords. Available approaches:<code>"observation_based,feature_based,model_based"</code>.</li>
+<li><code>models</code>: comma-separated list of lustering models keywords. Available approaches:<code>"k_means,gaussian_mixture"</code>. K-Means for the Observation and Feature based approaches, and Gaussian Mixture models for Model based approach.</li>
+<li><code>pre_transformation</code>: comma-separated list of pre_transformation keywords. Availables: <code>"none"</code>,<code>"log"</code> or <code>"log_modified"</code>.</li>
+<li><code>distance_metric</code>: comma-separated list of distance_metrics keywords. Availables: <code>"euclidean,dtw,softdtw"</code>.</li>
+<li><code>feature_transformations</code>: comma-separated list of feature_transformations keywords for the Feature based approach. Available: <code>"DWT"</code>, using Haar wavelet.</li>
+<li><code>n_clusters</code>: list of number of clusters settings to search, for the non-hierarchical clustering models. Example: <code>[3, 4, 5]</code>.</li>
+<li><code>main_accuracy_estimator</code>: error metric which will be minimized as target by the procedure. It can be one of <code>"silhouette"</code>,<code>"davies_bouldin"</code> or <code>"calinski_harabasz"</code>.</li>
+<li><code>gamma</code>: regularization parameter for the soft DWT metric, lower is less smoothed (closer to true DTW). Example: <code>0.01</code>.</li>
 </ul>
 <h3 id="cross-correlation-parameters">Cross-correlation parameters</h3>
-<p>These parameters controls the cross-correlation computation, which is used to determine if there are time-series useful
-as extra-regressors for multivariate multiple-input-single-output forecasting models.
-This part is optional.</p>
+<p>These parameters controls the cross-correlation computation. This part is optional.</p>
 <ul>
 <li>
 <p><code>xcorr_modes</code>: indicate the different algorithms which should be used to compute the cross-correlation.
@@ -256,76 +206,21 @@ additional regressors. E.g. <code>"pearson"</code>.</li>
 <li><code>xcorr_extra_regressor_threshold</code>: the minimum absolute value of cross-correlation which indicates a useful
 extra-regressor. E.g. 0.8.</li>
 </ul>
-<h3 id="additional-regressors-parameters">Additional regressors parameters</h3>
-<p>These are additional regressors, which can be used in multivariate multiple-input-single-output forecasting models for
-which the future values are already known at the forecasting time. For example, if we have weather forecast for the next
-two weeks and we think that the temperature influences the target time-series, we can feed it in TIMEX. This is
-optional.</p>
-<p>The additional regressors should be put in a CSV file, in the form:</p>
-<table>
-<thead>
-<tr>
-<th>time_index</th>
-<th>additional regressor A</th>
-<th>additional regressor B</th>
-<th>&hellip;</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>2000-01-01</td>
-<td>x</td>
-<td>x</td>
-<td>&hellip;</td>
-</tr>
-<tr>
-<td>2000-01-02</td>
-<td>x</td>
-<td>x</td>
-<td>&hellip;</td>
-</tr>
-<tr>
-<td>&hellip;</td>
-<td>&hellip;</td>
-<td>&hellip;</td>
-<td>&hellip;</td>
-</tr>
-</tbody>
-</table>
-<p>And the following options has to be specified:</p>
-<ul>
-<li><code>additional_regressors</code>: Key-value dict where key is a column name, and value is the path of the CSV containing the
-additional regressors useful for that series.
-If some additional regressors may be useful for all the time-series in the dataset, we can specify them using the
-"<code>_all</code>" key.
-Example:</li>
-</ul>
-<pre><code class="language-json">&quot;additional_regressors&quot;: {
-  &quot;_all&quot;: &quot;../datasets/AdditionalRegressors/Temperature.csv&quot;,
-  &quot;time-series A&quot;: &quot;../datasets/AdditionalRegressors/RegressorUsefulForTimeSeriesA.csv&quot;
-}
-</code></pre>
 <h3 id="visualization-parameters">Visualization parameters</h3>
-<p>Parameters used to tune the visualization part of TIMEX.</p>
+<p>Parameters used to tune the visualization part of TIMEX-CLUSTERING.</p>
 <ul>
-<li><code>language</code>: Can be one between <code>"en"</code> and <code>"it"</code>. TIMEX for now supports English and Italian.</li>
 <li><code>xcorr_graph_threshold</code>: This controls the minumum value of cross-correlation for which an arc in the
 cross-correlation graph is drawn. It should be between 0.0 and 1.0.</li>
 </ul>
-<h2 id="available-forecasting-models">Available forecasting models</h2>
-<p>The following models are implemented in TIMEX and can be used in the forecasting procedure:</p>
+<h2 id="available-clustering-models">Available clustering models</h2>
+<p>The following models are implemented in TIMEX-CLUSTERING and can be used in the forecasting procedure:</p>
 <ul>
-<li>Facebook Prophet: This is the <a href="https://github.com/facebook/prophet">Facebook Prophet</a> forecasting model. Keyword:
-<code>fbprophet</code>.</li>
-<li>LSTM: A simple LSTM implementation built with <a href="https://pytorch.org/">PyTorch</a>. Keyword: <code>lstm</code>.</li>
-<li>Exponential Smoothing: An exponential smoothing model, with automatic choice of trend and seasonality period, built on
-top of <a href="https://scikit-learn.org/stable/">sklearn</a>. Keyword: <code>exponentialsmoothing</code>.</li>
-<li>ARIMA: Simple ARIMA model, with automatic tuning. Keyword: <code>arima</code>.
+<li>Gaussian Mixture Model: A simple Gaussian Mixture implementation built with <a href="https://scikit-learn.org/stable/">sklearn</a>. Keyword: <code>gaussian_mixture</code>.</li>
+<li>K-Means: A simple K-Means implementation built with <a href="https://tslearn.readthedocs.io/en/stable/index.html">ts-learn</a>. Keyword: <code>k_means</code>.
 </li>
 </ul>
-<h2 id="available-transformations">Available transformations</h2>
-<p>The following transformations are available on TIMEX_CLUSTERING, which will use them in order to pre-process the time-series and
-check if this increases the forecasting performance on the validation set.</p>
+<h2 id="available-pre-transformations">Available pre-transformations</h2>
+<p>The following transformations are available on TIMEX_CLUSTERING, which will use them in order to pre-process the time-series and check if this increases the clustering performance on the evaluation criteria.</p>
 <ul>
 <li>Identity: don't modify the values. Keyword: <code>none</code>.</li>
 <li>Logarithmic: Simple logarithmic function, with support for negative values. It uses the formula:
@@ -334,8 +229,6 @@ if <code>x</code> &gt; 1, 0 otherwise. However, the modified logarithmic one sho
 <li>Modified logarithmic: Simple logarithmic function, adapted to work on all the real numbers. It uses the formula:
 $$f(x) = sign(x) * log(|x| + 1)$$
 Keyword: <code>log_modified</code>.</li>
-<li>Yeo-Johnson: transformation presented in this <a href="https://doi.org/10.1093/biomet/87.4.954">paper</a>.
-Keyword: <code>yeo-johnson</code></li>
 </ul>
 <details class="source">
 <summary>
@@ -388,12 +281,11 @@ Keyword: <code>yeo-johnson</code></li>
 <li><a href="#selection-parameters">Selection parameters</a></li>
 <li><a href="#model-parameters">Model parameters</a></li>
 <li><a href="#cross-correlation-parameters">Cross-correlation parameters</a></li>
-<li><a href="#additional-regressors-parameters">Additional regressors parameters</a></li>
 <li><a href="#visualization-parameters">Visualization parameters</a></li>
 </ul>
 </li>
-<li><a href="#available-forecasting-models">Available forecasting models</a></li>
-<li><a href="#available-transformations">Available transformations</a></li>
+<li><a href="#available-clustering-models">Available clustering models</a></li>
+<li><a href="#available-pre-transformations">Available pre-transformations</a></li>
 </ul>
 </div>
 <ul id="index">
