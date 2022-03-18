@@ -1,5 +1,4 @@
 from timexseries_clustering.data_clustering.models.predictor import ClustersModel
-from tslearn.clustering import TimeSeriesKMeans
 from .validation_performances import ValidationPerformance
 from .pipeline import create_timeseries_containers
 
