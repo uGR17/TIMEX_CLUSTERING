@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 
 import dateparser
-import numpy
 import pytest
 from pandas import DataFrame
 from pandas._libs.tslibs.timestamps import Timestamp
