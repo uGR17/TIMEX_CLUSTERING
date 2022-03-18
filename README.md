@@ -25,6 +25,7 @@ the main characteristics of TIMEX-CLUSTERING. A Notebook explaining the clusteri
 
 ## Documentation
 The full documentation is available at [here](https://ugr17.github.io/TIMEX_CLUSTERING/timexseries_clustering/index.html).
+It is also available the Master thesis written [here](https://github.com/uGR17/TIMEX_CLUSTERING/blob/main/docs/Thesis-TIMEX-CLUSTERING.pdf).
 
 ## Contacts
 If you have questions, suggestions or problems, feel free to open an Issue.
