@@ -43,7 +43,6 @@ The observation-based approach is a direct approach for clustering time-series b
 <p>Finally, in the model-based methods, the time-series under consideration are assumed to have been generated from specific underlying models or by a combination of probability distributions, and the similarity between fitted models is evaluated .</p>
 <p>The proposed TIMEX-CLUSTERING framework, developed in Python, is characterized by the pipeline depicted in. Such pipeline comprises the following six steps: data ingestion, data pre-processing, data description, data clustering and service delivery.</p>
 <p>TIMEX-CLUSTERING's goal is to provide an automatic clustering framework, which could be used by any user on their datasets with a minimal amount of knowledge about clustering procedures. It should provide efficient and high quality time-series clustering. TIMEX-CLUSTERING will use the three different clustering approaches (observation-based, feature-based and model-based) in order to cover datasets with different nature. It is emphasized that a clustering-as-a-service is not yet available in the literature: this framework will be also unique because will include all the clustering approaches.</p>
-<p><img alt="Pipeline of TIMEX-CLUSTERING" src="https://github.com/uGR17/TIMEX_CLUSTERING/blob/5573c65f90fb99922524d4f32da0625c8885112d/examples/figures/pipeline.PNG"></p>
 <h2 id="use-cases">Use cases</h2>
 <p>There are at least two use cases worth mentioning:</p>
 <ol>
@@ -56,13 +55,10 @@ some time-series, set some settings or use defaults, and press a button to recei
 time-series. TIMEX-CLUSTERING can be adapted to work this way.</li>
 </ol>
 <h2 id="get-started">Get started</h2>
-<p>Refer to the Examples section of the GitHub repository, or check the
-<a href="https://github.com/uGR17/TIMEX_CLUSTERING">source code</a>
-<a href="https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/COVID_Clustering.ipynb">covid-19 timex-clustering example</a>
-<a href="https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/UEA_UCR_Dataset_Clustering_Example.ipynb">UAE&amp;UCR dataset timex-clustering example</a></p>
+<p>Refer to the Examples section of the GitHub repository, or check the <a href="https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/COVID_Clustering.ipynb">covid-19 timex-clustering example</a> or the <a href="https://github.com/uGR17/TIMEX_CLUSTERING/blob/ff89d8b55826436ea74ba142e4129f57b3b7d786/examples/UEA_UCR_Dataset_Clustering_Example.ipynb">UAE&amp;UCR dataset timex-clustering example</a></p>
 <h2 id="architecture">Architecture</h2>
 <p>The general architecture of TIMEX-CLUSTERING is here presented:</p>
-<p><img alt="Pipeline of TIMEX-CLUSTERING" src="https://github.com/uGR17/TIMEX_CLUSTERING/blob/5573c65f90fb99922524d4f32da0625c8885112d/examples/figures/pipeline.PNG"></p>
+<p><img alt="Pipeline of TIMEX-CLUSTERING" src="https://https://github.com/uGR17/TIMEX_CLUSTERING/blob/main/examples/figures/pipeline.PNG"></p>
 <p>The most important aspect of TIMEX-CLUSTERING architecture is the <strong>configuration options</strong> dictionary. It is a key-value list of settings which influences all the key aspects of the pipeline. It can be stored in a JSON file, loaded before the
 pipeline starts.</p>
 <h2 id="configuration-parameters-dictionary">Configuration parameters dictionary</h2>
@@ -169,7 +165,7 @@ is equal to <code>value_selection</code> are kept. If this is specified, also <c
 <p>Moreover, if <code>dateparser_options</code> is specified in `input_parameters', then the options will be passed to
 dateparser to parse the dates.</p>
 <h3 id="model-parameters">Model parameters</h3>
-<p>These parameters control the classes of models used in the forecasting, the feature transformation tested, etc.</p>
+<p>These parameters control the classes of models used in the clustering, the feature transformation tested, etc.</p>
 <p>The following options has to be specified:</p>
 <ul>
 <li><code>clustering_approach</code>: comma-separated list of clustering approaches keywords. Available approaches:<code>"observation_based,feature_based,model_based"</code>.</li>
@@ -213,21 +209,19 @@ extra-regressor. E.g. 0.8.</li>
 cross-correlation graph is drawn. It should be between 0.0 and 1.0.</li>
 </ul>
 <h2 id="available-clustering-models">Available clustering models</h2>
-<p>The following models are implemented in TIMEX-CLUSTERING and can be used in the forecasting procedure:</p>
+<p>The following models are implemented in TIMEX-CLUSTERING and can be used in the clustering procedure:</p>
 <ul>
-<li>Gaussian Mixture Model: A simple Gaussian Mixture implementation built with <a href="https://scikit-learn.org/stable/">sklearn</a>. Keyword: <code>gaussian_mixture</code>.</li>
-<li>K-Means: A simple K-Means implementation built with <a href="https://tslearn.readthedocs.io/en/stable/index.html">ts-learn</a>. Keyword: <code>k_means</code>.
-</li>
+<li>Gaussian Mixture Model: A simple Gaussian Mixture implementation built with <a href="https://scikit-learn.org/stable/">sklearn</a>. Keyword: <code>gaussian_mixture</code>. This model is valid for the Model based clustering approach.</li>
+<li>K-Means: A simple K-Means implementation built with <a href="https://tslearn.readthedocs.io/en/stable/index.html">ts-learn</a>. Keyword: <code>k_means</code>. This model is valid for the Observation and Feature based clustering approach.</li>
 </ul>
 <h2 id="available-pre-transformations">Available pre-transformations</h2>
 <p>The following transformations are available on TIMEX_CLUSTERING, which will use them in order to pre-process the time-series and check if this increases the clustering performance on the evaluation criteria.</p>
 <ul>
 <li>Identity: don't modify the values. Keyword: <code>none</code>.</li>
 <li>Logarithmic: Simple logarithmic function, with support for negative values. It uses the formula:
-$$f(x) = sign(x) * log(|x|)$$
-if <code>x</code> &gt; 1, 0 otherwise. However, the modified logarithmic one should be preferred. Keyword: <code>log</code>.</li>
+f(x) = sign(x) * log(|x|) if <code>x</code> &gt; 1, 0 otherwise. However, the modified logarithmic one should be preferred. Keyword: <code>log</code>.</li>
 <li>Modified logarithmic: Simple logarithmic function, adapted to work on all the real numbers. It uses the formula:
-$$f(x) = sign(x) * log(|x| + 1)$$
+f(x) = sign(x) * log(|x| + 1).
 Keyword: <code>log_modified</code>.</li>
 </ul>
 <details class="source">
